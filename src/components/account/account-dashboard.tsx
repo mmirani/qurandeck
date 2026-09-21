@@ -2,6 +2,7 @@
 
 import { useMushaf } from "@/components/providers/mushaf-provider";
 import { UserMenu } from "@/components/user/user-menu";
+import { RailToggle } from "@/components/shell/rail-toggle";
 import { Modal } from "@/components/ui/modal";
 import { PROMISE_LINE, PROMISE_STORY, PROMISE_WHY } from "@/lib/brand";
 import { CompletionMap } from "@/components/account/completion-map";

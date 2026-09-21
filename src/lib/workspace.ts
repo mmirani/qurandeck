@@ -108,16 +108,20 @@ export function maxColumnsForWidth(width: number): 1 | 2 | 3 | 4 {
   return 1;
 }
 
-function pinAudio(widgets: WidgetKind[]) {
+function pinAudio(widgets: WidgetKind[]): WidgetKind[] {
   const rest = widgets.filter((item) => item !== "audio");
   return widgets.includes("audio") ? [...rest, "audio"] : rest;
 }
 
-function uniqueWidgets(widgets: WidgetKind[]) {
+function isWidgetKind(value: unknown): value is WidgetKind {
+  return typeof value === "string" && value in WIDGET_CATALOG;
+}
+
+function uniqueWidgets(widgets: readonly unknown[]): WidgetKind[] {
   const seen = new Set<WidgetKind>();
   const next: WidgetKind[] = [];
   for (const widget of widgets) {
-    if (!WIDGET_CATALOG[widget] || widget === "reader" || seen.has(widget)) continue;
+    if (!isWidgetKind(widget) || widget === "reader" || seen.has(widget)) continue;
     seen.add(widget);
     next.push(widget);
   }

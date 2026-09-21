@@ -54,7 +54,9 @@ export function RailCard({
           type="button"
           aria-expanded={open}
           aria-controls={`study-card-${id}`}
-          onClick={() => updatePreferences({ studyCards: { [id]: !open } })}
+          onClick={() =>
+            updatePreferences({ studyCards: { ...preferences.studyCards, [id]: !open } })
+          }
           className="flex min-w-0 flex-1 cursor-pointer items-center justify-between gap-2 text-left"
         >
           <h2 className="section-heading text-gold">{title}</h2>
