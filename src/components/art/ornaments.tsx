@@ -1,0 +1,48 @@
+export function EightPointStar({ className = "h-5 w-5" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 64 64" className={className} aria-hidden="true">
+      <circle cx="32" cy="32" r="10" fill="currentColor" />
+    </svg>
+  );
+}
+
+export function ArabesqueDivider({ className = "" }: { className?: string }) {
+  return (
+    <div className={`flex h-4 w-full items-center gap-2 text-gold ${className}`} aria-hidden="true">
+      <span className="h-px flex-1 bg-current opacity-20" />
+      <span className="h-1.5 w-1.5 rounded-full bg-current opacity-45" />
+      <span className="h-px flex-1 bg-current opacity-20" />
+    </div>
+  );
+}
+
+export function CornerFrame({
+  children,
+  className = "",
+  style,
+}: {
+  children: React.ReactNode;
+  className?: string;
+  style?: React.CSSProperties;
+}) {
+  return (
+    <div className={className} style={style}>
+      {children}
+    </div>
+  );
+}
+
+const QD_LEFT =
+  "M14.39,6.5L11.37,8.93L9.28,11.02L5.34,16.36L2.67,22.04L1.39,26.45L0.81,29.7L0.46,37.01L1.28,43.5L2.2,46.98L3.83,51.16L5.57,54.41L7.31,56.96L12.06,62.06L16.01,64.97L21.93,67.87L26.8,69.26L32.13,69.95L35.61,69.95L39.21,69.49L44.78,67.87L50.12,65.2L50.58,65.31L54.29,68.79L56.26,69.72L59.16,69.95L60.9,69.49L62.65,68.45L64.04,66.94L64.97,65.2L65.31,63.46L65.2,61.37L64.73,59.98L63.81,58.47L60.67,55.22L63.57,50.46L65.66,44.9L66.71,39.44L66.82,32.25L66.13,27.15L64.5,21.46L62.18,16.47L59.51,12.53L55.22,8.12L49.77,4.41L46.87,3.02L43.27,1.74L38.05,0.7L32.6,0.46L28.65,0.81L25.64,1.39L19.61,3.48ZM32.25,14.39L36.66,14.5L40.49,15.43L43.39,16.82L46.17,18.79L49.3,22.27L51.28,25.75L52.55,29.58L53.13,33.41L53.13,37.01L52.55,40.6L50.58,45.48L50,45.82L48.14,43.04L47.33,40.72L46.87,38.28L46.75,33.06L47.8,28.19L47.68,27.49L45.82,24.25L42.81,21.23L38.98,19.14L37.24,18.68L36.54,18.79L35.03,22.39L33.99,25.99L33.29,29.81L32.95,35.03L33.29,40.6L34.45,46.29L35.85,50.23L37.24,52.9L38.63,54.87L38.63,55.22L38.17,55.57L35.5,56.03L31.9,56.03L28.19,55.34L24.71,53.94L21,51.39L18.33,48.49L16.13,44.66L14.85,40.95L14.27,37.12L14.27,33.29L14.85,29.47L16.01,25.99L18.33,21.93L21,19.03L24.13,16.82L28.31,15.08Z";
+
+const QD_RIGHT =
+  "M65.2,0.46L59.51,1.04L56.15,1.86L54.52,2.55L57.42,4.76L60.21,7.31L62.65,10.09L65.66,14.39L69.03,14.5L72.85,15.43L75.64,16.71L78.65,18.79L80.86,21L82.37,23.09L83.64,25.41L85.03,29.47L85.61,33.06L85.61,37.35L84.8,41.76L83.64,45.01L81.32,48.84L78.65,51.62L75.64,53.71L71.35,55.45L67.05,56.15L68.68,59.05L69.37,62.41L68.91,66.13L67.87,68.45L66.94,69.72L67.29,69.95L71.23,69.61L74.13,69.03L77.96,67.87L80.97,66.59L84.11,64.85L86.54,63.11L91.18,58.7L93.5,55.68L95.01,53.25L96.4,50.46L97.91,46.29L99.19,39.91L99.42,33.64L98.61,26.91L97.91,24.13L96.4,19.95L94.43,16.13L92.81,13.69L90.95,11.37L88.17,8.58L83.64,5.22L78.19,2.55L72.04,0.93L69.26,0.58Z";
+
+export function MihrabMark({ className = "h-8 w-10 text-gold" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 100 71" className={className} aria-hidden="true">
+      <path fill="currentColor" fillRule="evenodd" d={QD_LEFT} />
+      <path fill="currentColor" d={QD_RIGHT} />
+    </svg>
+  );
+}
