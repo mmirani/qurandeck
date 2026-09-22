@@ -2,7 +2,7 @@
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Check, ChevronDown, Plus, RotateCcw } from "lucide-react";
+import { BookOpen, Check, ChevronDown, Plus, RotateCcw } from "lucide-react";
 import { useMushaf } from "@/components/providers/mushaf-provider";
 import {
   editionForGroup,
@@ -25,9 +25,14 @@ export function LanguagePicker() {
   );
   const hasTranslit = preferences.showTransliteration || verses.some((item) => item.transliteration);
   const atCap = preferences.translationIds.length >= MAX_TRANSLATIONS;
+  const translationCols = preferences.showTranslation ? Math.max(preferences.translationIds.length, 0) : 0;
+  const arabicOnly =
+    Number(preferences.showArabic) + Number(preferences.showTransliteration) + translationCols === 1 &&
+    preferences.showArabic;
+  const traditionalOn = arabicOnly && (preferences.traditionalPage || preferences.focusMode);
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className="flex flex-wrap items-center gap-2" data-tour="languages">
       <Chip
         active={preferences.showArabic}
         onClick={() => updatePreferences({ showArabic: !preferences.showArabic })}
@@ -67,6 +72,16 @@ export function LanguagePicker() {
       >
         <RotateCcw className="h-4 w-4" />
       </button>
+      {arabicOnly ? (
+        <Chip
+          active={traditionalOn}
+          tone="accent"
+          onClick={() => updatePreferences({ traditionalPage: !traditionalOn })}
+        >
+          <BookOpen className="h-4 w-4" />
+          Mushaf View
+        </Chip>
+      ) : null}
     </div>
   );
 }
@@ -267,21 +282,27 @@ function Chip({
   onClick,
   children,
   disabled,
+  tone = "gold",
 }: {
   active: boolean;
   onClick: () => void;
   children: React.ReactNode;
   disabled?: boolean;
+  tone?: "gold" | "accent";
 }) {
+  const filled =
+    tone === "accent" ? "bg-chip-alt text-on-chip-alt" : "bg-gold text-on-gold";
+  const idle =
+    tone === "accent"
+      ? "border-2 border-chip-alt bg-chip-alt/20 text-chip-alt"
+      : "border border-gold/35 bg-accent-soft/40 text-ink-soft";
   return (
     <button
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className={`h-11 cursor-pointer rounded-full px-4 text-sm ${
-        active
-          ? "bg-gold text-on-gold"
-          : "border border-gold/35 bg-accent-soft/40 text-ink-soft"
+      className={`inline-flex h-11 cursor-pointer items-center gap-2 rounded-full px-4 text-sm ${
+        active ? filled : idle
       } ${disabled ? "cursor-not-allowed opacity-45" : ""}`}
     >
       {children}

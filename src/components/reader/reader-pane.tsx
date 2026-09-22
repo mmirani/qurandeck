@@ -2,7 +2,9 @@
 
 import { useEffect, useRef } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { MushafPage } from "@/components/art/ornaments";
 import { useMushaf } from "@/components/providers/mushaf-provider";
+import { MushafStream } from "@/components/reader/mushaf-stream";
 import { ReaderToolbar } from "@/components/reader/reader-toolbar";
 import { VerseCard } from "@/components/reader/verse-card";
 
@@ -19,10 +21,13 @@ export function ReaderPane() {
     preferences,
     setVisibleVerseKeys,
     introduction,
+    currentJuz,
   } = useMushaf();
   const scroller = useRef<HTMLDivElement>(null);
   const translationCols = preferences.showTranslation ? Math.max(preferences.translationIds.length, 0) : 0;
   const layers = Number(preferences.showArabic) + Number(preferences.showTransliteration) + translationCols;
+  const arabicOnly = layers === 1 && preferences.showArabic;
+  const traditional = arabicOnly && (preferences.traditionalPage || preferences.focusMode);
 
   useEffect(() => {
     if (!playingVerseKey || !preferences.autoFollow) return;
@@ -90,7 +95,13 @@ export function ReaderPane() {
   return (
     <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden">
       <ReaderToolbar />
-      <div ref={scroller} id="main-reader" className="@container min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-6 md:px-8 lg:px-10">
+      <div
+        ref={scroller}
+        id="main-reader"
+        className={`@container min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-6 md:px-8 lg:px-10 ${
+          traditional && preferences.focusMode ? "mushaf-desk" : ""
+        }`}
+      >
         {error ? (
           <p className="rounded-3xl border border-danger/40 bg-surface p-6 text-danger">{error}</p>
         ) : null}
@@ -105,19 +116,38 @@ export function ReaderPane() {
             className="reader-stream flex flex-col gap-5 pb-36"
             data-layers={layers}
             data-size={preferences.fontSize >= 34 ? "xl" : undefined}
-            data-script={layers === 1 && preferences.showArabic ? "ar" : undefined}
+            data-script={arabicOnly ? "ar" : undefined}
+            data-traditional={traditional ? "on" : undefined}
           >
-            {mode === "surah" && preferences.showIntroduction && introduction ? (
+            {mode === "surah" && !preferences.focusMode && preferences.showIntroduction && introduction ? (
               <section className="rounded-3xl border border-line bg-surface p-5 md:p-6">
                 <h3 className="section-heading text-gold-deep">Introduction</h3>
                 <p className="mt-3 text-base leading-relaxed text-ink">{introduction}</p>
               </section>
             ) : null}
-            {verses.map((verse, index) => {
-              const prev = verses[index - 1];
-              const showSurahLabel = mode === "juz" && prev?.chapterId !== verse.chapterId;
-              return <VerseCard key={verse.verseKey} verse={verse} showSurahLabel={showSurahLabel} />;
-            })}
+            {traditional ? (
+              <MushafPage
+                titleArabic={mode === "surah" ? chapter?.nameArabic : undefined}
+                titleLatin={
+                  mode === "surah" ? chapter?.nameSimple : currentJuz ? `Juz ${currentJuz}` : undefined
+                }
+              >
+                <MushafStream verses={verses} mode={mode} />
+              </MushafPage>
+            ) : (
+              verses.map((verse, index) => {
+                const prev = verses[index - 1];
+                const showSurahLabel = mode === "juz" && prev?.chapterId !== verse.chapterId;
+                return (
+                  <VerseCard
+                    key={verse.verseKey}
+                    verse={verse}
+                    showSurahLabel={showSurahLabel}
+                    tourAnchor={index === 0}
+                  />
+                );
+              })
+            )}
             {chapter && mode === "surah" ? (
               <div className="flex items-center justify-between pt-4">
                 <button

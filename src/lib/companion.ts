@@ -1,3 +1,5 @@
+import { HOME_THEME, LUMEN_CANVAS, LUMEN_GOLD } from "./appearance";
+
 const KEY = "al-mushaf-nur-v2";
 export const NUR_SRC = "/companion/nur.png";
 export const NUR_SIZE = 88;
@@ -119,4 +121,13 @@ export function companionFilterFromGold(gold: string, canvas = "") {
     return `hue-rotate(${rotate}deg) saturate(1.65) brightness(0.74) contrast(1.24)`;
   }
   return `hue-rotate(${rotate}deg) saturate(1.38) brightness(1.06)`;
+}
+
+export function companionFilterFromDocument() {
+  if (typeof document === "undefined") return "none";
+  if (document.documentElement.dataset.theme === HOME_THEME) {
+    return companionFilterFromGold(LUMEN_GOLD, LUMEN_CANVAS);
+  }
+  const styles = getComputedStyle(document.documentElement);
+  return companionFilterFromGold(styles.getPropertyValue("--gold"), styles.getPropertyValue("--canvas"));
 }

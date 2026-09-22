@@ -6,24 +6,20 @@ import { motion, useReducedMotion } from "motion/react";
 import { SurahSidebar } from "@/components/sidebar/surah-sidebar";
 import { StudySidebar } from "@/components/sidebar/study-sidebar";
 import { ReaderPane } from "@/components/reader/reader-pane";
-import { FiltersModal } from "@/components/search/filters-modal";
-import { ThemePicker } from "@/components/modals/theme-picker";
-import { JuzModal } from "@/components/modals/juz-modal";
-import { SettingsModal } from "@/components/modals/settings-modal";
-import { AccountModal } from "@/components/account/account-dashboard";
-import { AuthModal } from "@/components/modals/auth-modal";
-import { BookmarksModal, HighlightsModal, NotesModal } from "@/components/modals/library-modals";
 import { AudioPlayer } from "@/components/audio/audio-player";
 import { useMushaf } from "@/components/providers/mushaf-provider";
 import { RailStrip } from "@/components/shell/rail-toggle";
 import { NurCompanion } from "@/components/companion/nur-companion";
+import { AppModals } from "@/components/shell/app-modals";
+import { GuideProvider } from "@/components/guide/guide-provider";
+import { TourOverlay } from "@/components/guide/tour-overlay";
 
 const CALM = { type: "tween" as const, duration: 0.8, ease: [0.33, 0.05, 0.2, 1] as const };
 
 export function AppShell() {
   const [leftOpen, setLeftOpen] = useState(false);
   const [rightOpen, setRightOpen] = useState(false);
-  const { preferences } = useMushaf();
+  const { preferences, isPlaying, togglePlay } = useMushaf();
   const focus = preferences.focusMode;
   const { lg: isLg, xl: isXl, xxl: is2xl } = useBreakpoints();
   const reduce = useReducedMotion();
@@ -34,12 +30,24 @@ export function AppShell() {
   const strip = 40;
   const showNav = Boolean(isLg && !focus);
   const showStudy = Boolean(isXl && !focus);
+  const arabicOnly = preferences.showArabic && !preferences.showTranslation && !preferences.showTransliteration;
+  const book = Boolean(focus && arabicOnly);
   const navOpen = Boolean(showNav && preferences.showNavRail);
   const studyOpen = Boolean(showStudy && preferences.showStudyRail);
   const boost = navOpen && studyOpen ? 1 : navOpen || studyOpen ? 1.22 : 1.45;
 
+  useEffect(() => {
+    if (book && isPlaying) togglePlay();
+  }, [book, isPlaying, togglePlay]);
+
   return (
-    <div className="relative z-[1] flex h-dvh flex-col gap-2 overflow-hidden bg-canvas p-3 text-ink md:p-4">
+    <GuideProvider>
+    <div
+      id="main-content"
+      className={`relative z-[1] flex h-dvh flex-col gap-2 overflow-hidden bg-canvas text-ink ${
+        book ? "p-2 md:p-3" : "p-3 md:p-4"
+      }`}
+    >
       <div className="flex min-h-0 flex-1 w-full gap-3">
         <RailColumn
           visible={showNav}
@@ -52,7 +60,9 @@ export function AppShell() {
           <SurahSidebar />
         </RailColumn>
         <div
-          className="min-h-0 min-w-0 flex-1 overflow-hidden rounded-3xl border border-line bg-surface"
+          className={`min-h-0 min-w-0 flex-1 overflow-hidden ${
+            book ? "rounded-md border-0 bg-transparent" : "rounded-3xl border border-line bg-surface"
+          }`}
           style={{ ["--measure-boost" as string]: String(boost) }}
         >
           <ReaderPane />
@@ -99,6 +109,7 @@ export function AppShell() {
         </Drawer>
       ) : null}
 
+      {book ? null : (
       <div
         className={`fixed z-30 ${
           focus
@@ -108,18 +119,13 @@ export function AppShell() {
       >
         <AudioPlayer variant="dock" />
       </div>
+      )}
 
-      <NurCompanion />
-      <FiltersModal />
-      <ThemePicker />
-      <JuzModal />
-      <SettingsModal />
-      <AccountModal />
-      <AuthModal />
-      <BookmarksModal />
-      <HighlightsModal />
-      <NotesModal />
+      {book ? null : <NurCompanion />}
+      <TourOverlay />
+      <AppModals />
     </div>
+    </GuideProvider>
   );
 }
 

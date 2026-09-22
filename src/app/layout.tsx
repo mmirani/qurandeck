@@ -26,7 +26,7 @@ export const metadata: Metadata = {
   description: SITE_DESCRIPTION,
 };
 
-const themeScript = `try{var p=JSON.parse(localStorage.getItem('al-mushaf-preferences')||'{}');if(p.theme)document.documentElement.dataset.theme=p.theme;}catch(e){}`;
+const themeScript = `try{var p=JSON.parse(localStorage.getItem('al-mushaf-preferences')||'{}');var home=location.pathname==='/';var t=home?'iris':(p.theme||'iris');document.documentElement.dataset.theme=t;}catch(e){document.documentElement.dataset.theme='iris'}document.documentElement.dataset.scroll=/^\\/(read$|surah\\/|juz\\/)/.test(location.pathname)?'lock':'page';`;
 
 export default function RootLayout({
   children,
@@ -36,16 +36,16 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      data-theme="manuscript"
-      className={`${jakarta.variable} ${sourceSerif.variable} ${naskh.variable} h-full antialiased`}
+      data-theme="iris"
+      className={`${jakarta.variable} ${sourceSerif.variable} ${naskh.variable} min-h-full antialiased`}
       suppressHydrationWarning
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
-      <body className="h-full overflow-hidden">
-        <a className="skip-link" href="#main-reader">
-          Skip to reading
+      <body className="min-h-full bg-canvas text-ink">
+        <a className="skip-link" href="#main-content">
+          Skip to content
         </a>
         <MushafProvider>{children}</MushafProvider>
       </body>

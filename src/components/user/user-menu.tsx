@@ -68,6 +68,7 @@ export function UserMenu({ fill = false }: { fill?: boolean }) {
         type="button"
         aria-haspopup="menu"
         aria-expanded={open}
+        data-tour="account"
         onClick={() => setOpen((value) => !value)}
         className={`flex cursor-pointer items-center gap-3 rounded-full border text-left ${
           fill ? "h-14 w-full px-4" : "h-12 max-w-[13rem] px-3"

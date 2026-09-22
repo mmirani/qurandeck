@@ -1,7 +1,17 @@
-export const GUIDE_VERSION = 1;
-export const HELPER_NAME = "Qalam";
+import { COMPANION_NAME } from "@/lib/brand";
 
-export type TourId = "welcome" | "search" | "languages" | "ayah" | "audio" | "study" | "account";
+export const GUIDE_VERSION = 2;
+export const HELPER_NAME = COMPANION_NAME;
+
+export type TourId =
+  | "welcome"
+  | "search"
+  | "languages"
+  | "ayah"
+  | "audio"
+  | "size"
+  | "study"
+  | "account";
 
 export type TourStep = {
   id: TourId;
@@ -15,55 +25,73 @@ export type TourStep = {
 export const WELCOME_TOUR: TourStep[] = [
   {
     id: "welcome",
-    title: "I’ll walk with you",
-    body: "I’m Qalam, your reading helper. A few quiet stops, then you can ask me anytime.",
+    title: `Hi — I’m ${COMPANION_NAME}`,
+    body: "A short walk through the mushaf. Skip anytime. Click me later if you only want one feature.",
   },
   {
     id: "search",
     title: "Find an ayah fast",
-    body: "Type a word, a theme, or a place like 2:255. Filters sit beside the search box.",
+    body: "Type a word, a theme, a surah name, or a place like 2:255. Filters sit beside the box. ⌘K also works.",
     target: "search",
     lesson: true,
   },
   {
     id: "languages",
     title: "Arabic stays. Add more.",
-    body: "Arabic is the mushaf. English is on by default. Add French, Persian, or others beside it — they don’t replace each other. The circular arrow comes back to Arabic and English.",
+    body: "Arabic is the mushaf. English is on by default. Add others beside it — they don’t replace each other. The circular arrow comes back to Arabic and English.",
     target: "languages",
     lesson: true,
   },
   {
     id: "ayah",
     title: "Each ayah can do more",
-    body: "Tap an ayah to select it. Play, favorite, highlight, note, and tafsir live on the card. Highlights can be erased.",
+    body: "Tap an ayah to select it. Play this verse, rest of the surah, note, star, highlight, or erase. Tafsir lives in the header chip, not on every card.",
     target: "ayah",
     lesson: true,
   },
   {
     id: "audio",
-    title: "One ayah, or from here",
-    body: "Ayah plays just this verse. From here keeps reciting the rest of the surah.",
+    title: "One ayah, or the rest",
+    body: "Play surah starts at the beginning. On the ayah, Ayah plays just this verse. Rest of Surah keeps reciting from here.",
     target: "audio",
     lesson: true,
   },
   {
     id: "study",
     title: "The right bar is your desk",
-    body: "Notes, tafsir, highlights, and word-by-word live here. The square icon tucks the bar so the mushaf can grow.",
+    body: "Notes, highlights, and word-by-word live here. The square icon tucks the bar so the mushaf can grow.",
     target: "study",
     lesson: true,
   },
   {
     id: "account",
     title: "Your place stays private",
-    body: "Sign in for notes, highlights, favorites, and progress — free, private, forever. Ask me again from this gold pen whenever you want.",
+    body: "Sign in for a named profile. Notes, highlights, and progress stay on this device — free, private, forever. Ask me anytime.",
     target: "account",
     lesson: true,
   },
 ];
 
-export const LESSONS = WELCOME_TOUR.filter((step) => step.lesson);
+export const EXTRA_LESSONS: TourStep[] = [
+  {
+    id: "size",
+    title: "Make the type kinder",
+    body: "Size sits in the header. Ask me “bigger” or “smaller” and I’ll move it for you.",
+    target: "size",
+    lesson: true,
+  },
+];
+
+export const LESSONS = [...WELCOME_TOUR.filter((step) => step.lesson), ...EXTRA_LESSONS];
 
 export function stepById(id: TourId) {
-  return WELCOME_TOUR.find((step) => step.id === id) ?? WELCOME_TOUR[0];
+  return WELCOME_TOUR.find((step) => step.id === id) ?? EXTRA_LESSONS.find((step) => step.id === id) ?? WELCOME_TOUR[0];
 }
+
+export const HELPER_HINTS = [
+  "walk me through",
+  "play this surah",
+  "bigger text",
+  "highlight this ayah",
+  "open my desk",
+];

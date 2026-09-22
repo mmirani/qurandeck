@@ -152,7 +152,11 @@ export type SessionUser = {
   provider?: "local" | "google";
 };
 
+export type MushafInkId = "gold" | "green" | "crimson" | "navy" | "teal";
+
 export type AppearanceThemeId =
+  | "iris"
+  | "pastels"
   | "manuscript"
   | "emerald"
   | "ottoman"
@@ -167,7 +171,6 @@ export type AppearanceThemeId =
   | "amethyst"
   | "rose"
   | "cyan"
-  | "iris"
   | "blush";
 
 export type ReaderMode = "surah" | "juz";
@@ -212,6 +215,8 @@ export type Preferences = {
   showWordByWord: boolean;
   studyCards: StudyCards;
   focusMode: boolean;
+  traditionalPage: boolean;
+  mushafInk: MushafInkId;
   showNavRail: boolean;
   showStudyRail: boolean;
 };

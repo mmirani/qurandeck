@@ -120,9 +120,9 @@ export function AudioPlayer({ variant = "rail" }: { variant?: "rail" | "dock" })
         {playMode === "verse"
           ? "This ayah only — recitation stops at the end"
           : playMode === "from-here"
-            ? "Continuing from here through the surah"
+            ? "Rest of this reading — recitation keeps going"
             : preferences.autoPlayOnAyahClick
-              ? "Tap an ayah to cue it · Ayah plays one verse · From here keeps going"
+              ? "Tap an ayah to cue it · Ayah plays one verse · Rest of Surah keeps going"
               : "Tap an ayah to cue it, then press play"}
       </p>
       <ArabesqueDivider className="my-3 text-gold/80" />

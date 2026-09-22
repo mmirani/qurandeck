@@ -94,6 +94,27 @@ export function parseVerseKey(key: string | null | undefined) {
   return { chapterId, verseNumber };
 }
 
+export function readerHref(verseKey?: string | null) {
+  const place = parseVerseKey(verseKey);
+  if (!place) return "/read";
+  return `/surah/${place.chapterId}#ayah-${place.verseNumber}`;
+}
+
+export function versePlaceLabel(
+  chapters: { id: number; nameSimple: string }[],
+  verseKey?: string | null,
+) {
+  const place = parseVerseKey(verseKey);
+  if (!place) {
+    return { href: "/read", title: "Al-Fatihah", ayah: "1:1" };
+  }
+  return {
+    href: `/surah/${place.chapterId}#ayah-${place.verseNumber}`,
+    title: chapters.find((item) => item.id === place.chapterId)?.nameSimple ?? `Surah ${place.chapterId}`,
+    ayah: `${place.chapterId}:${place.verseNumber}`,
+  };
+}
+
 export function ayahsReadInSurah(progress: ReadingProgress, chapterId: number) {
   return progress.versesRead.filter((key) => Number(key.split(":")[0]) === chapterId).length;
 }

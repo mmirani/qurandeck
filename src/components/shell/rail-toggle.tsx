@@ -41,7 +41,7 @@ export function RailToggle({ side, compact }: { side: "nav" | "study"; compact?:
 
 export function RailStrip({ side }: { side: "nav" | "study" }) {
   return (
-    <div className="mushaf-rail flex h-full w-full flex-col items-center pt-3">
+    <div className="mushaf-rail flex h-full w-full flex-col items-center pt-3" data-tour={side === "study" ? "study" : undefined}>
       <RailToggle side={side} compact />
     </div>
   );

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Copy, Eraser, Highlighter, ListEnd, NotebookPen, Play, ScrollText, Share2, Star } from "lucide-react";
+import { Copy, Eraser, Highlighter, NotebookPen, Play, Share2, Star } from "lucide-react";
 import { useMushaf } from "@/components/providers/mushaf-provider";
 import { CornerFrame } from "@/components/art/ornaments";
 import { HighlightPopover, MarkedText } from "@/components/reader/marked-text";
@@ -18,10 +18,17 @@ import { groupForId, isRtlLanguage } from "@/lib/quran/languages";
 import { PRODUCT_NAME } from "@/lib/brand";
 import { shareOrCopy, verseShareText } from "@/lib/reading";
 
-export function VerseCard({ verse, showSurahLabel }: { verse: Verse; showSurahLabel?: boolean }) {
+export function VerseCard({
+  verse,
+  showSurahLabel,
+  tourAnchor,
+}: {
+  verse: Verse;
+  showSurahLabel?: boolean;
+  tourAnchor?: boolean;
+}) {
   const {
     preferences,
-    updatePreferences,
     selectedVerseKey,
     selectedWord,
     playingVerseKey,
@@ -37,6 +44,7 @@ export function VerseCard({ verse, showSurahLabel }: { verse: Verse; showSurahLa
     playWord,
     playVerse,
     playFrom,
+    mode,
     cueVerse,
     toggleBookmarkVerse,
     toggleWordHighlight,
@@ -86,7 +94,7 @@ export function VerseCard({ verse, showSurahLabel }: { verse: Verse; showSurahLa
     <article
       id={`ayah-${verse.verseNumber}`}
       data-verse-key={verse.verseKey}
-      className={`scroll-mt-28 cursor-pointer ${active || reciting ? "rounded-3xl" : ""}`}
+      className={`scroll-mt-28 cursor-pointer ${active || reciting ? "is-live rounded-3xl" : ""}`}
       onClick={onAyahClick}
     >
       {showSurahLabel ? (
@@ -95,7 +103,7 @@ export function VerseCard({ verse, showSurahLabel }: { verse: Verse; showSurahLa
         </p>
       ) : null}
       <CornerFrame
-        className={`rounded-3xl border bg-surface p-5 ${
+        className={`verse-frame rounded-3xl border bg-surface p-5 ${
           active ? "ring-2 ring-gold/40" : reciting ? "ring-1 ring-accent/40" : ""
         } ${wash ? "border-transparent" : "border-line"}`}
         style={
@@ -107,7 +115,7 @@ export function VerseCard({ verse, showSurahLabel }: { verse: Verse; showSurahLa
             : undefined
         }
       >
-        <div className="flex items-start justify-between gap-3">
+        <div className="verse-head flex items-start justify-between gap-3">
           <div className="relative">
             <button
               type="button"
@@ -115,7 +123,7 @@ export function VerseCard({ verse, showSurahLabel }: { verse: Verse; showSurahLa
                 event.stopPropagation();
                 onAyahClick();
               }}
-              className="flex h-10 min-w-10 cursor-pointer items-center justify-center rounded-full bg-accent-soft font-display text-lg font-semibold text-gold-deep"
+              className="ayah-num flex h-10 min-w-10 cursor-pointer items-center justify-center rounded-full bg-accent-soft font-display text-lg font-semibold text-gold-deep"
               aria-label={`Select verse ${verse.verseKey}`}
             >
               {verse.verseNumber}
@@ -127,14 +135,27 @@ export function VerseCard({ verse, showSurahLabel }: { verse: Verse; showSurahLa
               <Star className="absolute -bottom-1 -left-1 h-3.5 w-3.5 fill-gold text-gold" />
             ) : null}
           </div>
-          <div className="flex flex-wrap justify-end gap-1">
+          <div className="verse-actions flex flex-wrap justify-end gap-1" data-tour={tourAnchor ? "ayah" : undefined}>
             <IconAction label="Play this ayah only, then stop" onClick={() => playVerse(verse.verseKey)}>
               <Play className="h-4 w-4" />
-              <span className="pr-2 text-[10px] font-medium">Ayah</span>
+              <span className="pr-1 text-[10px] font-medium">Ayah</span>
             </IconAction>
-            <IconAction label="Start here and keep reciting the rest of the surah" onClick={() => playFrom(verse.verseKey)}>
-              <ListEnd className="h-4 w-4" />
-              <span className="pr-2 text-[10px] font-medium">From here</span>
+            <IconAction
+              label={mode === "juz" ? "Play from here through the rest of this juz" : "Play from here through the rest of this surah"}
+              onClick={() => playFrom(verse.verseKey)}
+            >
+              <Play className="h-4 w-4" />
+              <span className="pr-1 text-[10px] font-medium">{mode === "juz" ? "Rest of Juz" : "Rest of Surah"}</span>
+            </IconAction>
+            <IconAction
+              label="Write a note on this ayah"
+              onClick={() => {
+                selectVerse(verse.verseKey);
+                document.getElementById("verse-note")?.focus();
+              }}
+            >
+              <NotebookPen className={`h-4 w-4 ${note ? "text-gold" : ""}`} />
+              <span className="pr-1 text-[10px] font-medium">Note</span>
             </IconAction>
             <IconAction
               label={favorited ? "Remove favorite" : "Favorite this ayah"}
@@ -157,28 +178,13 @@ export function VerseCard({ verse, showSurahLabel }: { verse: Verse; showSurahLa
               </IconAction>
             ) : null}
             <IconAction
-              label="Write a note"
-              onClick={() => {
-                selectVerse(verse.verseKey);
-                document.getElementById("verse-note")?.focus();
-              }}
-            >
-              <NotebookPen className={`h-4 w-4 ${note ? "text-gold" : ""}`} />
-            </IconAction>
-            <IconAction
-              label={preferences.showTafsir ? "Hide tafsir / explanation under ayahs" : "Show tafsir / explanation under ayahs"}
-              onClick={() => updatePreferences({ showTafsir: !preferences.showTafsir })}
-            >
-              <ScrollText className={`h-4 w-4 ${preferences.showTafsir ? "text-gold" : ""}`} />
-            </IconAction>
-            <IconAction
-              label="Copy verse"
+              label="Copy this ayah"
               onClick={() => void navigator.clipboard.writeText(verseShareText(verse))}
             >
               <Copy className="h-4 w-4" />
             </IconAction>
             <IconAction
-              label="Share this verse"
+              label="Share this ayah"
               onClick={() => void shareOrCopy(`${PRODUCT_NAME} · ${verse.verseKey}`, verseShareText(verse))}
             >
               <Share2 className="h-4 w-4" />
@@ -361,14 +367,16 @@ function IconAction({
     <button
       type="button"
       aria-label={label}
-      title={label}
       onClick={(event) => {
         event.stopPropagation();
         onClick();
       }}
-      className="inline-flex min-h-11 min-w-11 cursor-pointer items-center justify-center gap-1 rounded-full border border-gold/30 px-1.5 text-ink-soft hover:bg-accent-soft hover:text-accent"
+      className="group/action relative inline-flex min-h-11 min-w-11 cursor-pointer items-center justify-center gap-1 rounded-full border border-gold/30 px-1.5 text-ink-soft hover:bg-accent-soft hover:text-accent"
     >
       {children}
+      <span className="pointer-events-none absolute left-1/2 top-[calc(100%+8px)] z-30 w-max max-w-[14rem] -translate-x-1/2 rounded-lg bg-panel px-2.5 py-1.5 text-left text-[11px] font-medium leading-snug text-panel-ink opacity-0 shadow-[0_8px_24px_rgba(15,23,42,0.28)] transition duration-150 group-hover/action:opacity-100 group-focus-visible/action:opacity-100">
+        {label}
+      </span>
     </button>
   );
 }

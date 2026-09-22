@@ -1,7 +1,7 @@
 "use client";
 
 import { Palette } from "lucide-react";
-import { FONT_SIZE_MAX, FONT_SIZE_MIN } from "@/lib/appearance";
+import { APPEARANCE_THEMES, FONT_SIZE_MAX, FONT_SIZE_MIN } from "@/lib/appearance";
 import { useMushaf } from "@/components/providers/mushaf-provider";
 import { LanguagePicker } from "@/components/reader/language-picker";
 import { Modal } from "@/components/ui/modal";
@@ -53,10 +53,10 @@ export function SettingsModal() {
           <button
             type="button"
             onClick={() => openModal("themes")}
-            className="mt-3 inline-flex h-11 cursor-pointer items-center gap-2 rounded-full border border-line px-5 text-sm capitalize text-ink"
+            className="mt-3 inline-flex h-11 cursor-pointer items-center gap-2 rounded-full border border-line px-5 text-sm text-ink"
           >
             <Palette className="h-4 w-4" />
-            {preferences.theme}
+            {APPEARANCE_THEMES.find((item) => item.id === preferences.theme)?.name ?? preferences.theme}
           </button>
         </section>
         <section>

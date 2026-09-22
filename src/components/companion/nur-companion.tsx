@@ -1,14 +1,16 @@
 "use client";
 
-import { useCallback, useRef, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import Image from "next/image";
 import { useReducedMotion } from "motion/react";
-import { COMPANION_NAME, COMPANION_NAME_AR } from "@/lib/brand";
+import { COMPANION_NAME } from "@/lib/brand";
+import { NurGuidePanel } from "@/components/guide/nur-guide-panel";
+import { useGuide } from "@/components/guide/guide-provider";
 import {
   NUR_SIZE,
   NUR_SRC,
   clampPose,
-  companionFilterFromGold,
+  companionFilterFromDocument,
   defaultCorner,
   defaultPose,
   loadCompanionPose,
@@ -48,24 +50,43 @@ function subscribeTheme(onChange: () => void) {
   return () => mo.disconnect();
 }
 
-function readFilter() {
-  const styles = getComputedStyle(document.documentElement);
-  return companionFilterFromGold(styles.getPropertyValue("--gold"), styles.getPropertyValue("--canvas"));
-}
-
 export function NurCompanion() {
   const reduce = useReducedMotion();
+  const { active: guiding } = useGuide();
   const mounted = useSyncExternalStore(subscribeNever, () => true, () => false);
   const pose = useSyncExternalStore(subscribePose, loadCompanionPose, () => defaultPose);
-  const filter = useSyncExternalStore(subscribeTheme, readFilter, () => "none");
+  const filter = useSyncExternalStore(subscribeTheme, companionFilterFromDocument, () => "none");
   const [open, setOpen] = useState(false);
   const [dragging, setDragging] = useState(false);
   const moved = useRef(false);
   const drag = useRef<{ x: number; y: number; left: number; top: number } | null>(null);
 
+  const rootRef = useRef<HTMLDivElement>(null);
   const setPose = useCallback((next: CompanionPose) => {
     writePose(next);
   }, []);
+
+  useEffect(() => {
+    if (guiding) setOpen(false);
+  }, [guiding]);
+
+  useEffect(() => {
+    if (!open) return;
+    const onPointer = (event: PointerEvent) => {
+      const node = event.target as Node;
+      if (rootRef.current?.contains(node)) return;
+      setOpen(false);
+    };
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+    window.addEventListener("pointerdown", onPointer);
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("pointerdown", onPointer);
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
 
   if (!mounted) return null;
 
@@ -119,31 +140,19 @@ export function NurCompanion() {
 
   return (
     <div
+      ref={rootRef}
       className={`nur ${dragging ? "is-dragging" : ""} ${open ? "is-open" : ""}`}
       style={{ left: place.left, top: place.top, width: NUR_SIZE, height: NUR_SIZE }}
     >
       {open ? (
         <div role="dialog" aria-labelledby="nur-title" className={`nur-panel ${panelLeft ? "is-left" : "is-right"}`}>
-          <p id="nur-title" className="nur-name">
-            {COMPANION_NAME} <span lang="ar">{COMPANION_NAME_AR}</span>
-          </p>
-          <p className="nur-copy">
-            A little light for your reading. I take the colour of your theme. Drag me anywhere — or use the arrows.
-          </p>
-          <div className="nur-actions">
-            <button type="button" onClick={() => setPose({ ...defaultCorner(), hidden: false })}>
-              Come to the corner
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setOpen(false);
-                setPose({ ...pose, hidden: true });
-              }}
-            >
-              Rest
-            </button>
-          </div>
+          <NurGuidePanel
+            onClose={() => setOpen(false)}
+            onRest={() => {
+              setOpen(false);
+              setPose({ ...pose, hidden: true });
+            }}
+          />
         </div>
       ) : null}
 

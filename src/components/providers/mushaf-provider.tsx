@@ -63,7 +63,7 @@ import {
   saveSwatches,
   saveUsers,
 } from "@/lib/storage";
-import { layoutSignals } from "@/lib/appearance";
+import { layoutSignals, appliedTheme } from "@/lib/appearance";
 import {
   addReadingSeconds,
   defaultReadingProgress,
@@ -86,6 +86,7 @@ import {
   toggleArabicWord,
 } from "@/lib/highlights";
 import { wordByWordAudioUrl } from "@/lib/quran/sources";
+import { requestWelcomeTour } from "@/lib/guide/progress";
 
 type PlayMode = "idle" | "word" | "verse" | "from-here";
 
@@ -123,6 +124,7 @@ type MushafContextValue = {
   highlighting: boolean;
   visibleVerseKeys: string[];
   user: SessionUser | null;
+  hydrated: boolean;
   introduction: string;
   progress: ReadingProgress;
   audioRef: React.RefObject<HTMLAudioElement | null>;
@@ -266,12 +268,12 @@ export function MushafProvider({ children }: { children: ReactNode }) {
     if (!hydrated) return;
     savePreferences(preferences);
     const layout = layoutSignals(preferences);
-    document.documentElement.dataset.theme = preferences.theme;
+    document.documentElement.dataset.theme = appliedTheme(pathname, preferences.theme);
     document.documentElement.dataset.layers = String(layout.layers);
     document.documentElement.dataset.size = layout.size;
     document.documentElement.dataset.script = layout.script;
     document.documentElement.style.setProperty("--reading-size", `${preferences.fontSize}px`);
-  }, [hydrated, preferences]);
+  }, [hydrated, pathname, preferences]);
 
   useEffect(() => {
     if (!hydrated) return;
@@ -405,6 +407,11 @@ export function MushafProvider({ children }: { children: ReactNode }) {
   );
 
   useEffect(() => {
+    const lock = pathname === "/read" || pathname.startsWith("/surah/") || pathname.startsWith("/juz/");
+    document.documentElement.dataset.scroll = lock ? "lock" : "page";
+  }, [pathname]);
+
+  useEffect(() => {
     const surahMatch = pathname.match(/^\/surah\/(\d+)/);
     const juzMatch = pathname.match(/^\/juz\/(\d+)/);
     if (surahMatch) {
@@ -417,7 +424,7 @@ export function MushafProvider({ children }: { children: ReactNode }) {
       void loadJuzData(Number(juzMatch[1]));
       return;
     }
-    if (pathname === "/") void loadSurah(1);
+    if (pathname === "/read") void loadSurah(1);
   }, [loadJuzData, loadSurah, pathname]);
 
   const updatePreferences = useCallback((partial: Partial<Preferences>) => {
@@ -898,8 +905,10 @@ export function MushafProvider({ children }: { children: ReactNode }) {
     setUser(session);
     setModal(null);
     setResumeCue(true);
+    requestWelcomeTour();
+    if (!/^\/(read$|surah\/|juz\/)/.test(pathname)) router.push("/read");
     return null;
-  }, []);
+  }, [pathname, router]);
 
   const signInWithGoogle = useCallback(async (email: string) => {
     const trimmed = email.trim().toLowerCase();
@@ -925,8 +934,12 @@ export function MushafProvider({ children }: { children: ReactNode }) {
     setUser(session);
     setModal(null);
     setResumeCue(true);
+    if (!existing) {
+      requestWelcomeTour();
+      if (!/^\/(read$|surah\/|juz\/)/.test(pathname)) router.push("/read");
+    }
     return null;
-  }, []);
+  }, [pathname, router]);
 
   const signOut = useCallback(() => {
     saveSession(null);
@@ -968,6 +981,7 @@ export function MushafProvider({ children }: { children: ReactNode }) {
       highlighting,
       visibleVerseKeys,
       user,
+      hydrated,
       introduction,
       progress,
       audioRef,
@@ -1033,6 +1047,7 @@ export function MushafProvider({ children }: { children: ReactNode }) {
       highlightWords,
       highlighting,
       highlights,
+      hydrated,
       introduction,
       isPlaying,
       jumpToHit,

@@ -1,6 +1,7 @@
 import { GUIDE_VERSION, type TourId } from "./catalog";
 
 const KEY = "al-mushaf-guide";
+export const GUIDE_EVENT = "qurandeck-guide";
 
 export type GuideProgress = {
   version: number;
@@ -67,4 +68,9 @@ export function queueWelcome(current: GuideProgress): GuideProgress {
   const next = { ...current, pendingWelcome: true, completedWelcome: false };
   saveGuideProgress(next);
   return next;
+}
+
+export function requestWelcomeTour() {
+  queueWelcome(loadGuideProgress());
+  window.dispatchEvent(new CustomEvent(GUIDE_EVENT, { detail: { type: "welcome" } }));
 }

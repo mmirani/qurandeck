@@ -41,7 +41,7 @@ export function StudySidebar() {
   const words = verse?.words.filter((item) => item.charType === "word") ?? [];
 
   return (
-    <aside className="mushaf-rail flex h-full min-h-0 flex-col overflow-hidden p-4">
+    <aside className="mushaf-rail flex h-full min-h-0 flex-col overflow-hidden p-4" data-tour="study">
       <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain">
       <AccountRailCard />
       <section className="rail-card rounded-2xl p-4">

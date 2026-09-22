@@ -32,6 +32,82 @@ export function CornerFrame({
   );
 }
 
+const INK = "var(--mushaf-field)";
+
+function volute(cx: number, cy: number, radius: number, start: number, dir: 1 | -1) {
+  const turns = 1.08;
+  const steps = 72;
+  const parts: string[] = [];
+  for (let i = 0; i <= steps; i += 1) {
+    const t = i / steps;
+    const angle = start + dir * t * turns * Math.PI * 2;
+    const r = radius * (1 - t * 0.82);
+    const x = cx + Math.cos(angle) * r;
+    const y = cy + Math.sin(angle) * r;
+    parts.push(`${i === 0 ? "M" : "L"}${x.toFixed(2)} ${y.toFixed(2)}`);
+  }
+  return parts.join(" ");
+}
+
+function CornerScrolls() {
+  const stroke = {
+    fill: "none" as const,
+    stroke: INK,
+    strokeWidth: 2.7,
+    strokeLinecap: "round" as const,
+    strokeLinejoin: "round" as const,
+  };
+  return (
+    <g>
+      <path {...stroke} d={volute(32, 32, 20, -Math.PI / 2, -1)} />
+      <path {...stroke} d={volute(70, 30, 20, Math.PI, -1)} />
+      <path {...stroke} d={volute(30, 70, 20, 0, -1)} />
+    </g>
+  );
+}
+
+function FrameCorner({ className }: { className: string }) {
+  return (
+    <svg className={className} viewBox="0 0 100 100" aria-hidden="true">
+      <CornerScrolls />
+    </svg>
+  );
+}
+
+export function MushafPage({
+  children,
+  titleArabic,
+  titleLatin,
+}: {
+  children: React.ReactNode;
+  titleArabic?: string;
+  titleLatin?: string;
+}) {
+  return (
+    <div className="mushaf-page">
+      <div className="mushaf-frame">
+        <FrameCorner className="mushaf-corner is-tl" />
+        <FrameCorner className="mushaf-corner is-tr" />
+        <FrameCorner className="mushaf-corner is-bl" />
+        <FrameCorner className="mushaf-corner is-br" />
+        <div className="mushaf-page-leaf">
+          {titleArabic || titleLatin ? (
+            <header className="mushaf-sura">
+              {titleArabic ? (
+                <p dir="rtl" lang="ar" className="mushaf-sura-ar">
+                  {titleArabic}
+                </p>
+              ) : null}
+              {titleLatin ? <p className="mushaf-sura-en">{titleLatin}</p> : null}
+            </header>
+          ) : null}
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const QD_LEFT =
   "M14.39,6.5L11.37,8.93L9.28,11.02L5.34,16.36L2.67,22.04L1.39,26.45L0.81,29.7L0.46,37.01L1.28,43.5L2.2,46.98L3.83,51.16L5.57,54.41L7.31,56.96L12.06,62.06L16.01,64.97L21.93,67.87L26.8,69.26L32.13,69.95L35.61,69.95L39.21,69.49L44.78,67.87L50.12,65.2L50.58,65.31L54.29,68.79L56.26,69.72L59.16,69.95L60.9,69.49L62.65,68.45L64.04,66.94L64.97,65.2L65.31,63.46L65.2,61.37L64.73,59.98L63.81,58.47L60.67,55.22L63.57,50.46L65.66,44.9L66.71,39.44L66.82,32.25L66.13,27.15L64.5,21.46L62.18,16.47L59.51,12.53L55.22,8.12L49.77,4.41L46.87,3.02L43.27,1.74L38.05,0.7L32.6,0.46L28.65,0.81L25.64,1.39L19.61,3.48ZM32.25,14.39L36.66,14.5L40.49,15.43L43.39,16.82L46.17,18.79L49.3,22.27L51.28,25.75L52.55,29.58L53.13,33.41L53.13,37.01L52.55,40.6L50.58,45.48L50,45.82L48.14,43.04L47.33,40.72L46.87,38.28L46.75,33.06L47.8,28.19L47.68,27.49L45.82,24.25L42.81,21.23L38.98,19.14L37.24,18.68L36.54,18.79L35.03,22.39L33.99,25.99L33.29,29.81L32.95,35.03L33.29,40.6L34.45,46.29L35.85,50.23L37.24,52.9L38.63,54.87L38.63,55.22L38.17,55.57L35.5,56.03L31.9,56.03L28.19,55.34L24.71,53.94L21,51.39L18.33,48.49L16.13,44.66L14.85,40.95L14.27,37.12L14.27,33.29L14.85,29.47L16.01,25.99L18.33,21.93L21,19.03L24.13,16.82L28.31,15.08Z";
 

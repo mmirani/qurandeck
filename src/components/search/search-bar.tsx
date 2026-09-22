@@ -48,7 +48,7 @@ export function SearchBar() {
   }, [chapters, local]);
 
   return (
-    <div className="relative">
+    <div className="relative" data-tour="search">
       <label className="sr-only" htmlFor="quran-search">
         Search the Quran by word, theme, surah name, or verse such as 2:255
       </label>

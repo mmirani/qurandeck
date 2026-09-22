@@ -165,7 +165,7 @@ export function ContinueCard({ compact = false }: { compact?: boolean }) {
   );
 }
 
-function StatCard({ label, value, hint }: { label: string; value: string; hint: string }) {
+export function StatCard({ label, value, hint }: { label: string; value: string; hint: string }) {
   return (
     <div className="rounded-2xl border border-line bg-surface px-4 py-3">
       <p className="text-[10px] uppercase tracking-[0.16em] text-gold-deep">{label}</p>

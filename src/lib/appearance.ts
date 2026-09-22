@@ -1,4 +1,8 @@
-import type { AppearanceThemeId } from "./quran/types";
+import type { AppearanceThemeId, MushafInkId } from "./quran/types";
+
+export const HOME_THEME: AppearanceThemeId = "iris";
+export const LUMEN_CANVAS = "#e7ecf2";
+export const LUMEN_GOLD = "#0f766e";
 
 export const APPEARANCE_THEMES: Array<{
   id: AppearanceThemeId;
@@ -7,6 +11,20 @@ export const APPEARANCE_THEMES: Array<{
   description: string;
   swatches: [string, string, string];
 }> = [
+  {
+    id: "iris",
+    name: "Noor",
+    group: "day",
+    description: "Lavender light, purple chips, cyan marks",
+    swatches: ["#E4DCFF", "#7C3AED", "#06B6D4"],
+  },
+  {
+    id: "pastels",
+    name: "Pastels",
+    group: "day",
+    description: "White room with blush, lilac, and mint — soft, feminine daylight",
+    swatches: ["#FFF9FC", "#E8A0B8", "#C5E8D5"],
+  },
   {
     id: "manuscript",
     name: "Lumen",
@@ -27,13 +45,6 @@ export const APPEARANCE_THEMES: Array<{
     group: "day",
     description: "Cool blue wash with a clear blue accent",
     swatches: ["#DBE7F6", "#1D4ED8", "#0F172A"],
-  },
-  {
-    id: "iris",
-    name: "Iris",
-    group: "day",
-    description: "Lavender light, purple chips, cyan marks",
-    swatches: ["#E4DCFF", "#7C3AED", "#06B6D4"],
   },
   {
     id: "blush",
@@ -121,8 +132,28 @@ export const APPEARANCE_THEMES: Array<{
   },
 ];
 
+export function appliedTheme(pathname: string, theme: AppearanceThemeId): AppearanceThemeId {
+  return pathname === "/" ? HOME_THEME : theme;
+}
+
 export const FONT_SIZE_MIN = 14;
 export const FONT_SIZE_MAX = 36;
+
+export const MUSHAF_INKS: Array<{
+  id: MushafInkId;
+  name: string;
+  swatch: string;
+}> = [
+  { id: "green", name: "Madinah green", swatch: "#0f3d2e" },
+  { id: "gold", name: "Gilded ochre", swatch: "#b8860b" },
+  { id: "crimson", name: "Ottoman crimson", swatch: "#7a1c28" },
+  { id: "navy", name: "Indigo night", swatch: "#13233f" },
+  { id: "teal", name: "Lumen teal", swatch: "#115e59" },
+];
+
+export function asMushafInk(value: unknown): MushafInkId {
+  return MUSHAF_INKS.some((ink) => ink.id === value) ? (value as MushafInkId) : "green";
+}
 
 export function layoutSignals(prefs: {
   fontSize: number;

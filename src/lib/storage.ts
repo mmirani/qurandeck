@@ -1,3 +1,4 @@
+import { asMushafInk } from "./appearance";
 import { sanitizeTranslationIds, withTranslationIds } from "./quran/languages";
 import { DEFAULT_RECITATION_ID, DEFAULT_TAFSIR_ID, DEFAULT_TRANSLATION_ID } from "./quran/sources";
 import { DEFAULT_SWATCH_ID, defaultSwatches } from "./highlights";
@@ -25,7 +26,7 @@ const KEYS = {
 } as const;
 
 export const defaultPreferences: Preferences = {
-  theme: "manuscript",
+  theme: "iris",
   fontSize: 18,
   showArabic: true,
   showTranslation: true,
@@ -45,6 +46,8 @@ export const defaultPreferences: Preferences = {
   showWordByWord: false,
   studyCards: mergeStudyCards(undefined),
   focusMode: false,
+  traditionalPage: false,
+  mushafInk: "green",
   showNavRail: true,
   showStudyRail: true,
 };
@@ -71,6 +74,8 @@ export function loadPreferences(): Preferences {
   merged.showWordByWord =
     typeof raw.showWordByWord === "boolean" ? raw.showWordByWord : Boolean(raw.studyCards?.words);
   merged.studyCards = mergeStudyCards(raw.studyCards);
+  merged.traditionalPage = Boolean(raw.traditionalPage);
+  merged.mushafInk = asMushafInk(raw.mushafInk);
   const ids = Array.isArray(raw.translationIds)
     ? sanitizeTranslationIds(raw.translationIds)
     : sanitizeTranslationIds([merged.translationId]);
