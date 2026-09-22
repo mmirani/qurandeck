@@ -22,6 +22,7 @@ import { StatCard } from "@/components/account/account-dashboard";
 import { HomeNur } from "@/components/home/home-nur";
 import { HomePreview } from "@/components/home/home-preview";
 import { AppModals } from "@/components/shell/app-modals";
+import { requestAuthTab } from "@/components/modals/auth-modal";
 import { useMushaf } from "@/components/providers/mushaf-provider";
 import { UserMenu } from "@/components/user/user-menu";
 import { MihrabMark } from "@/components/art/ornaments";
@@ -77,31 +78,26 @@ export function HomePage() {
 }
 
 function HomeNav({ signedIn }: { signedIn: boolean }) {
-  const { openModal } = useMushaf();
   return (
     <header className="sticky top-0 z-40 border-b border-line/70 bg-canvas/90 backdrop-blur-md">
-      <div className="mx-auto flex h-16 max-w-6xl items-center gap-3 px-4 sm:h-[4.5rem] sm:px-6">
+      <div className="mx-auto flex min-h-16 max-w-6xl flex-wrap items-center gap-3 px-4 py-2 sm:min-h-[4.5rem] sm:px-6">
         <Link href="/" className="flex min-w-0 cursor-pointer items-center gap-2 text-gold">
           <MihrabMark className="h-8 w-10 shrink-0" />
           <span className="truncate font-display text-lg font-semibold tracking-tight text-ink">{PRODUCT_DISPLAY}</span>
         </Link>
-        <div className="ml-auto flex items-center gap-2">
-          <Link
-            href="/read"
-            className="inline-flex h-11 cursor-pointer items-center rounded-full border border-gold/40 px-4 text-sm font-medium text-gold-deep hover:bg-highlight"
-          >
-            {signedIn ? "Open mushaf" : "Read as guest"}
-          </Link>
+        <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
           {signedIn ? (
-            <UserMenu />
+            <>
+              <Link
+                href="/read"
+                className="inline-flex h-11 cursor-pointer items-center rounded-full border border-gold/40 px-4 text-sm font-medium text-gold-deep hover:bg-highlight"
+              >
+                Open mushaf
+              </Link>
+              <UserMenu />
+            </>
           ) : (
-            <button
-              type="button"
-              onClick={() => openModal("auth")}
-              className="inline-flex h-11 cursor-pointer items-center rounded-full bg-gold px-4 text-sm font-semibold text-on-gold"
-            >
-              Create account
-            </button>
+            <GuestAuthButtons size="nav" />
           )}
         </div>
       </div>
@@ -110,7 +106,6 @@ function HomeNav({ signedIn }: { signedIn: boolean }) {
 }
 
 function HomeGuestHero() {
-  const { openModal } = useMushaf();
   return (
     <section className="mx-auto grid max-w-6xl gap-10 px-4 py-12 sm:px-6 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:items-center lg:py-16">
       <div>
@@ -123,19 +118,7 @@ function HomeGuestHero() {
           forever.
         </p>
         <div className="mt-7 flex flex-wrap gap-3">
-          <Link
-            href="/read"
-            className="inline-flex h-12 cursor-pointer items-center rounded-full bg-gold px-6 text-base font-semibold text-on-gold"
-          >
-            Read as guest
-          </Link>
-          <button
-            type="button"
-            onClick={() => openModal("auth")}
-            className="inline-flex h-12 cursor-pointer items-center rounded-full border border-gold/45 px-6 text-base font-medium text-gold-deep hover:bg-highlight"
-          >
-            Create a free account
-          </button>
+          <GuestAuthButtons size="hero" />
         </div>
         <ul className="mt-8 flex flex-wrap gap-2">
           {HOME_PROMISES.map((item) => (
@@ -161,7 +144,8 @@ function HomeHeroSkeleton() {
       <div className="mt-4 h-16 max-w-lg rounded-2xl bg-line/40" />
       <div className="mt-7 flex gap-3">
         <div className="h-12 w-36 rounded-full bg-gold/30" />
-        <div className="h-12 w-44 rounded-full bg-line/50" />
+        <div className="h-12 w-24 rounded-full bg-line/50" />
+        <div className="h-12 w-44 rounded-full bg-line/40" />
       </div>
     </section>
   );
@@ -356,7 +340,6 @@ function HomeMore() {
 }
 
 function HomeCta() {
-  const { openModal } = useMushaf();
   return (
     <section className="border-t border-line/70 bg-highlight">
       <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-14 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
@@ -368,22 +351,59 @@ function HomeCta() {
           <p className="mt-3 max-w-xl text-ink-soft">{PROMISE_STORY}</p>
         </div>
         <div className="flex flex-wrap gap-3">
-          <Link
-            href="/read"
-            className="inline-flex h-12 cursor-pointer items-center rounded-full border border-gold/45 px-6 text-base font-medium text-gold-deep hover:bg-surface"
-          >
-            Read as guest
-          </Link>
-          <button
-            type="button"
-            onClick={() => openModal("auth")}
-            className="inline-flex h-12 cursor-pointer items-center rounded-full bg-gold px-6 text-base font-semibold text-on-gold"
-          >
-            Create a free account
-          </button>
+          <GuestAuthButtons size="cta" />
         </div>
       </div>
     </section>
+  );
+}
+
+function GuestAuthButtons({ size }: { size: "nav" | "hero" | "cta" }) {
+  const { openModal } = useMushaf();
+  const compact = size === "nav";
+  const chip = compact
+    ? "inline-flex h-11 cursor-pointer items-center rounded-full px-4 text-sm"
+    : "inline-flex h-12 cursor-pointer items-center rounded-full px-6 text-base";
+  const guestFilled = size === "hero";
+  const createFilled = size !== "hero";
+
+  return (
+    <>
+      <Link
+        href="/read"
+        className={`${chip} ${
+          guestFilled
+            ? "bg-gold font-semibold text-on-gold"
+            : "border border-gold/40 font-medium text-gold-deep hover:bg-highlight"
+        }`}
+      >
+        Read as guest
+      </Link>
+      <button
+        type="button"
+        onClick={() => {
+          requestAuthTab("signin");
+          openModal("auth");
+        }}
+        className={`${chip} border border-line font-medium text-ink hover:bg-highlight`}
+      >
+        Sign in
+      </button>
+      <button
+        type="button"
+        onClick={() => {
+          requestAuthTab("signup");
+          openModal("auth");
+        }}
+        className={`${chip} ${
+          createFilled
+            ? "bg-gold font-semibold text-on-gold"
+            : "border border-gold/45 font-medium text-gold-deep hover:bg-highlight"
+        }`}
+      >
+        {compact ? "Create account" : "Create a free account"}
+      </button>
+    </>
   );
 }
 

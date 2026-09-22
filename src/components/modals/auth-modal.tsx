@@ -5,19 +5,39 @@ import { useMushaf } from "@/components/providers/mushaf-provider";
 import { Modal } from "@/components/ui/modal";
 import { PROMISE_LINE, PROMISE_STORY } from "@/lib/brand";
 
+type AuthTab = "google" | "signin" | "signup";
+
+let pendingTab: AuthTab = "google";
+
+export function requestAuthTab(tab: AuthTab) {
+  pendingTab = tab;
+}
+
 export function AuthModal() {
   const { modal, closeModal, signIn, signUp, signInWithGoogle, signOut, user } = useMushaf();
-  const [mode, setMode] = useState<"google" | "signin" | "signup">("google");
+  const [mode, setMode] = useState<AuthTab>(pendingTab);
+  const [open, setOpen] = useState(modal === "auth");
   const [username, setUsername] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [password, setPassword] = useState("");
   const [email, setEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
 
+  if (modal === "auth" && !open) {
+    setOpen(true);
+    setMode(pendingTab);
+    setError(null);
+  } else if (modal !== "auth" && open) {
+    setOpen(false);
+    pendingTab = "google";
+  }
+
   if (modal !== "auth") return null;
 
+  const title = user ? "Your account" : mode === "signup" ? "Create account" : "Sign in";
+
   return (
-    <Modal eyebrow={PROMISE_LINE} title={user ? "Your account" : "Sign in"} onClose={closeModal}>
+    <Modal eyebrow={PROMISE_LINE} title={title} onClose={closeModal}>
       {user ? (
         <div className="space-y-4">
           <p className="text-sm text-ink-soft">

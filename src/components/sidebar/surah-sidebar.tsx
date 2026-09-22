@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useMushaf } from "@/components/providers/mushaf-provider";
 import { ArabesqueDivider, MihrabMark } from "@/components/art/ornaments";
 import { PRODUCT_DISPLAY } from "@/lib/brand";
@@ -50,10 +51,16 @@ export function SurahSidebar() {
     <aside className="mushaf-rail flex h-full min-h-0 flex-col overflow-hidden">
       <div className="shrink-0 px-5 pb-3 pt-5">
         <div className="flex items-start justify-between gap-2">
-          <div className="flex min-w-0 items-center gap-3">
+          <Link
+            href="/"
+            className="flex min-w-0 cursor-pointer items-center gap-3 text-ink hover:text-gold-deep"
+            aria-label={`${PRODUCT_DISPLAY} home`}
+          >
             <MihrabMark className="h-11 w-14 shrink-0 text-gold" />
-            <h1 className="font-display text-2xl font-semibold tracking-tight leading-none">{PRODUCT_DISPLAY}</h1>
-          </div>
+            <span className="truncate font-display text-2xl font-semibold tracking-tight leading-none">
+              {PRODUCT_DISPLAY}
+            </span>
+          </Link>
           <div className="hidden lg:block">
             <RailToggle side="nav" />
           </div>
