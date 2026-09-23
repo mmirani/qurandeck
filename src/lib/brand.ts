@@ -1,6 +1,6 @@
 /** Product name (the site). The work being read stays The Noble Quran. */
 export const PRODUCT_NAME = "QuranDeck";
-export const PRODUCT_DISPLAY = "Quran Deck";
+export const PRODUCT_DISPLAY = "QuranDeck";
 export const WORK_TITLE = "The Noble Quran";
 export const SITE_TITLE = `${PRODUCT_NAME} — ${WORK_TITLE}`;
 export const PROMISE_LINE = "Free, Private, Forever";

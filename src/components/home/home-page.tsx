@@ -26,7 +26,7 @@ import { requestAuthTab } from "@/components/modals/auth-modal";
 import { useMushaf } from "@/components/providers/mushaf-provider";
 import { UserMenu } from "@/components/user/user-menu";
 import { MihrabMark } from "@/components/art/ornaments";
-import { PRODUCT_DISPLAY, PRODUCT_NAME, PROMISE_LINE, PROMISE_STORY, WORK_TITLE } from "@/lib/brand";
+import { PRODUCT_NAME, PROMISE_LINE, PROMISE_STORY, WORK_TITLE } from "@/lib/brand";
 import { HOME_FEATURES, HOME_MORE, HOME_PROMISES, HOME_STARTS } from "@/lib/home";
 import {
   formatReadingMinutes,
@@ -64,7 +64,7 @@ export function HomePage() {
   return (
     <div className="min-h-dvh overflow-x-hidden bg-canvas text-ink">
       <HomeNav signedIn={Boolean(hydrated && user)} />
-      <main id="main-content">
+      <main id="main-content" className="pt-[4.5rem] sm:pt-20">
         {!hydrated ? <HomeHeroSkeleton /> : user ? <HomeSignedIn /> : <HomeGuestHero />}
         <HomeNur />
         <HomeFeatures />
@@ -79,13 +79,15 @@ export function HomePage() {
 
 function HomeNav({ signedIn }: { signedIn: boolean }) {
   return (
-    <header className="sticky top-0 z-40 border-b border-line/70 bg-canvas/90 backdrop-blur-md">
-      <div className="mx-auto flex min-h-16 max-w-6xl flex-wrap items-center gap-3 px-4 py-2 sm:min-h-[4.5rem] sm:px-6">
-        <Link href="/" className="flex min-w-0 cursor-pointer items-center gap-2 text-gold">
-          <MihrabMark className="h-8 w-10 shrink-0" />
-          <span className="truncate font-display text-lg font-semibold tracking-tight text-ink">{PRODUCT_DISPLAY}</span>
+    <header className="fixed inset-x-0 top-0 z-50 border-b border-line/70 bg-canvas/95 backdrop-blur-md">
+      <div className="mx-auto flex h-[4.5rem] max-w-6xl items-center gap-3 px-4 sm:h-20 sm:px-6">
+        <Link href="/" className="flex min-w-0 cursor-pointer items-center gap-2.5 text-gold sm:gap-3">
+          <MihrabMark className="h-8 w-8 shrink-0 sm:h-11 sm:w-11" />
+          <span className="truncate font-display text-[2rem] font-semibold leading-none tracking-tight text-ink sm:text-[2.75rem]">
+            {PRODUCT_NAME}
+          </span>
         </Link>
-        <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
+        <div className="ml-auto flex shrink-0 items-center justify-end gap-2">
           {signedIn ? (
             <>
               <Link
@@ -213,7 +215,7 @@ function HomeFeatures() {
             return (
               <article key={feature.id} className="overflow-hidden rounded-3xl border border-line bg-canvas/70">
                 <div className="relative bg-highlight px-5 py-5">
-                  <MihrabMark className="pointer-events-none absolute -right-2 -top-3 h-16 w-20 text-gold/15" />
+                  <MihrabMark className="pointer-events-none absolute -right-2 -top-3 h-16 w-16 text-gold/15" />
                   <span className="relative flex h-12 w-12 items-center justify-center rounded-2xl bg-canvas text-gold shadow-[0_8px_18px_rgba(15,23,42,0.06)] ring-1 ring-gold/25">
                     <Icon className="h-6 w-6" aria-hidden="true" />
                   </span>

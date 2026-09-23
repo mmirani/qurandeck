@@ -140,7 +140,7 @@ export function ReaderToolbar() {
             className="hidden h-12 shrink-0 cursor-pointer items-center gap-2 rounded-full px-1 text-gold hover:bg-highlight sm:flex"
             aria-label={`${PRODUCT_DISPLAY} home`}
           >
-            <MihrabMark className="h-7 w-9" />
+            <MihrabMark className="h-7 w-7" />
           </Link>
           <div className="min-w-0 flex-1">
             <SearchBar />

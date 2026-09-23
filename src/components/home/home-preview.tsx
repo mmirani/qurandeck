@@ -18,8 +18,8 @@ export function HomePreview() {
       <div className="flex gap-2 p-2 sm:p-2.5">
         <aside className="hidden w-[9.5rem] shrink-0 flex-col rounded-2xl bg-surface p-3 shadow-[0_8px_24px_rgba(15,23,42,0.06)] md:flex lg:w-44">
           <div className="flex items-center gap-2 text-gold">
-            <MihrabMark className="h-6 w-8" />
-            <p className="font-display text-sm font-semibold text-ink">Quran Deck</p>
+            <MihrabMark className="h-6 w-6" />
+            <p className="font-display text-sm font-semibold leading-none text-ink">QuranDeck</p>
           </div>
           <div className="mt-3 flex gap-1">
             {["Surahs", "Juz"].map((label, index) => (
