@@ -114,26 +114,36 @@ export function ReadingProgressTrack({
   );
 }
 
-export function MobileReadingProgress({ ayahMode }: { ayahMode: boolean }) {
-  const mobile = useMobileReader();
-  const { verses, isPlaying, preferences, loading, mode } = useMushaf();
-  const ratio = useReadingProgressRatio(ayahMode);
+function progressLabel(mode: string, ratio: number, total: number) {
+  const at = Math.max(1, Math.round(ratio * total));
+  const count = `${at} of ${total} ayahs`;
+  return mode === "juz"
+    ? `Reading progress through this juz, ${count}`
+    : `Reading progress through this surah, ${count}`;
+}
 
+function useProgressVisible() {
+  const { verses, preferences, loading } = useMushaf();
   const translationCols = preferences.showTranslation ? Math.max(preferences.translationIds.length, 0) : 0;
   const layers = Number(preferences.showArabic) + Number(preferences.showTransliteration) + translationCols;
   const arabicOnly = layers === 1 && preferences.showArabic;
   const book = Boolean(preferences.focusMode && arabicOnly);
+  return !loading && !book && verses.length > 0;
+}
 
-  if (!mobile || loading || book || verses.length === 0) return null;
+/** Fixed bar on phones (above footer / audio). */
+export function MobileReadingProgress({ ayahMode }: { ayahMode: boolean }) {
+  const mobile = useMobileReader();
+  const { verses, isPlaying, mode } = useMushaf();
+  const ratio = useReadingProgressRatio(ayahMode);
+  const visible = useProgressVisible();
+
+  if (!mobile || !visible) return null;
 
   const audioLift = isPlaying ? "4rem" : "0px";
   const ayahLift = ayahMode ? "4.35rem" : "0px";
   const bottom = `calc(env(safe-area-inset-bottom, 0px) + ${audioLift} + ${ayahLift})`;
-
-  const label =
-    mode === "juz"
-      ? `Reading progress through this juz, ${pctLabel(ratio, verses.length)}`
-      : `Reading progress through this surah, ${pctLabel(ratio, verses.length)}`;
+  const label = progressLabel(mode, ratio, verses.length);
 
   return (
     <div className="pointer-events-none fixed inset-x-0 z-[34] md:hidden" style={{ bottom }}>
@@ -142,7 +152,20 @@ export function MobileReadingProgress({ ayahMode }: { ayahMode: boolean }) {
   );
 }
 
-function pctLabel(ratio: number, total: number) {
-  const at = Math.max(1, Math.round(ratio * total));
-  return `${at} of ${total} ayahs`;
+/** Docked to the bottom of the center reader column on tablet and desktop. */
+export function PaneReadingProgress({ ayahMode }: { ayahMode: boolean }) {
+  const mobile = useMobileReader();
+  const { verses, mode } = useMushaf();
+  const ratio = useReadingProgressRatio(ayahMode);
+  const visible = useProgressVisible();
+
+  if (mobile || !visible) return null;
+
+  const label = progressLabel(mode, ratio, verses.length);
+
+  return (
+    <div className="reader-pane-progress hidden shrink-0 border-t border-line/60 bg-surface/95 backdrop-blur-sm md:block">
+      <ReadingProgressTrack ratio={ratio} ariaLabel={label} />
+    </div>
+  );
 }
