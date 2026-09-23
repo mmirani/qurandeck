@@ -64,7 +64,7 @@ export function HomePage() {
   return (
     <div className="min-h-dvh overflow-x-hidden bg-canvas text-ink">
       <HomeNav signedIn={Boolean(hydrated && user)} />
-      <main id="main-content" className="pt-[4.5rem] sm:pt-20">
+      <main id="main-content" className="pt-16">
         {!hydrated ? <HomeHeroSkeleton /> : user ? <HomeSignedIn /> : <HomeGuestHero />}
         <HomeNur />
         <HomeFeatures />
@@ -80,10 +80,10 @@ export function HomePage() {
 function HomeNav({ signedIn }: { signedIn: boolean }) {
   return (
     <header className="fixed inset-x-0 top-0 z-50 border-b border-line/70 bg-canvas/95 backdrop-blur-md">
-      <div className="mx-auto flex h-[4.5rem] max-w-6xl items-center gap-3 px-4 sm:h-20 sm:px-6">
-        <Link href="/" className="flex min-w-0 cursor-pointer items-center gap-2.5 text-gold sm:gap-3">
-          <MihrabMark className="h-8 w-8 shrink-0 sm:h-11 sm:w-11" />
-          <span className="truncate font-display text-[2rem] font-semibold leading-none tracking-tight text-ink sm:text-[2.75rem]">
+      <div className="mx-auto flex h-16 max-w-6xl items-center gap-3 px-4 sm:px-6">
+        <Link href="/" className="flex min-w-0 cursor-pointer items-center gap-2 text-gold">
+          <MihrabMark className="h-6 w-6 shrink-0 sm:h-7 sm:w-7" />
+          <span className="truncate font-display text-lg font-semibold leading-none tracking-tight text-ink sm:text-xl">
             {PRODUCT_NAME}
           </span>
         </Link>
@@ -112,7 +112,7 @@ function HomeGuestHero() {
     <section className="mx-auto grid max-w-6xl gap-10 px-4 py-12 sm:px-6 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:items-center lg:py-16">
       <div>
         <p className="kufic-label text-gold-deep">{PROMISE_LINE}</p>
-        <h1 className="mt-3 max-w-xl font-display text-4xl font-semibold tracking-tight text-ink sm:text-5xl">
+        <h1 className="mt-3 max-w-xl font-display text-4xl font-semibold tracking-tight text-ink sm:text-5xl lg:text-[3.25rem] lg:leading-[1.08]">
           A personal mushaf for {WORK_TITLE}
         </h1>
         <p className="mt-4 max-w-lg text-base leading-7 text-ink-soft sm:text-lg">
@@ -161,7 +161,7 @@ function HomeSignedIn() {
   return (
     <section className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:py-14">
       <p className="kufic-label text-gold-deep">{PROMISE_LINE}</p>
-      <h1 className="mt-2 font-display text-4xl font-semibold tracking-tight text-ink">
+      <h1 className="mt-2 font-display text-4xl font-semibold tracking-tight text-ink sm:text-5xl">
         Assalamu alaykum, {user?.displayName}.
       </h1>
       <p className="mt-3 max-w-2xl text-ink-soft">Your place, your notes, your map of {WORK_TITLE} — still on this device.</p>
