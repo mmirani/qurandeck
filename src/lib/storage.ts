@@ -70,6 +70,10 @@ function write(key: string, value: unknown) {
 
 export function loadPreferences(): Preferences {
   const value = parse(KEYS.preferences);
+  return preferencesFromUnknown(value);
+}
+
+export function preferencesFromUnknown(value: unknown): Preferences {
   if (!value || typeof value !== "object") return defaultPreferences;
   const raw = value as Partial<Preferences> & { translationIds?: unknown; studyCards?: { words?: boolean } };
   const merged = { ...defaultPreferences, ...raw };

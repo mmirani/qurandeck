@@ -85,6 +85,8 @@ import {
 } from "@/lib/highlights";
 import { wordByWordAudioUrl } from "@/lib/quran/sources";
 import { requestWelcomeTour } from "@/lib/guide/progress";
+import { LibrarySync } from "@/components/providers/library-sync";
+import type { LibrarySnapshot } from "@/lib/library";
 
 type PlayMode = "idle" | "word" | "verse" | "from-here";
 
@@ -169,6 +171,7 @@ type MushafContextValue = {
   updateSwatch: (id: string, patch: Partial<Pick<HighlightSwatch, "name" | "color">>) => void;
   removeSwatch: (id: string) => void;
   signOut: () => void;
+  applyLibrary: (library: LibrarySnapshot) => void;
   offerResume: boolean;
   clearResume: () => void;
 };
@@ -874,6 +877,20 @@ export function MushafProvider({ children }: { children: ReactNode }) {
     void nextAuthSignOut({ callbackUrl: "/" });
   }, []);
 
+  const applyLibrary = useCallback((library: LibrarySnapshot) => {
+    setPreferences(library.preferences);
+    setBookmarks(library.bookmarks);
+    setNotes(library.notes);
+    setHighlights(library.highlights);
+    setSwatches(library.swatches.length ? library.swatches : defaultSwatches);
+    setProgress(library.progress);
+  }, []);
+
+  const librarySnapshot = useMemo<LibrarySnapshot>(
+    () => ({ preferences, bookmarks, notes, highlights, swatches, progress }),
+    [bookmarks, highlights, notes, preferences, progress, swatches],
+  );
+
   const value = useMemo<MushafContextValue>(
     () => ({
       preferences,
@@ -949,11 +966,13 @@ export function MushafProvider({ children }: { children: ReactNode }) {
       updateSwatch,
       removeSwatch,
       signOut,
+      applyLibrary,
       offerResume: resumeCue,
       clearResume: () => setResumeCue(false),
     }),
     [
       addSwatch,
+      applyLibrary,
       applyFilters,
       bookmarks,
       chapter,
@@ -1020,6 +1039,12 @@ export function MushafProvider({ children }: { children: ReactNode }) {
 
   return (
     <MushafContext.Provider value={value}>
+      <LibrarySync
+        email={user?.email}
+        hydrated={hydrated}
+        snapshot={librarySnapshot}
+        onApply={applyLibrary}
+      />
       <audio ref={audioRef} preload="none" className="hidden" />
       {children}
     </MushafContext.Provider>
