@@ -1434,12 +1434,6 @@ body::before {
   }
 }
 
-@media (max-width: 767px) {
-  .home-preview {
-    box-shadow: 0 16px 40px color-mix(in srgb, var(--ink) 10%, transparent);
-  }
-}
-
 .tour-root {
   position: fixed;
   inset: 0;

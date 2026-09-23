@@ -23,7 +23,6 @@ import { CompletionMap } from "@/components/account/completion-map";
 import { StatCard } from "@/components/account/account-dashboard";
 import { BrandWordmark } from "@/components/brand/brand-wordmark";
 import { HomeSana } from "@/components/home/home-sana";
-import { HomePreview } from "@/components/home/home-preview";
 import { AppModals } from "@/components/shell/app-modals";
 import { requestAuthTab } from "@/components/modals/auth-modal";
 import { useMushaf } from "@/components/providers/mushaf-provider";
@@ -132,8 +131,8 @@ function HomeGuestHero() {
   const { openModal } = useMushaf();
 
   return (
-    <section className="mx-auto grid max-w-6xl gap-8 px-4 py-8 sm:px-6 sm:py-10 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:items-center lg:gap-10 lg:py-16">
-      <div className="min-w-0 text-center md:text-left">
+    <section className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-14 lg:py-20">
+      <div className="mx-auto max-w-2xl text-center md:mx-0 md:text-left">
         <h1 className="mx-auto max-w-xl font-display text-[clamp(2rem,6vw,2.5rem)] font-semibold leading-tight tracking-tight text-ink sm:text-4xl md:mx-0 lg:text-[3.25rem] lg:leading-[1.08]">
           A personal mushaf for {WORK_TITLE}
         </h1>
@@ -160,9 +159,6 @@ function HomeGuestHero() {
           </button>
         </div>
         <p className="mt-3 text-center text-sm text-muted md:text-left">Free • Private • No ads or tracking</p>
-      </div>
-      <div className="min-w-0">
-        <HomePreview />
       </div>
     </section>
   );
