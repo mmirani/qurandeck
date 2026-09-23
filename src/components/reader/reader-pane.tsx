@@ -8,6 +8,7 @@ import { MushafStream } from "@/components/reader/mushaf-stream";
 import { ReaderToolbar } from "@/components/reader/reader-toolbar";
 import { AyahReaderMobile } from "@/components/reader/ayah-reader-mobile";
 import { VerseCard } from "@/components/reader/verse-card";
+import { MobileReadingProgress } from "@/components/reader/mobile-reading-progress";
 import { useMobileReader } from "@/lib/use-media-query";
 
 export function ReaderPane() {
@@ -101,6 +102,7 @@ export function ReaderPane() {
   return (
     <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden">
       <ReaderToolbar />
+      <MobileReadingProgress ayahMode={ayahMode} />
       <div
         ref={scroller}
         id="main-reader"
