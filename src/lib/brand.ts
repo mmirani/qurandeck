@@ -10,5 +10,5 @@ export const PROMISE_STORY =
   `${PRODUCT_NAME} is a free, private, personalized platform. Your notes, highlights, favorites, and progress live here — and we keep improving it through your feedback. Free forever, in sha Allah.`;
 export const SITE_DESCRIPTION =
   "QuranDeck is a free, private, personalized platform for The Noble Quran. Notes, highlights, favorites, and recitation — improved through your feedback. Free forever, in sha Allah.";
-export const COMPANION_NAME = "Nur";
-export const COMPANION_NAME_AR = "نور";
+export const COMPANION_NAME = "Sana";
+export const COMPANION_NAME_AR = "سَنَا";

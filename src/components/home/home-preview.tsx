@@ -1,6 +1,7 @@
 import { Play, Star } from "lucide-react";
 import { MihrabMark } from "@/components/art/ornaments";
-import { NurVisual } from "@/components/companion/nur-visual";
+import { BrandWordmark } from "@/components/brand/brand-wordmark";
+import { SanaVisual } from "@/components/companion/sana-visual";
 
 const SURAHS = [
   { n: 1, name: "Al-Fatihah", hint: "The Opening · 7" },
@@ -19,7 +20,7 @@ export function HomePreview() {
         <aside className="hidden w-[9.5rem] shrink-0 flex-col rounded-2xl bg-surface p-3 shadow-[0_8px_24px_rgba(15,23,42,0.06)] md:flex lg:w-44">
           <div className="flex items-center gap-2 text-gold">
             <MihrabMark className="h-6 w-6" />
-            <p className="font-display text-sm font-semibold leading-none text-ink">QuranDeck</p>
+            <BrandWordmark className="text-sm leading-none" />
           </div>
           <div className="mt-3 flex gap-1">
             {["Surahs", "Juz"].map((label, index) => (
@@ -107,7 +108,7 @@ export function HomePreview() {
         </aside>
       </div>
       <div className="pointer-events-none absolute bottom-4 right-4 z-10 sm:bottom-5 sm:right-5">
-        <NurVisual className="is-sm" />
+        <SanaVisual className="is-sm" />
       </div>
     </div>
   );
@@ -139,7 +140,7 @@ function VerseShot({
           </span>
         </div>
       </div>
-      <p dir="rtl" lang="ar" className="mt-3 text-right font-arabic text-xl leading-[1.85] text-ink sm:text-2xl">
+      <p dir="rtl" lang="ar" className="mt-3 text-right font-arabic text-xl leading-[2.25] text-ink sm:text-2xl">
         {arabic}
       </p>
       <p className="mt-2 font-reading text-[12px] leading-5 text-ink-soft sm:text-[13px]">{english}</p>

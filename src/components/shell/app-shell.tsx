@@ -9,7 +9,7 @@ import { ReaderPane } from "@/components/reader/reader-pane";
 import { AudioPlayer } from "@/components/audio/audio-player";
 import { useMushaf } from "@/components/providers/mushaf-provider";
 import { RailStrip } from "@/components/shell/rail-toggle";
-import { NurCompanion } from "@/components/companion/nur-companion";
+import { SanaCompanion } from "@/components/companion/sana-companion";
 import { AppModals } from "@/components/shell/app-modals";
 import { GuideProvider } from "@/components/guide/guide-provider";
 import { TourOverlay } from "@/components/guide/tour-overlay";
@@ -121,7 +121,7 @@ export function AppShell() {
       </div>
       )}
 
-      {book ? null : <NurCompanion />}
+      {book ? null : <SanaCompanion />}
       <TourOverlay />
       <AppModals />
     </div>

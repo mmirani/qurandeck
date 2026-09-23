@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "
 import Image from "next/image";
 import { useReducedMotion } from "motion/react";
 import { COMPANION_NAME } from "@/lib/brand";
-import { NurGuidePanel } from "@/components/guide/nur-guide-panel";
+import { SanaGuidePanel } from "@/components/guide/sana-guide-panel";
 import { useGuide } from "@/components/guide/guide-provider";
 import {
   NUR_SIZE,
@@ -19,6 +19,7 @@ import {
 } from "@/lib/companion";
 
 const POSE_EVENT = "nur-pose";
+const companionAlt = `${COMPANION_NAME} floating companion`;
 
 function subscribeNever() {
   return () => {};
@@ -50,7 +51,7 @@ function subscribeTheme(onChange: () => void) {
   return () => mo.disconnect();
 }
 
-export function NurCompanion() {
+export function SanaCompanion() {
   const reduce = useReducedMotion();
   const { active: guiding } = useGuide();
   const mounted = useSyncExternalStore(subscribeNever, () => true, () => false);
@@ -132,7 +133,7 @@ export function NurCompanion() {
           setOpen(true);
         }}
       >
-        <Image src={NUR_SRC} alt="" width={36} height={32} className="nur-face" style={{ filter }} />
+        <Image src={NUR_SRC} alt={companionAlt} width={36} height={32} className="nur-face" style={{ filter }} />
         Call {COMPANION_NAME}
       </button>
     );
@@ -145,8 +146,8 @@ export function NurCompanion() {
       style={{ left: place.left, top: place.top, width: NUR_SIZE, height: NUR_SIZE }}
     >
       {open ? (
-        <div role="dialog" aria-labelledby="nur-title" className={`nur-panel ${panelLeft ? "is-left" : "is-right"}`}>
-          <NurGuidePanel
+        <div role="dialog" aria-labelledby="sana-title" className={`nur-panel ${panelLeft ? "is-left" : "is-right"}`}>
+          <SanaGuidePanel
             onClose={() => setOpen(false)}
             onRest={() => {
               setOpen(false);

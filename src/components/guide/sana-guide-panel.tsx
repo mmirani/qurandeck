@@ -5,7 +5,7 @@ import { Mic, Minus, X } from "lucide-react";
 import { useGuide } from "@/components/guide/guide-provider";
 import { COMPANION_NAME, COMPANION_NAME_AR } from "@/lib/brand";
 
-export function NurGuidePanel({
+export function SanaGuidePanel({
   onClose,
   onRest,
 }: {
@@ -19,7 +19,7 @@ export function NurGuidePanel({
   return (
     <div className="nur-guide">
       <div className="nur-head">
-        <p id="nur-title" className="nur-name">
+        <p id="sana-title" className="nur-name">
           {COMPANION_NAME} <span lang="ar">{COMPANION_NAME_AR}</span>
         </p>
         <div className="nur-head-tools">
@@ -37,11 +37,11 @@ export function NurGuidePanel({
           event.preventDefault();
         }}
       >
-        <label className="sr-only" htmlFor="nur-ask">
+        <label className="sr-only" htmlFor="sana-ask">
           Ask {COMPANION_NAME}
         </label>
         <input
-          id="nur-ask"
+          id="sana-ask"
           value={q}
           onChange={(event) => setQ(event.target.value)}
           placeholder={`Ask ${COMPANION_NAME}…`}

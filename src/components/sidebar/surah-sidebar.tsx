@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useMushaf } from "@/components/providers/mushaf-provider";
 import { ArabesqueDivider, MihrabMark } from "@/components/art/ornaments";
+import { BrandWordmark } from "@/components/brand/brand-wordmark";
 import { PRODUCT_DISPLAY } from "@/lib/brand";
 import { POPULAR_SURAH_IDS } from "@/lib/reading";
 import type { Chapter, Juz } from "@/lib/quran/types";
@@ -57,9 +58,7 @@ export function SurahSidebar() {
             aria-label={`${PRODUCT_DISPLAY} home`}
           >
             <MihrabMark className="h-11 w-11 shrink-0" />
-            <span className="truncate font-display text-2xl font-semibold tracking-tight leading-none">
-              {PRODUCT_DISPLAY}
-            </span>
+            <BrandWordmark className="truncate text-2xl leading-none" />
           </Link>
           <div className="hidden lg:block">
             <RailToggle side="nav" />

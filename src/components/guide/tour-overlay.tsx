@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { NurVisual } from "@/components/companion/nur-visual";
+import { SanaVisual } from "@/components/companion/sana-visual";
 import { useGuide } from "@/components/guide/guide-provider";
 import { COMPANION_NAME } from "@/lib/brand";
 
@@ -106,7 +106,7 @@ export function TourOverlay() {
             animate={{ opacity: 1, y: 0 }}
           >
             <div className="tour-card-head">
-              <NurVisual className="is-sm" lumen />
+              <SanaVisual className="is-sm" lumen />
               <p className="kufic-label text-gold-deep">{COMPANION_NAME}</p>
             </div>
             <h2 id="tour-title" className="tour-title">

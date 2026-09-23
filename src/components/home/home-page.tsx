@@ -19,7 +19,8 @@ import {
 } from "lucide-react";
 import { CompletionMap } from "@/components/account/completion-map";
 import { StatCard } from "@/components/account/account-dashboard";
-import { HomeNur } from "@/components/home/home-nur";
+import { BrandWordmark } from "@/components/brand/brand-wordmark";
+import { HomeSana } from "@/components/home/home-sana";
 import { HomePreview } from "@/components/home/home-preview";
 import { AppModals } from "@/components/shell/app-modals";
 import { requestAuthTab } from "@/components/modals/auth-modal";
@@ -66,7 +67,7 @@ export function HomePage() {
       <HomeNav signedIn={Boolean(hydrated && user)} />
       <main id="main-content" className="pt-16">
         {!hydrated ? <HomeHeroSkeleton /> : user ? <HomeSignedIn /> : <HomeGuestHero />}
-        <HomeNur />
+        <HomeSana />
         <HomeFeatures />
         <HomeMore />
         {!hydrated || user ? null : <HomeCta />}
@@ -83,9 +84,7 @@ function HomeNav({ signedIn }: { signedIn: boolean }) {
       <div className="mx-auto flex h-16 max-w-6xl items-center gap-3 px-4 sm:px-6">
         <Link href="/" className="flex min-w-0 cursor-pointer items-center gap-2.5">
           <MihrabMark className="h-7 w-7 shrink-0 sm:h-8 sm:w-8" />
-          <span className="truncate font-display text-2xl font-semibold leading-none tracking-tight text-ink sm:text-3xl">
-            {PRODUCT_NAME}
-          </span>
+          <BrandWordmark className="truncate text-2xl leading-none sm:text-3xl" />
         </Link>
         <div className="ml-auto flex shrink-0 items-center justify-end gap-2">
           {signedIn ? (
@@ -108,32 +107,39 @@ function HomeNav({ signedIn }: { signedIn: boolean }) {
 }
 
 function HomeGuestHero() {
+  const { openModal } = useMushaf();
+
   return (
     <section className="mx-auto grid max-w-6xl gap-10 px-4 py-12 sm:px-6 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:items-center lg:py-16">
       <div>
-        <p className="kufic-label text-gold-deep">{PROMISE_LINE}</p>
-        <h1 className="mt-3 max-w-xl font-display text-4xl font-semibold tracking-tight text-ink sm:text-5xl lg:text-[3.25rem] lg:leading-[1.08]">
+        <h1 className="max-w-xl font-display text-4xl font-semibold tracking-tight text-ink sm:text-5xl lg:text-[3.25rem] lg:leading-[1.08]">
           A personal mushaf for {WORK_TITLE}
         </h1>
         <p className="mt-4 max-w-lg text-base leading-7 text-ink-soft sm:text-lg">
           Search, recitation, notes, and a reading place that stays with you. Sleek enough for daily use. Free, private,
           forever.
         </p>
-        <div className="mt-7 flex flex-wrap gap-3">
-          <GuestAuthButtons size="hero" />
+        <div className="mt-7 flex flex-wrap items-center gap-x-5 gap-y-3">
+          <Link
+            href="/read"
+            className="inline-flex h-12 cursor-pointer items-center rounded-full bg-gold px-6 text-base font-semibold text-on-gold"
+          >
+            Start Reading — Free
+          </Link>
+          <button
+            type="button"
+            onClick={() => {
+              requestAuthTab("signin");
+              openModal("auth");
+            }}
+            className="cursor-pointer text-sm font-medium text-ink-soft underline-offset-4 transition hover:text-ink hover:underline"
+          >
+            Sign In
+          </button>
         </div>
-        <ul className="mt-8 flex flex-wrap gap-2">
-          {HOME_PROMISES.map((item) => (
-            <li
-              key={item.title}
-              className="rounded-full border border-line bg-surface px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-gold-deep"
-            >
-              {item.title}
-            </li>
-          ))}
-        </ul>
+        <p className="mt-4 text-sm text-muted">Free • Private • No ads or tracking</p>
       </div>
-        <HomePreview />
+      <HomePreview />
     </section>
   );
 }
@@ -144,10 +150,9 @@ function HomeHeroSkeleton() {
       <div className="h-4 w-40 rounded-full bg-line/70" />
       <div className="mt-4 h-12 w-full max-w-xl rounded-2xl bg-line/50" />
       <div className="mt-4 h-16 max-w-lg rounded-2xl bg-line/40" />
-      <div className="mt-7 flex gap-3">
-        <div className="h-12 w-36 rounded-full bg-gold/30" />
-        <div className="h-12 w-24 rounded-full bg-line/50" />
-        <div className="h-12 w-44 rounded-full bg-line/40" />
+      <div className="mt-7 flex flex-wrap items-center gap-4">
+        <div className="h-12 w-44 rounded-full bg-gold/30" />
+        <div className="h-4 w-16 rounded-full bg-line/50" />
       </div>
     </section>
   );
