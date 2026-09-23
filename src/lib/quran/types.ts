@@ -140,7 +140,7 @@ export type UserAccount = {
   displayName: string;
   passwordHash: string;
   email?: string;
-  provider?: "local" | "google";
+  provider?: "local" | "google" | "github" | "email" | "oauth";
   createdAt: string;
 };
 
@@ -149,7 +149,7 @@ export type SessionUser = {
   username: string;
   displayName: string;
   email?: string;
-  provider?: "local" | "google";
+  provider?: "local" | "google" | "github" | "email" | "oauth";
 };
 
 export type MushafInkId = "gold" | "green" | "crimson" | "navy" | "teal";

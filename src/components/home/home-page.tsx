@@ -1,6 +1,8 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import {
   Bookmark,
   BookOpen,
@@ -60,7 +62,16 @@ const MORE_ICONS = {
 } as const;
 
 export function HomePage() {
-  const { user, hydrated } = useMushaf();
+  const { user, hydrated, openModal } = useMushaf();
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    if (searchParams.get("auth") !== "1") return;
+    openModal("auth");
+    const url = new URL(window.location.href);
+    url.searchParams.delete("auth");
+    window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
+  }, [openModal, searchParams]);
 
   return (
     <div className="min-h-dvh overflow-x-hidden bg-canvas text-ink">
@@ -140,7 +151,7 @@ function HomeGuestHero() {
           <button
             type="button"
             onClick={() => {
-              requestAuthTab("signin");
+              requestAuthTab("social");
               openModal("auth");
             }}
             className="hidden min-h-11 cursor-pointer items-center justify-center text-sm font-medium text-ink-soft underline-offset-4 transition hover:text-ink hover:underline md:inline-flex"
@@ -402,7 +413,7 @@ function GuestAuthButtons({ size }: { size: "nav" | "hero" | "cta" }) {
       <button
         type="button"
         onClick={() => {
-          requestAuthTab("signin");
+          requestAuthTab("social");
           openModal("auth");
         }}
         className={`${chip} border border-line font-medium text-ink hover:bg-highlight`}
@@ -412,7 +423,7 @@ function GuestAuthButtons({ size }: { size: "nav" | "hero" | "cta" }) {
       <button
         type="button"
         onClick={() => {
-          requestAuthTab("signup");
+          requestAuthTab("social");
           openModal("auth");
         }}
         className={`${chip} ${
@@ -438,7 +449,7 @@ function HomeFooter() {
           <button
             type="button"
             onClick={() => {
-              requestAuthTab("signin");
+              requestAuthTab("social");
               openModal("auth");
             }}
             className="min-h-11 cursor-pointer text-sm font-medium text-ink-soft underline-offset-4 hover:text-ink hover:underline"
@@ -451,7 +462,7 @@ function HomeFooter() {
           <button
             type="button"
             onClick={() => {
-              requestAuthTab("signup");
+              requestAuthTab("social");
               openModal("auth");
             }}
             className="min-h-11 cursor-pointer text-sm font-medium text-gold-deep underline-offset-4 hover:underline"

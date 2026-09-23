@@ -11,6 +11,8 @@ import {
   type ReactNode,
 } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { signOut as nextAuthSignOut, useSession } from "next-auth/react";
+import { sessionUserFromAuth } from "@/lib/auth-session";
 import {
   getAudioMap,
   getChapters,
@@ -39,13 +41,11 @@ import type {
   SearchHit,
   SessionUser,
   TranslationResource,
-  UserAccount,
   Verse,
   Word,
 } from "@/lib/quran/types";
 import {
   defaultPreferences,
-  hashPassword,
   loadBookmarks,
   loadHighlights,
   loadNotes,
@@ -53,7 +53,6 @@ import {
   loadProgress,
   loadSession,
   loadSwatches,
-  loadUsers,
   saveBookmarks,
   saveHighlights,
   saveNotes,
@@ -61,7 +60,6 @@ import {
   saveProgress,
   saveSession,
   saveSwatches,
-  saveUsers,
 } from "@/lib/storage";
 import { layoutSignals, appliedTheme } from "@/lib/appearance";
 import {
@@ -170,9 +168,6 @@ type MushafContextValue = {
   addSwatch: (name: string, color: string) => void;
   updateSwatch: (id: string, patch: Partial<Pick<HighlightSwatch, "name" | "color">>) => void;
   removeSwatch: (id: string) => void;
-  signIn: (username: string, password: string) => Promise<string | null>;
-  signUp: (username: string, password: string, displayName: string) => Promise<string | null>;
-  signInWithGoogle: (email: string) => Promise<string | null>;
   signOut: () => void;
   offerResume: boolean;
   clearResume: () => void;
@@ -191,24 +186,10 @@ function verseIndex(verses: Verse[], key: string | null) {
   return verses.findIndex((verse) => verse.verseKey === key);
 }
 
-function displayNameFromEmail(email: string) {
-  const local = email.split("@")[0] ?? email;
-  return local.replace(/[._-]+/g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
-}
-
-function toSession(account: UserAccount): SessionUser {
-  return {
-    id: account.id,
-    username: account.username,
-    displayName: account.displayName,
-    email: account.email,
-    provider: account.provider ?? "local",
-  };
-}
-
 export function MushafProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
+  const { data: authSession, status: authStatus } = useSession();
   const audioRef = useRef<HTMLAudioElement>(null);
   const [preferences, setPreferences] = useState<Preferences>(defaultPreferences);
   const [hydrated, setHydrated] = useState(false);
@@ -259,10 +240,29 @@ export function MushafProvider({ children }: { children: ReactNode }) {
     setNotes(loadNotes());
     setHighlights(loadHighlights());
     setSwatches(loadSwatches());
-    setUser(loadSession());
     setProgress(loadProgress());
-    setHydrated(true);
   }, []);
+
+  useEffect(() => {
+    if (authStatus === "loading") return;
+
+    if (authSession?.user?.id) {
+      const mapped = sessionUserFromAuth(authSession);
+      saveSession(mapped);
+      setUser(mapped);
+      setHydrated(true);
+      return;
+    }
+
+    const legacy = loadSession();
+    if (legacy?.provider === "local") {
+      setUser(legacy);
+    } else {
+      saveSession(null);
+      setUser(null);
+    }
+    setHydrated(true);
+  }, [authSession, authStatus]);
 
   useEffect(() => {
     if (!hydrated) return;
@@ -868,82 +868,10 @@ export function MushafProvider({ children }: { children: ReactNode }) {
     [preferences.activeSwatchId],
   );
 
-  const signIn = useCallback(async (username: string, password: string) => {
-    const users = loadUsers();
-    const hash = await hashPassword(password);
-    const found = users.find((item) => item.username.toLowerCase() === username.trim().toLowerCase());
-    if (!found || !found.passwordHash || found.passwordHash !== hash) {
-      return "Username or password is incorrect.";
-    }
-    const session = toSession(found);
-    saveSession(session);
-    setUser(session);
-    setModal(null);
-    setResumeCue(true);
-    return null;
-  }, []);
-
-  const signUp = useCallback(async (username: string, password: string, displayName: string) => {
-    const trimmed = username.trim();
-    if (trimmed.length < 3) return "Username needs at least 3 characters.";
-    if (password.length < 8) return "Password needs at least 8 characters.";
-    const users = loadUsers();
-    if (users.some((item) => item.username.toLowerCase() === trimmed.toLowerCase())) {
-      return "That username is already taken.";
-    }
-    const account: UserAccount = {
-      id: crypto.randomUUID(),
-      username: trimmed,
-      displayName: displayName.trim() || trimmed,
-      passwordHash: await hashPassword(password),
-      provider: "local",
-      createdAt: new Date().toISOString(),
-    };
-    saveUsers([...users, account]);
-    const session = toSession(account);
-    saveSession(session);
-    setUser(session);
-    setModal(null);
-    setResumeCue(true);
-    requestWelcomeTour();
-    if (!/^\/(read$|surah\/|juz\/)/.test(pathname)) router.push("/read");
-    return null;
-  }, [pathname, router]);
-
-  const signInWithGoogle = useCallback(async (email: string) => {
-    const trimmed = email.trim().toLowerCase();
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) return "Enter a valid email address.";
-    const users = loadUsers();
-    const existing = users.find(
-      (item) => item.email?.toLowerCase() === trimmed || item.username.toLowerCase() === trimmed,
-    );
-    const account: UserAccount = existing
-      ? { ...existing, email: existing.email ?? trimmed, provider: existing.provider ?? "google" }
-      : {
-          id: crypto.randomUUID(),
-          username: trimmed,
-          email: trimmed,
-          displayName: displayNameFromEmail(trimmed),
-          passwordHash: "",
-          provider: "google",
-          createdAt: new Date().toISOString(),
-        };
-    saveUsers(existing ? users.map((item) => (item.id === account.id ? account : item)) : [...users, account]);
-    const session = toSession(account);
-    saveSession(session);
-    setUser(session);
-    setModal(null);
-    setResumeCue(true);
-    if (!existing) {
-      requestWelcomeTour();
-      if (!/^\/(read$|surah\/|juz\/)/.test(pathname)) router.push("/read");
-    }
-    return null;
-  }, [pathname, router]);
-
   const signOut = useCallback(() => {
     saveSession(null);
     setUser(null);
+    void nextAuthSignOut({ callbackUrl: "/" });
   }, []);
 
   const value = useMemo<MushafContextValue>(
@@ -1020,9 +948,6 @@ export function MushafProvider({ children }: { children: ReactNode }) {
       addSwatch,
       updateSwatch,
       removeSwatch,
-      signIn,
-      signUp,
-      signInWithGoogle,
       signOut,
       offerResume: resumeCue,
       clearResume: () => setResumeCue(false),
@@ -1078,10 +1003,7 @@ export function MushafProvider({ children }: { children: ReactNode }) {
       selectedVerseKey,
       selectedWord,
       setVisibleVerseKeys,
-      signIn,
-      signInWithGoogle,
       signOut,
-      signUp,
       stopAudio,
       swatches,
       toggleBookmarkVerse,

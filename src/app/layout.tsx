@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Noto_Naskh_Arabic, Plus_Jakarta_Sans, Source_Serif_4 } from "next/font/google";
-import { MushafProvider } from "@/components/providers/mushaf-provider";
+import { AppProviders } from "@/components/providers/app-providers";
 import { SITE_DESCRIPTION, SITE_TITLE } from "@/lib/brand";
 import "./globals.css";
 
@@ -47,7 +47,7 @@ export default function RootLayout({
         <a className="skip-link" href="#main-content">
           Skip to content
         </a>
-        <MushafProvider>{children}</MushafProvider>
+        <AppProviders>{children}</AppProviders>
       </body>
     </html>
   );
