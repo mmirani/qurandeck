@@ -2,19 +2,9 @@ import { auth } from "@/auth";
 import { getSql } from "@/lib/db";
 import { validateDisplayName } from "@/lib/display-name";
 import { normalizeLibrary, type LibrarySnapshot } from "@/lib/library";
+import { accountId, openLibrary, prepareLibraryStore, sealLibrary } from "@/lib/library-seal";
 
 const MAX_BYTES = 500_000;
-
-async function ensureTable() {
-  const sql = getSql();
-  await sql`
-    CREATE TABLE IF NOT EXISTS libraries (
-      email text PRIMARY KEY,
-      data jsonb NOT NULL,
-      updated_at timestamptz NOT NULL DEFAULT now()
-    )
-  `;
-}
 
 async function requireEmail() {
   const session = await auth();
@@ -28,18 +18,18 @@ export async function GET() {
   if (!email) return Response.json({ error: "Sign in required." }, { status: 401 });
 
   try {
-    await ensureTable();
+    await prepareLibraryStore();
     const sql = getSql();
     const rows = (await sql`
-      SELECT data, updated_at
+      SELECT sealed, updated_at
       FROM libraries
-      WHERE email = ${email}
+      WHERE account_id = ${accountId(email)}
       LIMIT 1
-    `) as { data?: unknown; updated_at?: string }[];
+    `) as { sealed?: string; updated_at?: string }[];
     const row = rows[0];
-    if (!row) return Response.json({ library: null, updatedAt: null });
+    if (!row?.sealed) return Response.json({ library: null, updatedAt: null });
     return Response.json({
-      library: normalizeLibrary(row.data),
+      library: normalizeLibrary(openLibrary(row.sealed)),
       updatedAt: row.updated_at ?? null,
     });
   } catch {
@@ -71,13 +61,13 @@ export async function PUT(request: Request) {
   }
 
   try {
-    await ensureTable();
+    await prepareLibraryStore();
     const sql = getSql();
     const rows = (await sql`
-      INSERT INTO libraries (email, data, updated_at)
-      VALUES (${email}, ${JSON.stringify(library)}::jsonb, now())
-      ON CONFLICT (email) DO UPDATE
-      SET data = EXCLUDED.data, updated_at = now()
+      INSERT INTO libraries (account_id, sealed, updated_at)
+      VALUES (${accountId(email)}, ${sealLibrary(library)}, now())
+      ON CONFLICT (account_id) DO UPDATE
+      SET sealed = EXCLUDED.sealed, updated_at = now()
       RETURNING updated_at
     `) as { updated_at?: string }[];
     const updatedAt = rows[0]?.updated_at ?? null;

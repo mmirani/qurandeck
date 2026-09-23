@@ -99,7 +99,7 @@ const RULES: Array<{ action: HelperAction; lesson?: TourId; reply: string; tests
   {
     action: "lesson",
     lesson: "account",
-    reply: "Sign in is free, private, and stays on this device.",
+    reply: "Sign in is free. Your library syncs with your account and is stored sealed.",
     tests: [/\b(account|sign\s*in|sign\s*up|private|login)\b/i],
   },
   {

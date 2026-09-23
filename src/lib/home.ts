@@ -1,6 +1,6 @@
 export const HOME_PROMISES = [
   { title: "Free", body: "No paywall, no trial clock, no surprise upgrade. The mushaf stays open." },
-  { title: "Private", body: "Notes, highlights, and progress live on your device. We do not sell your reading." },
+  { title: "Private", body: "A signed-in library is stored sealed, not as readable text. We do not sell your reading." },
   { title: "Forever", body: "A personal copy of The Noble Quran that keeps improving with you, in sha Allah." },
 ] as const;
 

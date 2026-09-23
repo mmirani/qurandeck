@@ -66,7 +66,7 @@ export const WELCOME_TOUR: TourStep[] = [
   {
     id: "account",
     title: "Your place stays private",
-    body: "Sign in for a named profile. Notes, highlights, and progress stay on this device — free, private, forever. Ask me anytime.",
+    body: "Sign in for a named profile. Your library syncs with your account and is stored sealed. We do not sell your reading.",
     target: "account",
     lesson: true,
   },

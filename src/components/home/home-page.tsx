@@ -189,7 +189,7 @@ function HomeSignedIn() {
       <h1 className="mt-2 font-display text-4xl font-semibold tracking-tight text-ink sm:text-5xl">
         Assalamu alaykum, {user?.displayName}.
       </h1>
-      <p className="mt-3 max-w-2xl text-ink-soft">Your place, your notes, your map of {WORK_TITLE} — still on this device.</p>
+      <p className="mt-3 max-w-2xl text-ink-soft">Your place, your notes, your map of {WORK_TITLE} — saved with your account.</p>
 
       <div className="mt-8 grid gap-4 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
         <div className="rounded-3xl border-2 border-gold bg-highlight p-6">
