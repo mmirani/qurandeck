@@ -145,7 +145,7 @@
 }
 
 html {
-  --companion-gold: var(--gold);
+  --companion-gold: #34baab;
 }
 
 [data-theme="iris"] {
@@ -159,7 +159,6 @@ html {
   --accent: #06b6d4;
   --accent-soft: #a5f3fc;
   --gold: #7c3aed;
-  --companion-gold: #0f766e;
   --gold-deep: #5b21b6;
   --line: #c4b5fd;
   --highlight: #ede9fe;
@@ -961,8 +960,8 @@ body::before {
 [data-theme="iris"] .nur-orb,
 [data-theme="iris"] .nur-call,
 [data-theme="iris"] .nur-stage {
-  --gold: #0f766e;
-  --gold-deep: #115e59;
+  --gold: #34baab;
+  --gold-deep: #2a9890;
 }
 
 .nur {

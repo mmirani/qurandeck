@@ -2,7 +2,7 @@ import type { AppearanceThemeId, MushafInkId } from "./quran/types";
 
 export const HOME_THEME: AppearanceThemeId = "iris";
 export const LUMEN_CANVAS = "#e7ecf2";
-export const LUMEN_GOLD = "#0f766e";
+export const LUMEN_GOLD = "#34baab";
 
 export const APPEARANCE_THEMES: Array<{
   id: AppearanceThemeId;
