@@ -6,47 +6,12 @@ import { useMushaf } from "@/components/providers/mushaf-provider";
 import { LanguagePicker } from "@/components/reader/language-picker";
 import { Modal } from "@/components/ui/modal";
 import { StyledSelect } from "@/components/ui/styled-select";
-import { PROMISE_LINE, PROMISE_STORY } from "@/lib/brand";
 
-export function SettingsModal() {
-  const {
-    modal,
-    closeModal,
-    preferences,
-    updatePreferences,
-    recitations,
-    openModal,
-    user,
-  } = useMushaf();
-  if (modal !== "settings") return null;
+export function ReadingSettings() {
+  const { preferences, updatePreferences, recitations, openModal } = useMushaf();
 
   return (
-    <Modal eyebrow="Reading room" title="Settings" onClose={closeModal} wide>
       <div className="grid gap-8 lg:grid-cols-2">
-        <section>
-          <h3 className="kufic-label text-gold-deep">Account</h3>
-          <p className="mt-2 text-sm text-ink-soft">
-            {user ? `Signed in as ${user.displayName}. ` : null}
-            {PROMISE_STORY}
-          </p>
-          <p className="mt-2 text-xs text-gold-deep">{PROMISE_LINE}</p>
-          <button
-            type="button"
-            onClick={() => openModal("account")}
-            className="mt-3 h-11 cursor-pointer rounded-full bg-gold px-5 text-sm text-on-gold"
-          >
-            Account dashboard
-          </button>
-          {user ? (
-            <button
-              type="button"
-              onClick={() => openModal("auth")}
-              className="mt-2 h-11 cursor-pointer rounded-full border border-line px-5 text-sm text-ink"
-            >
-              Account details
-            </button>
-          ) : null}
-        </section>
         <section>
           <h3 className="kufic-label text-gold-deep">Appearance</h3>
           <p className="mt-2 text-sm text-ink-soft">Background, ink, and accent colours.</p>
@@ -152,6 +117,16 @@ export function SettingsModal() {
           </label>
         </section>
       </div>
+  );
+}
+
+export function SettingsModal() {
+  const { modal, closeModal } = useMushaf();
+  if (modal !== "settings") return null;
+
+  return (
+    <Modal eyebrow="Reading room" title="Reading settings" onClose={closeModal} wide>
+      <ReadingSettings />
     </Modal>
   );
 }

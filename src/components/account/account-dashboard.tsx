@@ -1,10 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import { useMushaf } from "@/components/providers/mushaf-provider";
 import { UserMenu } from "@/components/user/user-menu";
 import { RailToggle } from "@/components/shell/rail-toggle";
+import { ReadingSettings } from "@/components/modals/settings-modal";
 import { Modal } from "@/components/ui/modal";
-import { PROMISE_LINE, PROMISE_STORY, PROMISE_WHY } from "@/lib/brand";
+import { PROMISE_LINE, PROMISE_WHY } from "@/lib/brand";
 import { CompletionMap } from "@/components/account/completion-map";
 import {
   formatReadingMinutes,
@@ -13,19 +15,90 @@ import {
   TOTAL_SURAHS,
 } from "@/lib/reading";
 
+type AccountTab = "progress" | "saved" | "settings";
+
 export function AccountModal() {
-  const { modal, closeModal } = useMushaf();
+  const { modal, closeModal, user, signOut, updateDisplayName } = useMushaf();
+  const [tab, setTab] = useState<AccountTab>("progress");
+  const [name, setName] = useState(user?.displayName ?? "");
+  const [nameError, setNameError] = useState<string | null>(null);
+  const [open, setOpen] = useState(false);
+  if (modal === "account" && !open) {
+    setOpen(true);
+    setName(user?.displayName ?? "");
+    setNameError(null);
+  } else if (modal !== "account" && open) {
+    setOpen(false);
+  }
   if (modal !== "account") return null;
 
   return (
-    <Modal eyebrow={PROMISE_LINE} title="Account" onClose={closeModal} wide>
-      <AccountDashboard />
+    <Modal eyebrow={PROMISE_LINE} title={user?.displayName ?? "Account"} onClose={closeModal} wide>
+      <div className="space-y-4">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <p className="text-sm text-ink-soft">{user?.email ?? "Reading on this device"}</p>
+          {user ? (
+            <button
+              type="button"
+              onClick={signOut}
+              className="h-10 cursor-pointer rounded-full border border-line px-4 text-sm text-ink"
+            >
+              Sign out
+            </button>
+          ) : null}
+        </div>
+        <div className="flex gap-1.5" role="tablist" aria-label="Account">
+          <AccountTabButton active={tab === "progress"} onClick={() => setTab("progress")}>
+            Progress
+          </AccountTabButton>
+          <AccountTabButton active={tab === "saved"} onClick={() => setTab("saved")}>
+            Saved
+          </AccountTabButton>
+          <AccountTabButton active={tab === "settings"} onClick={() => setTab("settings")}>
+            Settings
+          </AccountTabButton>
+        </div>
+        {tab === "progress" ? <AccountDashboard /> : null}
+        {tab === "saved" ? <SavedLibrary /> : null}
+        {tab === "settings" ? (
+          <div className="space-y-6">
+            {user ? (
+              <form
+                className="max-w-md space-y-2"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  const message = updateDisplayName(name);
+                  setNameError(message);
+                }}
+              >
+                <label className="block text-sm">
+                  Display name
+                  <input
+                    className="mt-1 h-11 w-full rounded-2xl border border-line bg-surface px-3"
+                    value={name}
+                    onChange={(event) => {
+                      setName(event.target.value);
+                      setNameError(null);
+                    }}
+                    maxLength={40}
+                  />
+                </label>
+                {nameError ? <p className="text-sm text-danger">{nameError}</p> : null}
+                <button type="submit" className="h-11 cursor-pointer rounded-full bg-gold px-5 text-sm font-semibold text-on-gold">
+                  Save name
+                </button>
+              </form>
+            ) : null}
+            <ReadingSettings />
+          </div>
+        ) : null}
+      </div>
     </Modal>
   );
 }
 
 export function AccountRailCard() {
-  const { user, openModal } = useMushaf();
+  const { user } = useMushaf();
   return (
     <section className="rail-card rounded-2xl p-4">
       <div className="flex items-center justify-between gap-2">
@@ -39,13 +112,6 @@ export function AccountRailCard() {
       <div className="mt-3">
         <UserMenu fill />
       </div>
-      <button
-        type="button"
-        onClick={() => openModal("account")}
-        className="mt-3 h-11 w-full cursor-pointer rounded-full bg-gold/20 text-sm text-gold"
-      >
-        Open dashboard
-      </button>
     </section>
   );
 }
@@ -56,44 +122,114 @@ function AccountDashboard() {
 
   return (
     <div className="space-y-6">
-      <p className="text-sm text-ink-soft">
-        {user ? `Assalamu alaykum, ${user.displayName}. ` : null}
-        {PROMISE_STORY}
-      </p>
       <ContinueCard />
-      <CompletionMap />
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        <StatCard label="Verses read" value={`${progress.versesRead.length}`} hint={`of ${TOTAL_AYAHS} · 4s dwell, play, highlight, or note`} />
+        <StatCard label="Verses read" value={`${progress.versesRead.length}`} hint={`of ${TOTAL_AYAHS}`} />
         <StatCard label="Surahs finished" value={`${progress.surahsRead.length}`} hint={`of ${TOTAL_SURAHS}`} />
-        <StatCard label="Streak" value={`${progress.streak} day${progress.streak === 1 ? "" : "s"}`} hint={progress.lastReadDay ? `Last ${progress.lastReadDay}` : "Start by staying on an ayah"} />
-        <StatCard label="Active minutes" value={`${minutes}`} hint="Counted while ayahs are in view" />
-        <StatCard label="Favorites" value={`${bookmarks.length}`} hint="Ayahs and words you starred" />
-        <StatCard label="Notes / highlights" value={`${notes.length} / ${highlights.length}`} hint="Personal study on this device" />
+        <StatCard label="Streak" value={`${progress.streak} day${progress.streak === 1 ? "" : "s"}`} hint={progress.lastReadDay ? `Last ${progress.lastReadDay}` : "Stay on an ayah to begin"} />
+        <StatCard label="Minutes" value={`${minutes}`} hint="While ayahs are on screen" />
+        <StatCard label="Favorites" value={`${bookmarks.length}`} hint="In Saved" />
+        <StatCard label="Notes" value={`${notes.length}`} hint={`${highlights.length} highlights`} />
       </div>
-      <div className="flex flex-wrap gap-2">
+      <CompletionMap />
+      {user ? null : (
         <button
           type="button"
-          onClick={() => openModal(user ? "settings" : "auth")}
-          className="h-14 w-full cursor-pointer rounded-full bg-gold px-5 text-lg text-on-gold"
+          onClick={() => openModal("auth")}
+          className="h-12 w-full cursor-pointer rounded-full bg-gold text-sm font-semibold text-on-gold"
         >
-          {user ? "Reading settings" : "Sign in"}
+          Sign in to keep this library
         </button>
-        <button
-          type="button"
-          onClick={() => openModal("bookmarks")}
-          className="h-11 cursor-pointer rounded-full border border-line px-5 text-sm text-ink"
-        >
-          Favorites
-        </button>
-        <button
-          type="button"
-          onClick={() => openModal("notes")}
-          className="h-11 cursor-pointer rounded-full border border-line px-5 text-sm text-ink"
-        >
-          Notes
-        </button>
-      </div>
+      )}
     </div>
+  );
+}
+
+function SavedLibrary() {
+  const { bookmarks, notes, jumpToHit, closeModal } = useMushaf();
+
+  const openVerse = (verseKey: string, label: string) => {
+    const [chapterId, verseNumber] = verseKey.split(":").map(Number);
+    closeModal();
+    jumpToHit({
+      verseKey,
+      chapterId,
+      verseNumber,
+      textArabic: "",
+      textTranslation: label,
+      source: "jump",
+    });
+  };
+
+  return (
+    <div className="grid gap-6 lg:grid-cols-2">
+      <section>
+        <h3 className="text-sm font-semibold text-ink">Favorites</h3>
+        {bookmarks.length === 0 ? (
+          <p className="mt-2 text-sm text-ink-soft">Star an ayah or word while you read.</p>
+        ) : (
+          <ul className="mt-2 space-y-2">
+            {bookmarks.map((item) => (
+              <li key={item.id}>
+                <button
+                  type="button"
+                  onClick={() => openVerse(item.verseKey, item.label)}
+                  className="w-full cursor-pointer rounded-2xl border border-line px-4 py-3 text-left hover:bg-highlight"
+                >
+                  <p className="text-xs capitalize text-gold-deep">{item.type === "verse" ? "Ayah" : item.type}</p>
+                  <p className="text-sm text-ink">{item.label}</p>
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+      <section>
+        <h3 className="text-sm font-semibold text-ink">Notes</h3>
+        {notes.length === 0 ? (
+          <p className="mt-2 text-sm text-ink-soft">Notes you write on an ayah show up here.</p>
+        ) : (
+          <ul className="mt-2 space-y-2">
+            {notes.map((note) => (
+              <li key={note.id} className="rounded-2xl border border-line p-4">
+                <button
+                  type="button"
+                  className="cursor-pointer text-xs text-gold-deep"
+                  onClick={() => openVerse(note.verseKey, note.body)}
+                >
+                  {note.verseKey}
+                </button>
+                <p className="mt-1 whitespace-pre-wrap text-sm text-ink">{note.body}</p>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+    </div>
+  );
+}
+
+function AccountTabButton({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      role="tab"
+      aria-selected={active}
+      onClick={onClick}
+      className={`h-10 flex-1 cursor-pointer rounded-full text-sm font-medium ${
+        active ? "bg-gold text-on-gold" : "border border-line bg-surface text-ink-soft"
+      }`}
+    >
+      {children}
+    </button>
   );
 }
 
