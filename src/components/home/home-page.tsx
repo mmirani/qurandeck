@@ -471,6 +471,14 @@ function HomeFooter() {
         <p>
           {PRODUCT_NAME} · {WORK_TITLE}
         </p>
+        <nav aria-label="Legal" className="flex items-center gap-4">
+          <Link href="/privacy" className="underline-offset-4 hover:text-ink hover:underline">
+            Privacy
+          </Link>
+          <Link href="/terms" className="underline-offset-4 hover:text-ink hover:underline">
+            Terms
+          </Link>
+        </nav>
         <p>{PROMISE_LINE}</p>
         <div className="flex items-center gap-2">
           <Languages className="h-4 w-4 text-gold" aria-hidden="true" />
