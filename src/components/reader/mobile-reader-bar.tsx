@@ -9,6 +9,7 @@ import { useReaderChrome } from "@/components/shell/reader-chrome";
 export function MobileReaderBar() {
   const { openNav } = useReaderChrome();
   const { preferences, updatePreferences, openModal, chapter, mode, currentJuz } = useMushaf();
+  const tafsirOn = preferences.showTafsir;
   const title =
     mode === "juz" ? `Juz ${currentJuz ?? "—"}` : (chapter?.nameSimple ?? "Al-Fatihah");
   const themeName = APPEARANCE_THEMES.find((item) => item.id === preferences.theme)?.name ?? preferences.theme;
@@ -38,6 +39,16 @@ export function MobileReaderBar() {
         >
           {title}
         </button>
+        {tafsirOn ? (
+          <button
+            type="button"
+            onClick={() => updatePreferences({ showTafsir: false })}
+            className="inline-flex h-11 min-h-11 shrink-0 cursor-pointer items-center rounded-full bg-gold px-3 text-xs font-semibold text-on-gold"
+            aria-label="Turn off tafsir"
+          >
+            Tafsir on
+          </button>
+        ) : null}
         <button
           type="button"
           onClick={() => openModal("themes")}

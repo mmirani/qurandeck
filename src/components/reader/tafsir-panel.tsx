@@ -2,7 +2,7 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Check, ChevronDown } from "lucide-react";
+import { Check, ChevronDown, X } from "lucide-react";
 import { getTafsir, getTafsirs } from "@/lib/quran/client";
 import { useMushaf } from "@/components/providers/mushaf-provider";
 import { DEFAULT_TAFSIR_ID } from "@/lib/quran/sources";
@@ -80,7 +80,7 @@ export function TafsirChip() {
 }
 
 export function VerseTafsir({ verseKey }: { verseKey: string }) {
-  const { preferences } = useMushaf();
+  const { preferences, updatePreferences } = useMushaf();
   const [host, setHost] = useState<HTMLElement | null>(null);
   const [ready, setReady] = useState(false);
   const [catalog, setCatalog] = useState<TafsirResource[]>([]);
@@ -152,10 +152,21 @@ export function VerseTafsir({ verseKey }: { verseKey: string }) {
       className="verse-tafsir mt-5"
       onClick={(event) => event.stopPropagation()}
     >
-      <p className="kufic-label text-gold-deep">
-        Tafsir
-        {work ? ` · ${titleLang(work.languageName)} · ${work.name}` : ""}
-      </p>
+      <div className="flex items-start justify-between gap-2">
+        <p className="kufic-label min-w-0 text-gold-deep">
+          Tafsir
+          {work ? ` · ${titleLang(work.languageName)} · ${work.name}` : ""}
+        </p>
+        <button
+          type="button"
+          onClick={() => updatePreferences({ showTafsir: false })}
+          className="inline-flex h-11 min-h-11 shrink-0 cursor-pointer items-center gap-1 rounded-full border border-line px-3 text-xs font-medium text-ink-soft hover:bg-highlight"
+          aria-label="Hide tafsir for all ayahs"
+        >
+          <X className="h-3.5 w-3.5" />
+          <span className="md:hidden">Hide</span>
+        </button>
+      </div>
       {!ready || loading ? (
         <p className="mt-2 text-sm text-ink-soft/70">Loading commentary…</p>
       ) : error ? (

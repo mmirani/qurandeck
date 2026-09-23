@@ -30,6 +30,7 @@ export function VerseActionSheet({
     highlightAyah,
     clearVerseHighlights,
     updatePreferences,
+    preferences,
   } = useMushaf();
 
   const favorited = bookmarks.some((item) => item.type === "verse" && item.verseKey === verse.verseKey);
@@ -57,10 +58,14 @@ export function VerseActionSheet({
         />
         <SheetAction
           icon={<NotebookPen className="h-5 w-5" />}
-          label="Tafsir & notes"
+          label={preferences.showTafsir ? "Hide tafsir" : "Show tafsir & notes"}
           onClick={() =>
             run(() => {
               selectVerse(verse.verseKey);
+              if (preferences.showTafsir) {
+                updatePreferences({ showTafsir: false });
+                return;
+              }
               updatePreferences({ showTafsir: true });
               window.setTimeout(() => document.getElementById("verse-note")?.focus(), 120);
             })
