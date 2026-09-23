@@ -219,4 +219,6 @@ export type Preferences = {
   mushafInk: MushafInkId;
   showNavRail: boolean;
   showStudyRail: boolean;
+  /** Mobile: continuous scroll vs one ayah per screen */
+  mobileReadingMode: "scroll" | "ayah";
 };

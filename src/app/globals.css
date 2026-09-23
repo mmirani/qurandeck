@@ -716,6 +716,26 @@ body::before {
   }
 }
 
+.reader-ayah-stage {
+  min-height: 0;
+  flex: 1;
+}
+
+.reader-ayah-stage .reader-ayah-card .arabic-text,
+.reader-ayah-stage .mushaf-arabic-mobile {
+  font-size: max(calc(var(--reading-size, 18px) * var(--arabic-scale, 1.75) * 1.22), clamp(1.75rem, 8vw, 2.35rem));
+  line-height: 2.55;
+}
+
+.reader-ayah-stage .reading-text {
+  font-size: clamp(1rem, 4.2vw, 1.125rem);
+  line-height: 1.65;
+}
+
+.reader-ayah-stage .verse-head {
+  margin-bottom: 0.5rem;
+}
+
 .ayah-stack {
   display: flex;
   flex-direction: column;

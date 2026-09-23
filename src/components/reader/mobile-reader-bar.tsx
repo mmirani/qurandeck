@@ -10,6 +10,7 @@ export function MobileReaderBar() {
   const { openNav } = useReaderChrome();
   const { preferences, updatePreferences, openModal, chapter, mode, currentJuz } = useMushaf();
   const tafsirOn = preferences.showTafsir;
+  const ayahMode = preferences.mobileReadingMode === "ayah";
   const title =
     mode === "juz" ? `Juz ${currentJuz ?? "—"}` : (chapter?.nameSimple ?? "Al-Fatihah");
   const themeName = APPEARANCE_THEMES.find((item) => item.id === preferences.theme)?.name ?? preferences.theme;
@@ -58,23 +59,68 @@ export function MobileReaderBar() {
           <Settings2 className="h-4 w-4 shrink-0" />
           <span className="max-w-[4.5rem] truncate">Aa</span>
         </button>
-        <button
-          type="button"
-          aria-label="Smaller text"
-          className="inline-flex h-11 min-h-11 min-w-11 cursor-pointer items-center justify-center rounded-full text-lg hover:bg-highlight"
-          onClick={() => updatePreferences({ fontSize: Math.max(FONT_SIZE_MIN, preferences.fontSize - 2) })}
+        {!ayahMode ? (
+          <>
+            <button
+              type="button"
+              aria-label="Smaller text"
+              className="inline-flex h-11 min-h-11 min-w-11 cursor-pointer items-center justify-center rounded-full text-lg hover:bg-highlight"
+              onClick={() => updatePreferences({ fontSize: Math.max(FONT_SIZE_MIN, preferences.fontSize - 2) })}
+            >
+              −
+            </button>
+            <button
+              type="button"
+              aria-label="Larger text"
+              className="inline-flex h-11 min-h-11 min-w-11 cursor-pointer items-center justify-center rounded-full text-lg hover:bg-highlight"
+              onClick={() => updatePreferences({ fontSize: Math.min(FONT_SIZE_MAX, preferences.fontSize + 2) })}
+            >
+              +
+            </button>
+          </>
+        ) : null}
+      </div>
+      <div className="flex gap-1.5 border-t border-line/50 px-3 py-2" role="group" aria-label="Reading layout">
+        <LayoutChip
+          active={!ayahMode}
+          onClick={() => updatePreferences({ mobileReadingMode: "scroll" })}
         >
-          −
-        </button>
-        <button
-          type="button"
-          aria-label="Larger text"
-          className="inline-flex h-11 min-h-11 min-w-11 cursor-pointer items-center justify-center rounded-full text-lg hover:bg-highlight"
-          onClick={() => updatePreferences({ fontSize: Math.min(FONT_SIZE_MAX, preferences.fontSize + 2) })}
+          Scroll
+        </LayoutChip>
+        <LayoutChip
+          active={ayahMode}
+          onClick={() =>
+            updatePreferences({
+              mobileReadingMode: "ayah",
+              traditionalPage: false,
+            })
+          }
         >
-          +
-        </button>
+          Ayah
+        </LayoutChip>
       </div>
     </div>
+  );
+}
+
+function LayoutChip({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`inline-flex h-10 min-h-10 flex-1 cursor-pointer items-center justify-center rounded-full text-sm font-medium ${
+        active ? "bg-gold text-on-gold" : "border border-line bg-surface text-ink-soft"
+      }`}
+    >
+      {children}
+    </button>
   );
 }

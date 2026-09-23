@@ -23,10 +23,13 @@ export function VerseCard({
   verse,
   showSurahLabel,
   tourAnchor,
+  ayahFocus,
 }: {
   verse: Verse;
   showSurahLabel?: boolean;
   tourAnchor?: boolean;
+  /** One-ayah mobile screen: larger type, minimal chrome */
+  ayahFocus?: boolean;
 }) {
   const {
     preferences,
@@ -96,8 +99,8 @@ export function VerseCard({
     <article
       id={`ayah-${verse.verseNumber}`}
       data-verse-key={verse.verseKey}
-      className={`scroll-mt-28 cursor-pointer ${active || reciting ? "is-live rounded-3xl" : ""}`}
-      onClick={onAyahClick}
+      className={`scroll-mt-28 ${ayahFocus ? "reader-ayah-card" : "cursor-pointer"} ${active || reciting ? "is-live rounded-3xl" : ""}`}
+      onClick={ayahFocus ? undefined : onAyahClick}
     >
       {showSurahLabel ? (
         <p className="kufic-label mb-3 px-2 text-gold-deep">
@@ -106,8 +109,10 @@ export function VerseCard({
       ) : null}
       <CornerFrame
         className={`verse-frame rounded-3xl border bg-surface p-5 ${
+          ayahFocus ? "border-0 bg-transparent p-0 shadow-none" : ""
+        } ${
           active ? "ring-2 ring-gold/40" : reciting ? "ring-1 ring-accent/40" : ""
-        } ${wash ? "border-transparent" : "border-line"}`}
+        } ${wash && !ayahFocus ? "border-transparent" : ayahFocus ? "" : "border-line"}`}
         style={
           washColor
             ? {

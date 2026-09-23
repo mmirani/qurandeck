@@ -6,7 +6,9 @@ import { MushafPage } from "@/components/art/ornaments";
 import { useMushaf } from "@/components/providers/mushaf-provider";
 import { MushafStream } from "@/components/reader/mushaf-stream";
 import { ReaderToolbar } from "@/components/reader/reader-toolbar";
+import { AyahReaderMobile } from "@/components/reader/ayah-reader-mobile";
 import { VerseCard } from "@/components/reader/verse-card";
+import { useMobileReader } from "@/lib/use-media-query";
 
 export function ReaderPane() {
   const {
@@ -20,6 +22,7 @@ export function ReaderPane() {
     mode,
     setSearchOpen,
     preferences,
+    selectedVerseKey,
     setVisibleVerseKeys,
     introduction,
     currentJuz,
@@ -29,17 +32,19 @@ export function ReaderPane() {
   const layers = Number(preferences.showArabic) + Number(preferences.showTransliteration) + translationCols;
   const arabicOnly = layers === 1 && preferences.showArabic;
   const traditional = arabicOnly && (preferences.traditionalPage || preferences.focusMode);
+  const mobile = useMobileReader();
+  const ayahMode = mobile && preferences.mobileReadingMode === "ayah" && !traditional;
 
   useEffect(() => {
-    if (!playingVerseKey || !preferences.autoFollow) return;
+    if (ayahMode || !playingVerseKey || !preferences.autoFollow) return;
     const node = scroller.current?.querySelector(`[data-verse-key="${playingVerseKey}"]`);
     node?.scrollIntoView({ behavior: "smooth", block: "center" });
-  }, [playingVerseKey, preferences.autoFollow]);
+  }, [ayahMode, playingVerseKey, preferences.autoFollow]);
 
   useEffect(() => {
     const root = scroller.current;
-    if (!root || loading) {
-      setVisibleVerseKeys([]);
+    if (!root || loading || ayahMode) {
+      setVisibleVerseKeys(ayahMode && selectedVerseKey ? [selectedVerseKey] : []);
       return;
     }
 
@@ -80,7 +85,7 @@ export function ReaderPane() {
       observer.disconnect();
       root.removeEventListener("scroll", onScroll);
     };
-  }, [loading, verses, setVisibleVerseKeys]);
+  }, [ayahMode, loading, selectedVerseKey, verses, setVisibleVerseKeys]);
 
   useEffect(() => {
     const onClick = (event: MouseEvent) => {
@@ -99,19 +104,23 @@ export function ReaderPane() {
       <div
         ref={scroller}
         id="main-reader"
-        className={`reader-scroll-surface @container min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 md:px-8 md:py-6 lg:px-10 ${
-          traditional && preferences.focusMode ? "mushaf-desk" : ""
-        } ${isPlaying ? "pb-24 md:pb-36" : "pb-20 md:pb-36"}`}
+        className={`reader-scroll-surface @container flex min-h-0 flex-1 flex-col ${
+          ayahMode ? "overflow-hidden px-0 py-0" : "overflow-y-auto overscroll-contain px-4 py-4 md:px-8 md:py-6 lg:px-10"
+        } ${traditional && preferences.focusMode ? "mushaf-desk" : ""} ${
+          ayahMode ? (isPlaying ? "pb-16" : "pb-0") : isPlaying ? "pb-24 md:pb-36" : "pb-20 md:pb-36"
+        }`}
       >
         {error ? (
           <p className="rounded-3xl border border-danger/40 bg-surface p-6 text-danger">{error}</p>
         ) : null}
         {loading ? (
-          <div className="space-y-5">
+          <div className="space-y-5 px-4 py-4">
             {Array.from({ length: 4 }).map((_, index) => (
               <div key={index} className="h-40 animate-pulse rounded-3xl bg-surface" />
             ))}
           </div>
+        ) : ayahMode ? (
+          <AyahReaderMobile verses={verses} mode={mode} />
         ) : (
           <div
             className="reader-stream flex flex-col gap-5 pb-36"

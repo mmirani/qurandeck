@@ -50,6 +50,7 @@ export const defaultPreferences: Preferences = {
   mushafInk: "green",
   showNavRail: true,
   showStudyRail: true,
+  mobileReadingMode: "scroll",
 };
 
 function parse(key: string): unknown {
@@ -76,6 +77,7 @@ export function loadPreferences(): Preferences {
   merged.studyCards = mergeStudyCards(raw.studyCards);
   merged.traditionalPage = Boolean(raw.traditionalPage);
   merged.mushafInk = asMushafInk(raw.mushafInk);
+  merged.mobileReadingMode = raw.mobileReadingMode === "ayah" ? "ayah" : "scroll";
   const ids = Array.isArray(raw.translationIds)
     ? sanitizeTranslationIds(raw.translationIds)
     : sanitizeTranslationIds([merged.translationId]);
