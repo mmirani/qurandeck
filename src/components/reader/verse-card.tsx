@@ -18,6 +18,7 @@ import type { Highlight, HighlightLayer, HighlightSwatch, Preferences, Verse, Wo
 import { groupForId, isRtlLanguage } from "@/lib/quran/languages";
 import { PRODUCT_NAME } from "@/lib/brand";
 import { shareOrCopy, verseShareText } from "@/lib/reading";
+import { useAyahFitScale } from "@/lib/use-ayah-fit-scale";
 
 export function VerseCard({
   verse,
@@ -69,13 +70,9 @@ export function VerseCard({
   const wash = ayahHighlight(marks, verse.verseKey);
   const washColor = wash ? swatchById(swatches, wash.swatchId).color : null;
   const chapterName = chapters.find((item) => item.id === verse.chapterId)?.nameSimple;
-  const { showArabic, showTranslation, showTransliteration, mobileAyahScript } = preferences;
-  const ayahShowArabic = ayahFocus
-    ? mobileAyahScript === "both" || mobileAyahScript === "arabic"
-    : showArabic;
-  const ayahShowTranslation = ayahFocus
-    ? mobileAyahScript === "both" || mobileAyahScript === "english"
-    : showTranslation;
+  const { showArabic, showTranslation, showTransliteration } = preferences;
+  const ayahShowArabic = ayahFocus ? true : showArabic;
+  const ayahShowTranslation = ayahFocus ? true : showTranslation;
   const translationCols = ayahShowTranslation
     ? preferences.translationIds
         .map((id) => (verse.translations ?? []).find((item) => item.id === id) ?? (verse.translation && id === preferences.translationId ? { id, text: verse.translation } : null))
@@ -130,6 +127,7 @@ export function VerseCard({
             : undefined
         }
       >
+        {!ayahFocus ? (
         <div className="verse-head flex items-start justify-between gap-3">
           <div className="relative">
             <button
@@ -231,11 +229,11 @@ export function VerseCard({
             </IconAction>
           </div>
         </div>
+        ) : null}
 
         {ayahFocus ? (
           <AyahFocusBody
             verse={verse}
-            script={mobileAyahScript}
             showArabic={ayahShowArabic}
             showTranslation={ayahShowTranslation}
             translationCols={translationCols}
@@ -384,7 +382,6 @@ export function VerseCard({
 
 function AyahFocusBody({
   verse,
-  script,
   showArabic,
   showTranslation,
   translationCols,
@@ -404,7 +401,6 @@ function AyahFocusBody({
   paint,
 }: {
   verse: Verse;
-  script: Preferences["mobileAyahScript"];
   showArabic: boolean;
   showTranslation: boolean;
   translationCols: { id: number; text: string }[];
@@ -432,41 +428,48 @@ function AyahFocusBody({
 }) {
   const primary =
     translationCols.find((column) => column.id === preferences.translationId) ?? translationCols[0];
+  const { viewportRef, contentRef, scrollable } = useAyahFitScale(verse.verseKey);
 
   return (
-    <div className="reader-ayah-slots mt-1 h-full min-h-0" data-script={script}>
-      {showArabic ? (
-        <div className="ayah-slot-arabic">
-          <ArabicBlock
-            verse={verse}
-            marks={marks}
-            swatches={swatches}
-            highlighting={highlighting}
-            selectedWord={selectedWord}
-            playingWordLocation={playingWordLocation}
-            selectVerse={selectVerse}
-            selectWord={selectWord}
-            playWord={playWord}
-            highlightWords={highlightWords}
-            toggleWordHighlight={toggleWordHighlight}
-            paint={paint}
-          />
-        </div>
-      ) : null}
-      {showTranslation && primary ? (
-        <div className="ayah-slot-translation">
-          <MarkedText
-            text={primary.text}
-            marks={marks.filter((item) => item.layer === "translation")}
-            swatches={swatches}
-            className="reading-text text-ink"
-            onSelect={(start, end, text, x, y) =>
-              setPicker({ x, y, layer: "translation", start, end, text })
-            }
-            onRemove={(id) => deleteHighlight(id)}
-          />
-        </div>
-      ) : null}
+    <div
+      ref={viewportRef}
+      className={`reader-ayah-viewport mt-0 h-full min-h-0 ${scrollable ? "is-scrollable" : ""}`}
+      style={{ ["--ayah-fit" as string]: "1" }}
+    >
+      <div ref={contentRef} className="reader-ayah-fit-content">
+        {showArabic ? (
+          <div className="ayah-block-arabic">
+            <ArabicBlock
+              verse={verse}
+              marks={marks}
+              swatches={swatches}
+              highlighting={highlighting}
+              selectedWord={selectedWord}
+              playingWordLocation={playingWordLocation}
+              selectVerse={selectVerse}
+              selectWord={selectWord}
+              playWord={playWord}
+              highlightWords={highlightWords}
+              toggleWordHighlight={toggleWordHighlight}
+              paint={paint}
+            />
+          </div>
+        ) : null}
+        {showTranslation && primary ? (
+          <div className="ayah-block-translation">
+            <MarkedText
+              text={primary.text}
+              marks={marks.filter((item) => item.layer === "translation")}
+              swatches={swatches}
+              className="reading-text text-ink"
+              onSelect={(start, end, text, x, y) =>
+                setPicker({ x, y, layer: "translation", start, end, text })
+              }
+              onRemove={(id) => deleteHighlight(id)}
+            />
+          </div>
+        ) : null}
+      </div>
     </div>
   );
 }

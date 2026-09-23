@@ -50,6 +50,7 @@ export function AppShell() {
 
   const showMobileAudio = mobile && !focus && isPlaying && !audioDismissed;
   const showDesktopDock = !mobile && !focus;
+  const mobileAyahMode = mobile && !focus && preferences.mobileReadingMode === "ayah";
 
   return (
     <GuideProvider>
@@ -121,7 +122,7 @@ export function AppShell() {
             </div>
           ) : null}
 
-          {book ? null : (
+          {book || mobileAyahMode ? null : (
             <SanaCompanion mobileDock={mobile && !focus} audioBarVisible={showMobileAudio} />
           )}
 

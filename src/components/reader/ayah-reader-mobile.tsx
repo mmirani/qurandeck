@@ -6,15 +6,8 @@ import { useMushaf } from "@/components/providers/mushaf-provider";
 import { VerseCard } from "@/components/reader/verse-card";
 import type { Verse } from "@/lib/quran/types";
 
-const SCRIPT_OPTIONS = [
-  { id: "arabic" as const, label: "Arabic" },
-  { id: "both" as const, label: "Both" },
-  { id: "english" as const, label: "English" },
-];
-
 export function AyahReaderMobile({ verses, mode }: { verses: Verse[]; mode: string }) {
-  const { selectedVerseKey, selectVerse, chapters, playingVerseKey, preferences, updatePreferences } =
-    useMushaf();
+  const { selectedVerseKey, selectVerse, chapters, playingVerseKey, preferences } = useMushaf();
 
   const index = Math.max(
     0,
@@ -65,7 +58,6 @@ export function AyahReaderMobile({ verses, mode }: { verses: Verse[]; mode: stri
   }
 
   const chapterName = chapters.find((item) => item.id === verse.chapterId)?.nameSimple;
-  const script = preferences.mobileAyahScript;
 
   return (
     <div className="reader-ayah-stage flex min-h-0 flex-1 flex-col">
@@ -85,21 +77,7 @@ export function AyahReaderMobile({ verses, mode }: { verses: Verse[]; mode: stri
       </div>
 
       <footer className="reader-ayah-footer shrink-0 border-t border-line/60 bg-canvas/95 px-3 py-3">
-        <div className="flex gap-1" role="group" aria-label="Show Arabic, English, or both">
-          {SCRIPT_OPTIONS.map((option) => (
-            <button
-              key={option.id}
-              type="button"
-              onClick={() => updatePreferences({ mobileAyahScript: option.id })}
-              className={`inline-flex h-10 min-h-10 flex-1 cursor-pointer items-center justify-center rounded-full text-sm font-medium ${
-                script === option.id ? "bg-gold text-on-gold" : "border border-line bg-surface text-ink-soft"
-              }`}
-            >
-              {option.label}
-            </button>
-          ))}
-        </div>
-        <div className="mt-2 flex gap-2">
+        <div className="flex gap-2">
           <button
             type="button"
             disabled={index <= 0}
