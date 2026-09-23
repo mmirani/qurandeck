@@ -51,6 +51,7 @@ export const defaultPreferences: Preferences = {
   showNavRail: true,
   showStudyRail: true,
   mobileReadingMode: "scroll",
+  mobileAyahScript: "both",
 };
 
 function parse(key: string): unknown {
@@ -78,6 +79,8 @@ export function loadPreferences(): Preferences {
   merged.traditionalPage = Boolean(raw.traditionalPage);
   merged.mushafInk = asMushafInk(raw.mushafInk);
   merged.mobileReadingMode = raw.mobileReadingMode === "ayah" ? "ayah" : "scroll";
+  merged.mobileAyahScript =
+    raw.mobileAyahScript === "arabic" || raw.mobileAyahScript === "english" ? raw.mobileAyahScript : "both";
   const ids = Array.isArray(raw.translationIds)
     ? sanitizeTranslationIds(raw.translationIds)
     : sanitizeTranslationIds([merged.translationId]);

@@ -221,4 +221,5 @@ export type Preferences = {
   showStudyRail: boolean;
   /** Mobile: continuous scroll vs one ayah per screen */
   mobileReadingMode: "scroll" | "ayah";
+  mobileAyahScript: "both" | "arabic" | "english";
 };

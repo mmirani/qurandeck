@@ -1,13 +1,20 @@
 "use client";
 
 import { useCallback, useEffect } from "react";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useMushaf } from "@/components/providers/mushaf-provider";
 import { VerseCard } from "@/components/reader/verse-card";
 import type { Verse } from "@/lib/quran/types";
 
+const SCRIPT_OPTIONS = [
+  { id: "arabic" as const, label: "Arabic" },
+  { id: "both" as const, label: "Both" },
+  { id: "english" as const, label: "English" },
+];
+
 export function AyahReaderMobile({ verses, mode }: { verses: Verse[]; mode: string }) {
-  const { selectedVerseKey, selectVerse, chapters, playingVerseKey, preferences } = useMushaf();
+  const { selectedVerseKey, selectVerse, chapters, playingVerseKey, preferences, updatePreferences } =
+    useMushaf();
 
   const index = Math.max(
     0,
@@ -41,10 +48,10 @@ export function AyahReaderMobile({ verses, mode }: { verses: Verse[]; mode: stri
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "ArrowDown" || event.key === "ArrowRight") {
+      if (event.key === "ArrowRight") {
         event.preventDefault();
         if (index < verses.length - 1) go(index + 1);
-      } else if (event.key === "ArrowUp" || event.key === "ArrowLeft") {
+      } else if (event.key === "ArrowLeft") {
         event.preventDefault();
         if (index > 0) go(index - 1);
       }
@@ -58,9 +65,10 @@ export function AyahReaderMobile({ verses, mode }: { verses: Verse[]; mode: stri
   }
 
   const chapterName = chapters.find((item) => item.id === verse.chapterId)?.nameSimple;
+  const script = preferences.mobileAyahScript;
 
   return (
-    <div className="reader-ayah-stage relative flex min-h-0 flex-1 flex-col">
+    <div className="reader-ayah-stage flex min-h-0 flex-1 flex-col">
       <div className="flex shrink-0 items-center justify-center gap-2 border-b border-line/50 px-4 py-2 text-xs text-ink-soft">
         <span className="font-medium text-ink">
           {mode === "juz" && chapterName ? `${chapterName} · ` : ""}
@@ -72,32 +80,48 @@ export function AyahReaderMobile({ verses, mode }: { verses: Verse[]; mode: stri
         </span>
       </div>
 
-      <div className="flex min-h-0 flex-1 items-center overflow-y-auto overscroll-contain px-3 py-4 pr-[3.75rem]">
-        <div className="mx-auto w-full max-w-lg">
-          <VerseCard verse={verse} showSurahLabel={showSurahLabel} ayahFocus />
-        </div>
+      <div className="reader-ayah-body min-h-0 flex-1 overflow-hidden px-4 pt-2">
+        <VerseCard verse={verse} showSurahLabel={showSurahLabel} ayahFocus />
       </div>
 
-      <div className="pointer-events-none absolute inset-y-0 right-0 z-10 flex w-[3.25rem] flex-col items-center justify-center gap-3 pr-1">
-        <button
-          type="button"
-          disabled={index <= 0}
-          onClick={() => go(index - 1)}
-          aria-label="Previous ayah"
-          className="pointer-events-auto inline-flex h-12 min-h-11 w-12 cursor-pointer items-center justify-center rounded-full border border-line bg-surface/95 text-ink shadow-[0_8px_24px_rgba(15,23,42,0.12)] backdrop-blur-sm disabled:cursor-not-allowed disabled:opacity-35"
-        >
-          <ChevronUp className="h-6 w-6" />
-        </button>
-        <button
-          type="button"
-          disabled={index >= verses.length - 1}
-          onClick={() => go(index + 1)}
-          aria-label="Next ayah"
-          className="pointer-events-auto inline-flex h-12 min-h-11 w-12 cursor-pointer items-center justify-center rounded-full bg-gold text-on-gold shadow-[0_8px_24px_rgba(15,23,42,0.16)] disabled:cursor-not-allowed disabled:opacity-35"
-        >
-          <ChevronDown className="h-6 w-6" />
-        </button>
-      </div>
+      <footer className="reader-ayah-footer shrink-0 border-t border-line/60 bg-canvas/95 px-3 py-3">
+        <div className="flex gap-1" role="group" aria-label="Show Arabic, English, or both">
+          {SCRIPT_OPTIONS.map((option) => (
+            <button
+              key={option.id}
+              type="button"
+              onClick={() => updatePreferences({ mobileAyahScript: option.id })}
+              className={`inline-flex h-10 min-h-10 flex-1 cursor-pointer items-center justify-center rounded-full text-sm font-medium ${
+                script === option.id ? "bg-gold text-on-gold" : "border border-line bg-surface text-ink-soft"
+              }`}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+        <div className="mt-2 flex gap-2">
+          <button
+            type="button"
+            disabled={index <= 0}
+            onClick={() => go(index - 1)}
+            aria-label="Previous ayah"
+            className="inline-flex h-12 min-h-11 flex-1 cursor-pointer items-center justify-center gap-1 rounded-full border border-line bg-surface text-sm font-medium text-ink disabled:cursor-not-allowed disabled:opacity-35"
+          >
+            <ChevronLeft className="h-5 w-5" />
+            Previous
+          </button>
+          <button
+            type="button"
+            disabled={index >= verses.length - 1}
+            onClick={() => go(index + 1)}
+            aria-label="Next ayah"
+            className="inline-flex h-12 min-h-11 flex-1 cursor-pointer items-center justify-center gap-1 rounded-full bg-gold text-sm font-semibold text-on-gold disabled:cursor-not-allowed disabled:opacity-35"
+          >
+            Next
+            <ChevronRight className="h-5 w-5" />
+          </button>
+        </div>
+      </footer>
     </div>
   );
 }

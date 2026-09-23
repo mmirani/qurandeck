@@ -14,7 +14,7 @@ import {
   verseHighlights,
   wordHighlight,
 } from "@/lib/highlights";
-import type { HighlightLayer, Verse } from "@/lib/quran/types";
+import type { Highlight, HighlightLayer, HighlightSwatch, Preferences, Verse, Word } from "@/lib/quran/types";
 import { groupForId, isRtlLanguage } from "@/lib/quran/languages";
 import { PRODUCT_NAME } from "@/lib/brand";
 import { shareOrCopy, verseShareText } from "@/lib/reading";
@@ -69,14 +69,22 @@ export function VerseCard({
   const wash = ayahHighlight(marks, verse.verseKey);
   const washColor = wash ? swatchById(swatches, wash.swatchId).color : null;
   const chapterName = chapters.find((item) => item.id === verse.chapterId)?.nameSimple;
-  const { showArabic, showTranslation, showTransliteration } = preferences;
-  const translationCols = showTranslation
+  const { showArabic, showTranslation, showTransliteration, mobileAyahScript } = preferences;
+  const ayahShowArabic = ayahFocus
+    ? mobileAyahScript === "both" || mobileAyahScript === "arabic"
+    : showArabic;
+  const ayahShowTranslation = ayahFocus
+    ? mobileAyahScript === "both" || mobileAyahScript === "english"
+    : showTranslation;
+  const translationCols = ayahShowTranslation
     ? preferences.translationIds
         .map((id) => (verse.translations ?? []).find((item) => item.id === id) ?? (verse.translation && id === preferences.translationId ? { id, text: verse.translation } : null))
         .filter((item): item is { id: number; text: string } => Boolean(item?.text))
     : [];
   const layers =
-    Number(showArabic) + Number(Boolean(showTransliteration && verse.transliteration)) + translationCols.length;
+    Number(ayahShowArabic) +
+    Number(Boolean(!ayahFocus && showTransliteration && verse.transliteration)) +
+    translationCols.length;
   const triple = layers >= 3;
   const [picker, setPicker] = useState<{
     x: number;
@@ -224,131 +232,117 @@ export function VerseCard({
           </div>
         </div>
 
-        <div
-          className={
-            layers <= 1
-              ? "mt-4 w-full"
-              : triple
-                ? "mt-4 flex flex-col gap-4 @min-[42rem]:grid @min-[42rem]:grid-cols-2 @min-[42rem]:items-start @min-[42rem]:gap-8 @min-[58rem]:grid-cols-3"
-                : "mt-4 flex flex-col gap-4 @min-[42rem]:grid @min-[42rem]:grid-cols-2 @min-[42rem]:items-start @min-[42rem]:gap-10"
-          }
-        >
-          {translationCols.map((column) => {
-            const group = groupForId(translations, column.id);
-            const rtl = group ? isRtlLanguage(group.key) : false;
-            const primary = column.id === preferences.translationId;
-            return (
-              <div key={column.id} dir={rtl ? "rtl" : "ltr"} lang={group?.key}>
-                {translationCols.length > 1 || group ? (
-                  <p className="kufic-label mb-2 text-[10px] text-gold-deep">
-                    {group?.label ?? "Translation"}
-                    {group && group.editions.length > 1
-                      ? ` · ${group.editions.find((item) => item.id === column.id)?.name ?? ""}`
-                      : ""}
-                  </p>
-                ) : null}
-                <MarkedText
-                  text={column.text}
-                  marks={primary ? marks.filter((item) => item.layer === "translation") : []}
-                  swatches={swatches}
-                  className="reading-text mt-3 text-sm leading-relaxed text-ink md:mt-0 md:text-base"
-                  onSelect={(start, end, text, x, y) => {
-                    if (!primary) return;
-                    setPicker({ x, y, layer: "translation", start, end, text });
-                  }}
-                  onRemove={primary ? (id) => deleteHighlight(id) : undefined}
-                />
-              </div>
-            );
-          })}
-
-          {showArabic ? (
-            <div dir="rtl" lang="ar" className={`arabic-text mushaf-arabic-mobile text-right ${highlighting ? "select-none" : ""}`}>
-              {verse.words.length > 0
-                ? verse.words.map((word) => {
-                    if (word.charType !== "word") {
-                      return (
-                        <span key={`${word.location}-end`} className="mx-1 inline-block text-gold-deep">
-                          {word.textUthmani}
-                        </span>
-                      );
-                    }
-                    const on = selectedWord?.location === word.location || playingWordLocation === word.location;
-                    const marked = wordHighlight(marks, verse.verseKey, word.position);
-                    const pen = marked ? swatchById(swatches, marked.swatchId) : null;
-                    return (
-                      <button
-                        key={word.location || `${verse.verseKey}-${word.position}`}
-                        type="button"
-                        onClick={(event) => event.stopPropagation()}
-                        onPointerDown={(event) => {
-                          if (!highlighting) return;
-                          event.preventDefault();
-                          paint.current = { start: word.position, last: word.position };
-                        }}
-                        onPointerEnter={() => {
-                          if (paint.current) paint.current.last = word.position;
-                        }}
-                        onPointerUp={(event) => {
-                          event.stopPropagation();
-                          selectVerse(verse.verseKey);
-                          selectWord(word);
-                          if (highlighting && paint.current) {
-                            const range = paint.current;
-                            paint.current = null;
-                            if (range.start !== range.last) highlightWords(verse, range.start, range.last);
-                            else toggleWordHighlight(verse, word);
-                            return;
-                          }
-                          if (!highlighting) void playWord(word);
-                        }}
-                        className={`mx-[2px] inline cursor-pointer rounded-md px-1 leading-[2.1] ${
-                          on ? "bg-gold/25" : "hover:bg-gold/10"
-                        }`}
-                        style={
-                          pen
-                            ? { background: `color-mix(in srgb, ${pen.color} 62%, transparent)` }
-                            : undefined
-                        }
-                      >
-                        {word.textUthmani}
-                      </button>
-                    );
-                  })
-                : verse.textUthmani}
-            </div>
-          ) : null}
-
-          {showTransliteration && verse.transliteration ? (
-            <MarkedText
-              text={verse.transliteration}
-              marks={marks.filter((item) => item.layer === "transliteration")}
-              swatches={swatches}
-              className={`translit-text ${
-                triple
-                  ? "@min-[42rem]:col-start-1 @min-[42rem]:row-start-2 @min-[58rem]:col-start-auto @min-[58rem]:row-start-auto"
-                  : ""
-              }`}
-              onSelect={(start, end, text, x, y) =>
-                setPicker({ x, y, layer: "transliteration", start, end, text })
+        {ayahFocus ? (
+          <AyahFocusBody
+            verse={verse}
+            script={mobileAyahScript}
+            showArabic={ayahShowArabic}
+            showTranslation={ayahShowTranslation}
+            translationCols={translationCols}
+            preferences={preferences}
+            marks={marks}
+            swatches={swatches}
+            highlighting={highlighting}
+            selectedWord={selectedWord}
+            playingWordLocation={playingWordLocation}
+            selectVerse={selectVerse}
+            selectWord={selectWord}
+            playWord={playWord}
+            highlightWords={highlightWords}
+            toggleWordHighlight={toggleWordHighlight}
+            deleteHighlight={deleteHighlight}
+            setPicker={setPicker}
+            paint={paint}
+          />
+        ) : (
+          <>
+            <div
+              className={
+                layers <= 1
+                  ? "mt-4 w-full"
+                  : triple
+                    ? "mt-4 flex flex-col gap-4 @min-[42rem]:grid @min-[42rem]:grid-cols-2 @min-[42rem]:items-start @min-[42rem]:gap-8 @min-[58rem]:grid-cols-3"
+                    : "mt-4 flex flex-col gap-4 @min-[42rem]:grid @min-[42rem]:grid-cols-2 @min-[42rem]:items-start @min-[42rem]:gap-10"
               }
-              onRemove={(id) => deleteHighlight(id)}
-            />
-          ) : null}
-        </div>
+            >
+              {translationCols.map((column) => {
+                const group = groupForId(translations, column.id);
+                const rtl = group ? isRtlLanguage(group.key) : false;
+                const primary = column.id === preferences.translationId;
+                return (
+                  <div key={column.id} dir={rtl ? "rtl" : "ltr"} lang={group?.key}>
+                    {translationCols.length > 1 || group ? (
+                      <p className="kufic-label mb-2 text-[10px] text-gold-deep">
+                        {group?.label ?? "Translation"}
+                        {group && group.editions.length > 1
+                          ? ` · ${group.editions.find((item) => item.id === column.id)?.name ?? ""}`
+                          : ""}
+                      </p>
+                    ) : null}
+                    <MarkedText
+                      text={column.text}
+                      marks={primary ? marks.filter((item) => item.layer === "translation") : []}
+                      swatches={swatches}
+                      className="reading-text mt-3 text-sm leading-relaxed text-ink md:mt-0 md:text-base"
+                      onSelect={(start, end, text, x, y) => {
+                        if (!primary) return;
+                        setPicker({ x, y, layer: "translation", start, end, text });
+                      }}
+                      onRemove={primary ? (id) => deleteHighlight(id) : undefined}
+                    />
+                  </div>
+                );
+              })}
 
-        {preferences.showTafsir ? <VerseTafsir verseKey={verse.verseKey} /> : null}
+              {showArabic ? (
+                <ArabicBlock
+                  verse={verse}
+                  marks={marks}
+                  swatches={swatches}
+                  highlighting={highlighting}
+                  selectedWord={selectedWord}
+                  playingWordLocation={playingWordLocation}
+                  selectVerse={selectVerse}
+                  selectWord={selectWord}
+                  playWord={playWord}
+                  highlightWords={highlightWords}
+                  toggleWordHighlight={toggleWordHighlight}
+                  paint={paint}
+                />
+              ) : null}
 
-        {note ? (
-          <div
-            className={`mt-4 rounded-2xl border border-gold/30 bg-gold/10 px-3 py-2 text-sm text-ink ${
-              active ? "" : "line-clamp-2"
-            }`}
-          >
-            <p className="kufic-label mb-1 text-[10px] text-gold-deep">Note</p>
-            <p className="whitespace-pre-wrap">{note.body}</p>
-          </div>
-        ) : null}
+              {showTransliteration && verse.transliteration ? (
+                <MarkedText
+                  text={verse.transliteration}
+                  marks={marks.filter((item) => item.layer === "transliteration")}
+                  swatches={swatches}
+                  className={`translit-text ${
+                    triple
+                      ? "@min-[42rem]:col-start-1 @min-[42rem]:row-start-2 @min-[58rem]:col-start-auto @min-[58rem]:row-start-auto"
+                      : ""
+                  }`}
+                  onSelect={(start, end, text, x, y) =>
+                    setPicker({ x, y, layer: "transliteration", start, end, text })
+                  }
+                  onRemove={(id) => deleteHighlight(id)}
+                />
+              ) : null}
+            </div>
+
+            {preferences.showTafsir ? <VerseTafsir verseKey={verse.verseKey} /> : null}
+
+            {note ? (
+              <div
+                className={`mt-4 rounded-2xl border border-gold/30 bg-gold/10 px-3 py-2 text-sm text-ink ${
+                  active ? "" : "line-clamp-2"
+                }`}
+              >
+                <p className="kufic-label mb-1 text-[10px] text-gold-deep">Note</p>
+                <p className="whitespace-pre-wrap">{note.body}</p>
+              </div>
+            ) : null}
+          </>
+        )}
       </CornerFrame>
 
       <VerseActionSheet verse={verse} open={sheetOpen} onClose={() => setSheetOpen(false)} />
@@ -385,6 +379,176 @@ export function VerseCard({
         />
       ) : null}
     </article>
+  );
+}
+
+function AyahFocusBody({
+  verse,
+  script,
+  showArabic,
+  showTranslation,
+  translationCols,
+  preferences,
+  marks,
+  swatches,
+  highlighting,
+  selectedWord,
+  playingWordLocation,
+  selectVerse,
+  selectWord,
+  playWord,
+  highlightWords,
+  toggleWordHighlight,
+  deleteHighlight,
+  setPicker,
+  paint,
+}: {
+  verse: Verse;
+  script: Preferences["mobileAyahScript"];
+  showArabic: boolean;
+  showTranslation: boolean;
+  translationCols: { id: number; text: string }[];
+  preferences: Preferences;
+  marks: Highlight[];
+  swatches: HighlightSwatch[];
+  highlighting: boolean;
+  selectedWord: Word | null;
+  playingWordLocation: string | null;
+  selectVerse: (key: string) => void;
+  selectWord: (word: Word) => void;
+  playWord: (word: Word) => void;
+  highlightWords: (verse: Verse, start: number, end: number) => void;
+  toggleWordHighlight: (verse: Verse, word: Word) => void;
+  deleteHighlight: (id: string) => void;
+  setPicker: (value: {
+    x: number;
+    y: number;
+    layer: Exclude<HighlightLayer, "arabic" | "ayah">;
+    start: number;
+    end: number;
+    text: string;
+  } | null) => void;
+  paint: React.MutableRefObject<{ start: number; last: number } | null>;
+}) {
+  const primary =
+    translationCols.find((column) => column.id === preferences.translationId) ?? translationCols[0];
+
+  return (
+    <div className="reader-ayah-slots mt-1 h-full min-h-0" data-script={script}>
+      {showArabic ? (
+        <div className="ayah-slot-arabic">
+          <ArabicBlock
+            verse={verse}
+            marks={marks}
+            swatches={swatches}
+            highlighting={highlighting}
+            selectedWord={selectedWord}
+            playingWordLocation={playingWordLocation}
+            selectVerse={selectVerse}
+            selectWord={selectWord}
+            playWord={playWord}
+            highlightWords={highlightWords}
+            toggleWordHighlight={toggleWordHighlight}
+            paint={paint}
+          />
+        </div>
+      ) : null}
+      {showTranslation && primary ? (
+        <div className="ayah-slot-translation">
+          <MarkedText
+            text={primary.text}
+            marks={marks.filter((item) => item.layer === "translation")}
+            swatches={swatches}
+            className="reading-text text-ink"
+            onSelect={(start, end, text, x, y) =>
+              setPicker({ x, y, layer: "translation", start, end, text })
+            }
+            onRemove={(id) => deleteHighlight(id)}
+          />
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function ArabicBlock({
+  verse,
+  marks,
+  swatches,
+  highlighting,
+  selectedWord,
+  playingWordLocation,
+  selectVerse,
+  selectWord,
+  playWord,
+  highlightWords,
+  toggleWordHighlight,
+  paint,
+}: {
+  verse: Verse;
+  marks: Highlight[];
+  swatches: HighlightSwatch[];
+  highlighting: boolean;
+  selectedWord: Word | null;
+  playingWordLocation: string | null;
+  selectVerse: (key: string) => void;
+  selectWord: (word: Word) => void;
+  playWord: (word: Word) => void;
+  highlightWords: (verse: Verse, start: number, end: number) => void;
+  toggleWordHighlight: (verse: Verse, word: Word) => void;
+  paint: React.MutableRefObject<{ start: number; last: number } | null>;
+}) {
+  return (
+    <div dir="rtl" lang="ar" className={`arabic-text mushaf-arabic-mobile text-right ${highlighting ? "select-none" : ""}`}>
+      {verse.words.length > 0
+        ? verse.words.map((word) => {
+            if (word.charType !== "word") {
+              return (
+                <span key={`${word.location}-end`} className="mx-1 inline-block text-gold-deep">
+                  {word.textUthmani}
+                </span>
+              );
+            }
+            const on = selectedWord?.location === word.location || playingWordLocation === word.location;
+            const marked = wordHighlight(marks, verse.verseKey, word.position);
+            const pen = marked ? swatchById(swatches, marked.swatchId) : null;
+            return (
+              <button
+                key={word.location || `${verse.verseKey}-${word.position}`}
+                type="button"
+                onClick={(event) => event.stopPropagation()}
+                onPointerDown={(event) => {
+                  if (!highlighting) return;
+                  event.preventDefault();
+                  paint.current = { start: word.position, last: word.position };
+                }}
+                onPointerEnter={() => {
+                  if (paint.current) paint.current.last = word.position;
+                }}
+                onPointerUp={(event) => {
+                  event.stopPropagation();
+                  selectVerse(verse.verseKey);
+                  selectWord(word);
+                  if (highlighting && paint.current) {
+                    const range = paint.current;
+                    paint.current = null;
+                    if (range.start !== range.last) highlightWords(verse, range.start, range.last);
+                    else toggleWordHighlight(verse, word);
+                    return;
+                  }
+                  if (!highlighting) void playWord(word);
+                }}
+                className={`mx-[2px] inline cursor-pointer rounded-md px-1 leading-[2.1] ${
+                  on ? "bg-gold/25" : "hover:bg-gold/10"
+                }`}
+                style={pen ? { background: `color-mix(in srgb, ${pen.color} 62%, transparent)` } : undefined}
+              >
+                {word.textUthmani}
+              </button>
+            );
+          })
+        : verse.textUthmani}
+    </div>
   );
 }
 

@@ -107,7 +107,7 @@ export function ReaderPane() {
         className={`reader-scroll-surface @container flex min-h-0 flex-1 flex-col ${
           ayahMode ? "overflow-hidden px-0 py-0" : "overflow-y-auto overscroll-contain px-4 py-4 md:px-8 md:py-6 lg:px-10"
         } ${traditional && preferences.focusMode ? "mushaf-desk" : ""} ${
-          ayahMode ? (isPlaying ? "pb-16" : "pb-0") : isPlaying ? "pb-24 md:pb-36" : "pb-20 md:pb-36"
+          ayahMode ? "pb-0" : isPlaying ? "pb-24 md:pb-36" : "pb-20 md:pb-36"
         }`}
       >
         {error ? (
