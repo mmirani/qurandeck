@@ -35,7 +35,7 @@ export function AccountModal() {
   const greeting = user?.displayName ? `Assalamu alaykum, ${user.displayName}.` : "Assalamu alaykum.";
 
   return (
-    <Modal title={greeting} onClose={closeModal} wide>
+    <Modal title={greeting} onClose={closeModal} wide stable>
       <div>
         <div className={`grid gap-1.5 ${user ? "grid-cols-4" : "grid-cols-3"}`} role="tablist" aria-label="Account">
           <AccountTabButton active={tab === "progress"} onClick={() => setTab("progress")}>

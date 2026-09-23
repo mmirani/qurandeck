@@ -9,12 +9,14 @@ export function Modal({
   children,
   onClose,
   wide = false,
+  stable = false,
 }: {
   title: string;
   eyebrow?: string;
   children: ReactNode;
   onClose: () => void;
   wide?: boolean;
+  stable?: boolean;
 }) {
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -36,9 +38,11 @@ export function Modal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="modal-title"
-        className={`ornament-border paper-panel relative z-10 max-h-[88vh] w-full overflow-hidden rounded-3xl ${wide ? "max-w-4xl" : "max-w-xl"}`}
+        className={`ornament-border paper-panel relative z-10 flex w-full flex-col overflow-hidden rounded-3xl ${
+          stable ? "h-[min(88vh,44rem)]" : "max-h-[88vh]"
+        } ${wide ? "max-w-4xl" : "max-w-xl"}`}
       >
-        <div className="flex items-start justify-between gap-4 border-b border-line/50 px-6 py-5">
+        <div className="flex shrink-0 items-start justify-between gap-4 border-b border-line/50 px-6 py-5">
           <div>
             {eyebrow ? <p className="kufic-label text-gold-deep">{eyebrow}</p> : null}
             <h2 id="modal-title" className="mt-1 font-display text-3xl text-ink">
@@ -53,7 +57,7 @@ export function Modal({
             <X className="h-4 w-4" aria-hidden="true" />
           </button>
         </div>
-        <div className="max-h-[calc(88vh-88px)] overflow-y-auto px-6 py-5">{children}</div>
+        <div className={`overflow-y-auto px-6 py-5 ${stable ? "min-h-0 flex-1" : "max-h-[calc(88vh-88px)]"}`}>{children}</div>
       </div>
     </div>
   );
