@@ -14,7 +14,13 @@ function formatTime(value: number) {
   return `${minutes}:${seconds}`;
 }
 
-export function AudioPlayer({ variant = "rail" }: { variant?: "rail" | "dock" }) {
+export function AudioPlayer({
+  variant = "rail",
+  mobileSticky = false,
+}: {
+  variant?: "rail" | "dock";
+  mobileSticky?: boolean;
+}) {
   const {
     recitations,
     preferences,
@@ -48,7 +54,13 @@ export function AudioPlayer({ variant = "rail" }: { variant?: "rail" | "dock" })
 
   if (variant === "dock") {
     return (
-      <section className="mushaf-player is-dock flex items-center gap-2 rounded-xl px-2 py-1.5 sm:gap-3 sm:px-3">
+      <section
+        className={`mushaf-player is-dock flex items-center gap-2 px-2 py-1.5 sm:gap-3 sm:px-3 ${
+          mobileSticky
+            ? "h-16 min-h-16 rounded-none border-x-0 border-b-0 border-t border-line/70 bg-canvas/95 backdrop-blur-md"
+            : "rounded-xl"
+        }`}
+      >
         <button
           type="button"
           className="inline-flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full border border-gold/55 text-gold hover:bg-gold/20"

@@ -4,8 +4,10 @@ import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "
 import Image from "next/image";
 import { useReducedMotion } from "motion/react";
 import { COMPANION_NAME } from "@/lib/brand";
+import { BottomSheet } from "@/components/shell/bottom-sheet";
 import { SanaGuidePanel } from "@/components/guide/sana-guide-panel";
 import { useGuide } from "@/components/guide/guide-provider";
+import { useMushaf } from "@/components/providers/mushaf-provider";
 import {
   NUR_SIZE,
   NUR_SRC,
@@ -51,7 +53,54 @@ function subscribeTheme(onChange: () => void) {
   return () => mo.disconnect();
 }
 
-export function SanaCompanion() {
+export function SanaCompanion({
+  mobileDock = false,
+  audioPlaying = false,
+}: {
+  mobileDock?: boolean;
+  audioPlaying?: boolean;
+}) {
+  if (mobileDock) return <SanaMobileDock audioPlaying={audioPlaying} />;
+  return <SanaFloatingCompanion />;
+}
+
+function SanaMobileDock({ audioPlaying }: { audioPlaying: boolean }) {
+  const { selectedVerseKey } = useMushaf();
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const filter = useSyncExternalStore(subscribeTheme, companionFilterFromDocument, () => "none");
+
+  return (
+    <>
+      <button
+        type="button"
+        className={`sana-mobile-pill fixed right-4 z-40 inline-flex h-12 min-h-11 cursor-pointer items-center gap-2 rounded-full border border-gold/35 bg-surface/95 px-3 shadow-[0_10px_28px_rgba(15,23,42,0.14)] backdrop-blur-md md:hidden ${
+          audioPlaying ? "bottom-[4.75rem]" : "bottom-4"
+        }`}
+        style={{ touchAction: "manipulation" }}
+        aria-label={`Open ${COMPANION_NAME}`}
+        onClick={() => setMobileOpen(true)}
+      >
+        <Image
+          src={NUR_SRC}
+          alt={companionAlt}
+          width={32}
+          height={32}
+          className="nur-face h-8 w-8 object-contain"
+          style={{ filter }}
+        />
+        <span className="text-sm font-semibold text-ink">{COMPANION_NAME}</span>
+      </button>
+      <BottomSheet open={mobileOpen} onClose={() => setMobileOpen(false)} title={COMPANION_NAME}>
+        {selectedVerseKey ? (
+          <p className="border-b border-line/60 px-4 pb-3 text-sm text-ink-soft">Near ayah {selectedVerseKey}</p>
+        ) : null}
+        <SanaGuidePanel onClose={() => setMobileOpen(false)} onRest={() => setMobileOpen(false)} />
+      </BottomSheet>
+    </>
+  );
+}
+
+function SanaFloatingCompanion() {
   const reduce = useReducedMotion();
   const { active: guiding } = useGuide();
   const mounted = useSyncExternalStore(subscribeNever, () => true, () => false);

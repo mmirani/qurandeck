@@ -16,6 +16,7 @@ export function ReaderPane() {
     chapter,
     openSurah,
     playingVerseKey,
+    isPlaying,
     mode,
     setSearchOpen,
     preferences,
@@ -98,9 +99,9 @@ export function ReaderPane() {
       <div
         ref={scroller}
         id="main-reader"
-        className={`@container min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-6 md:px-8 lg:px-10 ${
+        className={`reader-scroll-surface @container min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 md:px-8 md:py-6 lg:px-10 ${
           traditional && preferences.focusMode ? "mushaf-desk" : ""
-        }`}
+        } ${isPlaying ? "pb-24 md:pb-36" : "pb-20 md:pb-36"}`}
       >
         {error ? (
           <p className="rounded-3xl border border-danger/40 bg-surface p-6 text-danger">{error}</p>

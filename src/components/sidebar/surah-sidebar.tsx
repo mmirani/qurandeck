@@ -8,11 +8,13 @@ import { BrandWordmark } from "@/components/brand/brand-wordmark";
 import { PRODUCT_DISPLAY } from "@/lib/brand";
 import { POPULAR_SURAH_IDS } from "@/lib/reading";
 import type { Chapter, Juz } from "@/lib/quran/types";
+import { useReaderChrome } from "@/components/shell/reader-chrome";
 import { RailToggle } from "@/components/shell/rail-toggle";
 import { ContinueCard } from "@/components/account/account-dashboard";
 
 export function SurahSidebar() {
   const { chapters, chapter, openSurah, openJuz, currentJuz, juzs, mode } = useMushaf();
+  const { closeNav } = useReaderChrome();
   const [query, setQuery] = useState("");
   const [browse, setBrowse] = useState<"surah" | "popular" | "juz">(mode === "juz" ? "juz" : "surah");
 
@@ -104,7 +106,10 @@ export function SurahSidebar() {
               <button
                 key={juz.juzNumber}
                 type="button"
-                onClick={() => openJuz(juz.juzNumber)}
+                onClick={() => {
+                  openJuz(juz.juzNumber);
+                  closeNav();
+                }}
                 className={`mb-2 flex min-h-16 w-full cursor-pointer items-center gap-3 rounded-2xl px-3 py-3 text-left ${
                   active ? "bg-highlight ring-1 ring-gold/30" : "hover:bg-canvas"
                 }`}
@@ -136,7 +141,10 @@ export function SurahSidebar() {
               <button
                 key={item.id}
                 type="button"
-                onClick={() => openSurah(item.id)}
+                onClick={() => {
+                  openSurah(item.id);
+                  closeNav();
+                }}
                 className={`mb-1 flex min-h-14 w-full cursor-pointer items-center gap-3 rounded-2xl px-3 py-2.5 text-left ${
                   active ? "bg-highlight ring-1 ring-gold/25" : "hover:bg-canvas"
                 }`}

@@ -9,6 +9,7 @@ import { useMushaf } from "@/components/providers/mushaf-provider";
 import { SearchBar } from "@/components/search/search-bar";
 import { UserMenu } from "@/components/user/user-menu";
 import { LanguagePicker } from "@/components/reader/language-picker";
+import { MobileReaderBar } from "@/components/reader/mobile-reader-bar";
 import { ArabesqueDivider, MihrabMark } from "@/components/art/ornaments";
 import { PRODUCT_DISPLAY, PRODUCT_NAME } from "@/lib/brand";
 import { shareOrCopy } from "@/lib/reading";
@@ -122,11 +123,13 @@ export function ReaderToolbar() {
   }
 
   return (
-    <div
-      className={`relative shrink-0 overflow-hidden border-b border-line/40 px-4 py-4 md:px-8 ${
-        art ? "" : "bg-canvas/95"
-      }`}
-    >
+    <>
+      <MobileReaderBar />
+      <div
+        className={`relative hidden shrink-0 overflow-hidden border-b border-line/40 px-4 py-4 md:block md:px-8 ${
+          art ? "" : "bg-canvas/95"
+        }`}
+      >
       {art ? (
         <div className="surah-art" aria-hidden="true">
           <Image src={art} alt="" fill sizes="80vw" className="surah-art-photo" />
@@ -254,5 +257,6 @@ export function ReaderToolbar() {
         <ArabesqueDivider />
       </div>
     </div>
+    </>
   );
 }

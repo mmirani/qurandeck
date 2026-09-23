@@ -1,7 +1,8 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Copy, Eraser, Highlighter, NotebookPen, Play, Share2, Star } from "lucide-react";
+import { Copy, Eraser, Highlighter, MoreHorizontal, NotebookPen, Play, Share2, Star } from "lucide-react";
+import { VerseActionSheet } from "@/components/reader/verse-action-sheet";
 import { useMushaf } from "@/components/providers/mushaf-provider";
 import { CornerFrame } from "@/components/art/ornaments";
 import { HighlightPopover, MarkedText } from "@/components/reader/marked-text";
@@ -83,6 +84,7 @@ export function VerseCard({
     text: string;
   } | null>(null);
   const paint = useRef<{ start: number; last: number } | null>(null);
+  const [sheetOpen, setSheetOpen] = useState(false);
 
   const onAyahClick = () => {
     selectVerse(verse.verseKey);
@@ -123,7 +125,7 @@ export function VerseCard({
                 event.stopPropagation();
                 onAyahClick();
               }}
-              className="ayah-num flex h-10 min-w-10 cursor-pointer items-center justify-center rounded-full bg-accent-soft font-display text-lg font-semibold text-gold-deep"
+              className="ayah-num flex h-11 min-w-11 cursor-pointer items-center justify-center rounded-full bg-accent-soft font-display text-lg font-semibold text-gold-deep"
               aria-label={`Select verse ${verse.verseKey}`}
             >
               {verse.verseNumber}
@@ -135,7 +137,32 @@ export function VerseCard({
               <Star className="absolute -bottom-1 -left-1 h-3.5 w-3.5 fill-gold text-gold" />
             ) : null}
           </div>
-          <div className="verse-actions flex flex-wrap justify-end gap-1" data-tour={tourAnchor ? "ayah" : undefined}>
+          <div className="flex shrink-0 items-center gap-1 md:hidden" data-tour={tourAnchor ? "ayah" : undefined}>
+            <button
+              type="button"
+              aria-label={favorited ? "Bookmarked" : "Bookmark ayah"}
+              onClick={(event) => {
+                event.stopPropagation();
+                toggleBookmarkVerse(verse);
+              }}
+              className="inline-flex h-11 min-h-11 min-w-11 cursor-pointer items-center justify-center rounded-full border border-gold/30 text-ink-soft"
+            >
+              <Star className={`h-4 w-4 ${favorited ? "fill-gold text-gold" : ""}`} />
+            </button>
+            <button
+              type="button"
+              aria-label="Ayah actions"
+              onClick={(event) => {
+                event.stopPropagation();
+                selectVerse(verse.verseKey);
+                setSheetOpen(true);
+              }}
+              className="inline-flex h-11 min-h-11 min-w-11 cursor-pointer items-center justify-center rounded-full border border-gold/30 text-ink-soft"
+            >
+              <MoreHorizontal className="h-5 w-5" />
+            </button>
+          </div>
+          <div className="verse-actions hidden flex-wrap justify-end gap-1 md:flex" data-tour={tourAnchor ? "ayah" : undefined}>
             <IconAction label="Play this ayah only, then stop" onClick={() => playVerse(verse.verseKey)}>
               <Play className="h-4 w-4" />
               <span className="pr-1 text-[10px] font-medium">Ayah</span>
@@ -219,7 +246,7 @@ export function VerseCard({
                   text={column.text}
                   marks={primary ? marks.filter((item) => item.layer === "translation") : []}
                   swatches={swatches}
-                  className="reading-text text-ink"
+                  className="reading-text mt-3 text-sm leading-relaxed text-ink md:mt-0 md:text-base"
                   onSelect={(start, end, text, x, y) => {
                     if (!primary) return;
                     setPicker({ x, y, layer: "translation", start, end, text });
@@ -231,7 +258,7 @@ export function VerseCard({
           })}
 
           {showArabic ? (
-            <div dir="rtl" lang="ar" className={`arabic-text text-right ${highlighting ? "select-none" : ""}`}>
+            <div dir="rtl" lang="ar" className={`arabic-text mushaf-arabic-mobile text-right ${highlighting ? "select-none" : ""}`}>
               {verse.words.length > 0
                 ? verse.words.map((word) => {
                     if (word.charType !== "word") {
@@ -318,6 +345,8 @@ export function VerseCard({
           </div>
         ) : null}
       </CornerFrame>
+
+      <VerseActionSheet verse={verse} open={sheetOpen} onClose={() => setSheetOpen(false)} />
 
       {picker ? (
         <HighlightPopover

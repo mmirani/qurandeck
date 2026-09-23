@@ -681,6 +681,41 @@ body::before {
   line-height: 2.05;
 }
 
+@media (max-width: 767px) {
+  .reader-scroll-surface {
+    touch-action: pan-y;
+  }
+
+  .mushaf-arabic-mobile {
+    font-size: clamp(1.35rem, 5vw, 1.75rem);
+    line-height: 2.4;
+  }
+
+  .verse-frame {
+    padding: 1rem 0.25rem;
+  }
+
+  .sana-mobile-pill {
+    animation: sana-pill-pulse 3.2s ease-in-out infinite;
+  }
+}
+
+@keyframes sana-pill-pulse {
+  0%,
+  100% {
+    box-shadow: 0 10px 28px color-mix(in srgb, var(--ink) 12%, transparent);
+  }
+  50% {
+    box-shadow: 0 10px 28px color-mix(in srgb, var(--gold) 28%, transparent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sana-mobile-pill {
+    animation: none;
+  }
+}
+
 .ayah-stack {
   display: flex;
   flex-direction: column;
