@@ -692,7 +692,19 @@ body::before {
   }
 
   .verse-frame {
-    padding: 1rem 0.25rem;
+    padding: 1.25rem 1.125rem;
+  }
+
+  .reader-ayah-body {
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+    padding-top: 0.75rem;
+  }
+
+  .reader-ayah-fit-content {
+    padding-left: 0.125rem;
+    padding-right: 0.125rem;
+    padding-bottom: 0.5rem;
   }
 
   .sana-mobile-fab {
@@ -798,6 +810,12 @@ body::before {
   background: transparent;
   box-shadow: none;
   padding: 0.85rem 0.2rem;
+}
+
+@media (max-width: 767px) {
+  .reader-stream[data-script="ar"] .verse-frame {
+    padding: 1rem 0.85rem;
+  }
 }
 
 .reader-stream[data-script="ar"] article.is-live {

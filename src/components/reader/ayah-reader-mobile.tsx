@@ -72,7 +72,7 @@ export function AyahReaderMobile({ verses, mode }: { verses: Verse[]; mode: stri
         </span>
       </div>
 
-      <div className="reader-ayah-body min-h-0 flex-1 overflow-hidden px-4 pt-2">
+      <div className="reader-ayah-body min-h-0 flex-1 overflow-hidden">
         <VerseCard verse={verse} showSurahLabel={showSurahLabel} ayahFocus />
       </div>
 
