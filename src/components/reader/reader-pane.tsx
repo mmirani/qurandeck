@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import { MushafPage } from "@/components/art/ornaments";
 import { useMushaf } from "@/components/providers/mushaf-provider";
 import { MushafStream } from "@/components/reader/mushaf-stream";
@@ -130,10 +130,7 @@ export function ReaderPane() {
             data-traditional={traditional ? "on" : undefined}
           >
             {mode === "surah" && !preferences.focusMode && preferences.showIntroduction && introduction ? (
-              <section className="rounded-3xl border border-line bg-surface p-5 md:p-6">
-                <h3 className="section-heading text-gold-deep">Introduction</h3>
-                <p className="mt-3 text-base leading-relaxed text-ink">{introduction}</p>
-              </section>
+              <SurahIntroduction introduction={introduction} chapterId={chapter?.id} mobile={mobile} />
             ) : null}
             {traditional ? (
               <MushafPage
@@ -182,5 +179,48 @@ export function ReaderPane() {
         )}
       </div>
     </div>
+  );
+}
+
+function SurahIntroduction({
+  introduction,
+  chapterId,
+  mobile,
+}: {
+  introduction: string;
+  chapterId?: number;
+  mobile: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    setOpen(false);
+  }, [chapterId]);
+
+  if (mobile) {
+    return (
+      <section className="rounded-3xl border border-line bg-surface p-5">
+        <button
+          type="button"
+          onClick={() => setOpen((value) => !value)}
+          aria-expanded={open}
+          className="flex w-full min-h-11 cursor-pointer items-center justify-between gap-3 text-left"
+        >
+          <span className="section-heading text-gold-deep">Introduction</span>
+          <ChevronDown
+            className={`h-5 w-5 shrink-0 text-ink-soft transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+            aria-hidden
+          />
+        </button>
+        {open ? <p className="mt-3 text-base leading-relaxed text-ink">{introduction}</p> : null}
+      </section>
+    );
+  }
+
+  return (
+    <section className="rounded-3xl border border-line bg-surface p-5 md:p-6">
+      <h3 className="section-heading text-gold-deep">Introduction</h3>
+      <p className="mt-3 text-base leading-relaxed text-ink">{introduction}</p>
+    </section>
   );
 }
