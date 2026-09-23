@@ -32,32 +32,34 @@ export function AccountModal() {
   }
   if (modal !== "account") return null;
 
+  const greeting = user?.displayName ? `Assalamu alaykum, ${user.displayName}.` : "Assalamu alaykum.";
+
   return (
-    <Modal eyebrow={PROMISE_LINE} title={user?.displayName ?? "Account"} onClose={closeModal} wide>
-      <div className="space-y-4">
-        <div className="flex flex-wrap items-end justify-between gap-3">
-          <p className="text-sm text-ink-soft">{user?.email ?? "Reading on this device"}</p>
+    <Modal title={greeting} onClose={closeModal} wide>
+      <div>
+        <div className="flex items-center gap-1.5">
+          <div className="flex min-w-0 flex-1 gap-1.5" role="tablist" aria-label="Account">
+            <AccountTabButton active={tab === "progress"} onClick={() => setTab("progress")}>
+              Progress
+            </AccountTabButton>
+            <AccountTabButton active={tab === "saved"} onClick={() => setTab("saved")}>
+              Saved
+            </AccountTabButton>
+            <AccountTabButton active={tab === "settings"} onClick={() => setTab("settings")}>
+              Settings
+            </AccountTabButton>
+          </div>
           {user ? (
             <button
               type="button"
               onClick={signOut}
-              className="h-10 cursor-pointer rounded-full border border-line px-4 text-sm text-ink"
+              className="h-10 shrink-0 cursor-pointer rounded-full border border-line bg-surface px-4 text-sm font-medium text-ink-soft"
             >
               Sign out
             </button>
           ) : null}
         </div>
-        <div className="flex gap-1.5" role="tablist" aria-label="Account">
-          <AccountTabButton active={tab === "progress"} onClick={() => setTab("progress")}>
-            Progress
-          </AccountTabButton>
-          <AccountTabButton active={tab === "saved"} onClick={() => setTab("saved")}>
-            Saved
-          </AccountTabButton>
-          <AccountTabButton active={tab === "settings"} onClick={() => setTab("settings")}>
-            Settings
-          </AccountTabButton>
-        </div>
+        <div className="mt-10 border-t border-line/70 pt-8">
         {tab === "progress" ? <AccountDashboard /> : null}
         {tab === "saved" ? <SavedLibrary /> : null}
         {tab === "settings" ? (
@@ -92,6 +94,7 @@ export function AccountModal() {
             <ReadingSettings />
           </div>
         ) : null}
+        </div>
       </div>
     </Modal>
   );
