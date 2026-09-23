@@ -23,6 +23,7 @@ const KEYS = {
   users: "al-mushaf-users",
   session: "al-mushaf-session",
   progress: "al-mushaf-progress",
+  displayNames: "al-mushaf-display-names",
 } as const;
 
 export const defaultPreferences: Preferences = {
@@ -166,6 +167,25 @@ export function loadProgress(): ReadingProgress {
 
 export function saveProgress(value: ReadingProgress) {
   write(KEYS.progress, value);
+}
+
+export type DisplayProfile = { name: string; updatedAt: string };
+
+export function loadDisplayProfile(email: string): DisplayProfile | null {
+  const value = parse(KEYS.displayNames);
+  if (!value || typeof value !== "object") return null;
+  const profile = (value as Record<string, DisplayProfile>)[email.trim().toLowerCase()];
+  if (!profile || typeof profile.name !== "string" || !profile.name.trim()) return null;
+  return { name: profile.name.trim(), updatedAt: profile.updatedAt || new Date(0).toISOString() };
+}
+
+export function saveDisplayProfile(email: string, name: string) {
+  const key = email.trim().toLowerCase();
+  const current = parse(KEYS.displayNames);
+  const map = current && typeof current === "object" ? { ...(current as Record<string, DisplayProfile>) } : {};
+  map[key] = { name: name.trim(), updatedAt: new Date().toISOString() };
+  write(KEYS.displayNames, map);
+  return map[key];
 }
 
 export function saveSession(value: SessionUser | null) {

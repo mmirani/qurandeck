@@ -25,13 +25,14 @@ type AuthConfig = {
 };
 
 export function AuthModal() {
-  const { modal, closeModal, signOut, user } = useMushaf();
+  const { modal, closeModal, signOut, updateDisplayName, user } = useMushaf();
   const [mode, setMode] = useState<AuthTab>(pendingTab);
   const [open, setOpen] = useState(modal === "auth");
   const [email, setEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [magicUrl, setMagicUrl] = useState<string | null>(null);
+  const [displayName, setDisplayName] = useState("");
   const [busy, setBusy] = useState(false);
   const [config, setConfig] = useState<AuthConfig | null>(null);
 
@@ -59,6 +60,7 @@ export function AuthModal() {
     setError(null);
     setInfo(null);
     setMagicUrl(null);
+    setDisplayName(user?.displayName ?? "");
   } else if (modal !== "auth" && open) {
     setOpen(false);
     pendingTab = "email";
@@ -89,6 +91,36 @@ export function AuthModal() {
           <p className="text-xs text-gold-deep">
             {providerLabel} · {PROMISE_LINE}
           </p>
+          <form
+            className="space-y-2"
+            onSubmit={(event) => {
+              event.preventDefault();
+              const message = updateDisplayName(displayName);
+              setError(message);
+              setInfo(message ? null : "Display name saved.");
+            }}
+          >
+            <label className="block text-sm">
+              Display name
+              <input
+                className="mt-1 h-11 w-full rounded-2xl border border-line bg-surface px-3"
+                value={displayName}
+                onChange={(event) => {
+                  setDisplayName(event.target.value);
+                  setError(null);
+                  setInfo(null);
+                }}
+                maxLength={40}
+                autoComplete="nickname"
+              />
+            </label>
+            <p className="text-xs text-ink-soft">Shown on your reading screens. It does not have to be unique.</p>
+            {error ? <p className="text-sm text-danger">{error}</p> : null}
+            {info ? <p className="text-sm text-gold-deep">{info}</p> : null}
+            <button type="submit" className="h-11 cursor-pointer rounded-full bg-gold px-5 text-sm font-semibold text-on-gold">
+              Save name
+            </button>
+          </form>
           <button
             type="button"
             onClick={signOut}

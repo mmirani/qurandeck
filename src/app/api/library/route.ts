@@ -1,5 +1,6 @@
 import { auth } from "@/auth";
 import { getSql } from "@/lib/db";
+import { validateDisplayName } from "@/lib/display-name";
 import { normalizeLibrary, type LibrarySnapshot } from "@/lib/library";
 
 const MAX_BYTES = 500_000;
@@ -64,6 +65,10 @@ export async function PUT(request: Request) {
 
   const library = normalizeLibrary(body.library);
   if (!library) return Response.json({ error: "Invalid library." }, { status: 400 });
+  if (library.displayName) {
+    const nameError = validateDisplayName(library.displayName);
+    if (nameError) return Response.json({ error: nameError }, { status: 400 });
+  }
 
   try {
     await ensureTable();

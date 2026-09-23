@@ -1,3 +1,4 @@
+import { cleanDisplayName, validateDisplayName } from "@/lib/display-name";
 import { defaultPreferences, preferencesFromUnknown } from "@/lib/storage";
 import { defaultReadingProgress, type ReadingProgress } from "@/lib/reading";
 import type { Bookmark, Highlight, HighlightSwatch, Note, Preferences } from "@/lib/quran/types";
@@ -9,6 +10,8 @@ export type LibrarySnapshot = {
   highlights: Highlight[];
   swatches: HighlightSwatch[];
   progress: ReadingProgress;
+  displayName?: string;
+  displayNameUpdatedAt?: string;
 };
 
 function byId<T extends { id: string }>(items: T[]) {
@@ -46,9 +49,15 @@ export function mergeLibraries(local: LibrarySnapshot, remote: LibrarySnapshot):
   const remoteActive = remote.progress.lastActiveAt ?? 0;
   const preferences = localActive >= remoteActive ? local.preferences : remote.preferences;
   const lastVerseKey = localActive >= remoteActive ? local.progress.lastVerseKey : remote.progress.lastVerseKey;
+  const localNameAt = local.displayNameUpdatedAt ?? "";
+  const remoteNameAt = remote.displayNameUpdatedAt ?? "";
+  const displayName = localNameAt >= remoteNameAt ? local.displayName : remote.displayName;
+  const displayNameUpdatedAt = localNameAt >= remoteNameAt ? local.displayNameUpdatedAt : remote.displayNameUpdatedAt;
 
   return {
     preferences: { ...defaultPreferences, ...preferences },
+    displayName: displayName?.trim() || undefined,
+    displayNameUpdatedAt: displayNameUpdatedAt || undefined,
     bookmarks: [...verseBookmarks.values(), ...wordBookmarks.values(), ...byId(otherBookmarks)],
     notes: [...notes.values()],
     highlights: byId([...remote.highlights, ...local.highlights]),
@@ -62,6 +71,16 @@ export function mergeLibraries(local: LibrarySnapshot, remote: LibrarySnapshot):
       lastVerseKey,
       lastActiveAt: Math.max(localActive, remoteActive) || null,
     },
+  };
+}
+
+function safeDisplayName(name: unknown, updatedAt: unknown) {
+  if (typeof name !== "string") return {};
+  const displayName = cleanDisplayName(name).slice(0, 40);
+  if (!displayName || validateDisplayName(displayName)) return {};
+  return {
+    displayName,
+    displayNameUpdatedAt: typeof updatedAt === "string" ? updatedAt : undefined,
   };
 }
 
@@ -92,6 +111,7 @@ export function normalizeLibrary(value: unknown): LibrarySnapshot | null {
       surahsRead: Array.isArray(raw.progress?.surahsRead) ? raw.progress.surahsRead : [],
       versesRead: Array.isArray(raw.progress?.versesRead) ? raw.progress.versesRead : [],
     },
+    ...safeDisplayName(raw.displayName, raw.displayNameUpdatedAt),
   };
 }
 

@@ -7,11 +7,13 @@ import {
   loadHighlights,
   loadNotes,
   loadPreferences,
+  loadDisplayProfile,
   loadProgress,
   loadSwatches,
 } from "@/lib/storage";
 
-function localLibrary(): LibrarySnapshot {
+function localLibrary(email?: string): LibrarySnapshot {
+  const profile = email ? loadDisplayProfile(email) : null;
   return {
     preferences: loadPreferences(),
     bookmarks: loadBookmarks(),
@@ -19,6 +21,8 @@ function localLibrary(): LibrarySnapshot {
     highlights: loadHighlights(),
     swatches: loadSwatches(),
     progress: loadProgress(),
+    displayName: profile?.name,
+    displayNameUpdatedAt: profile?.updatedAt,
   };
 }
 
@@ -66,9 +70,9 @@ export function LibrarySync({
     void (async () => {
       const remote = await pullLibrary();
       if (cancelled || remote === undefined) return;
-      if (remote) onApplyRef.current(mergeLibraries(localLibrary(), remote));
+      if (remote) onApplyRef.current(mergeLibraries(localLibrary(normalized), remote));
       readyEmail.current = normalized;
-      if (!remote) void pushLibrary(localLibrary());
+      if (!remote) void pushLibrary(localLibrary(normalized));
     })();
 
     return () => {

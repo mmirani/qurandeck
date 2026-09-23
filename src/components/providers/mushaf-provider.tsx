@@ -51,6 +51,7 @@ import {
   loadNotes,
   loadPreferences,
   loadProgress,
+  loadDisplayProfile,
   loadSession,
   loadSwatches,
   saveBookmarks,
@@ -58,9 +59,11 @@ import {
   saveNotes,
   savePreferences,
   saveProgress,
+  saveDisplayProfile,
   saveSession,
   saveSwatches,
 } from "@/lib/storage";
+import { cleanDisplayName, validateDisplayName } from "@/lib/display-name";
 import { layoutSignals, appliedTheme } from "@/lib/appearance";
 import {
   addReadingSeconds,
@@ -172,6 +175,7 @@ type MushafContextValue = {
   removeSwatch: (id: string) => void;
   signOut: () => void;
   applyLibrary: (library: LibrarySnapshot) => void;
+  updateDisplayName: (name: string) => string | null;
   offerResume: boolean;
   clearResume: () => void;
 };
@@ -251,6 +255,8 @@ export function MushafProvider({ children }: { children: ReactNode }) {
 
     if (authSession?.user?.id) {
       const mapped = sessionUserFromAuth(authSession);
+      const profile = mapped.email ? loadDisplayProfile(mapped.email) : null;
+      if (profile) mapped.displayName = profile.name;
       saveSession(mapped);
       setUser(mapped);
       setHydrated(true);
@@ -884,12 +890,45 @@ export function MushafProvider({ children }: { children: ReactNode }) {
     setHighlights(library.highlights);
     setSwatches(library.swatches.length ? library.swatches : defaultSwatches);
     setProgress(library.progress);
+    setUser((current) => {
+      if (!current?.email || !library.displayName || validateDisplayName(library.displayName)) return current;
+      const profile = {
+        name: cleanDisplayName(library.displayName),
+        updatedAt: library.displayNameUpdatedAt || new Date().toISOString(),
+      };
+      const key = current.email.trim().toLowerCase();
+      const existing = loadDisplayProfile(key);
+      if (!existing || profile.updatedAt >= existing.updatedAt) {
+        const saved = saveDisplayProfile(key, profile.name);
+        return { ...current, displayName: saved.name };
+      }
+      return { ...current, displayName: existing.name };
+    });
   }, []);
 
-  const librarySnapshot = useMemo<LibrarySnapshot>(
-    () => ({ preferences, bookmarks, notes, highlights, swatches, progress }),
-    [bookmarks, highlights, notes, preferences, progress, swatches],
-  );
+  const updateDisplayName = useCallback((name: string) => {
+    const error = validateDisplayName(name);
+    if (error) return error;
+    const email = user?.email?.trim().toLowerCase();
+    if (!email) return "Sign in to set a display name.";
+    const saved = saveDisplayProfile(email, cleanDisplayName(name));
+    setUser((current) => (current ? { ...current, displayName: saved.name } : current));
+    return null;
+  }, [user?.email]);
+
+  const librarySnapshot = useMemo<LibrarySnapshot>(() => {
+    const profile = user?.email ? loadDisplayProfile(user.email) : null;
+    return {
+      preferences,
+      bookmarks,
+      notes,
+      highlights,
+      swatches,
+      progress,
+      displayName: profile?.name,
+      displayNameUpdatedAt: profile?.updatedAt,
+    };
+  }, [bookmarks, highlights, notes, preferences, progress, swatches, user?.displayName, user?.email]);
 
   const value = useMemo<MushafContextValue>(
     () => ({
@@ -967,12 +1006,14 @@ export function MushafProvider({ children }: { children: ReactNode }) {
       removeSwatch,
       signOut,
       applyLibrary,
+      updateDisplayName,
       offerResume: resumeCue,
       clearResume: () => setResumeCue(false),
     }),
     [
       addSwatch,
       applyLibrary,
+      updateDisplayName,
       applyFilters,
       bookmarks,
       chapter,
