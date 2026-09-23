@@ -81,9 +81,9 @@ function HomeNav({ signedIn }: { signedIn: boolean }) {
   return (
     <header className="fixed inset-x-0 top-0 z-50 border-b border-line/70 bg-canvas/95 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-6xl items-center gap-3 px-4 sm:px-6">
-        <Link href="/" className="flex min-w-0 cursor-pointer items-center gap-2 text-gold">
-          <MihrabMark className="h-6 w-6 shrink-0 sm:h-7 sm:w-7" />
-          <span className="truncate font-display text-lg font-semibold leading-none tracking-tight text-ink sm:text-xl">
+        <Link href="/" className="flex min-w-0 cursor-pointer items-center gap-2.5 text-gold">
+          <MihrabMark className="h-7 w-7 shrink-0 sm:h-8 sm:w-8" />
+          <span className="truncate font-display text-2xl font-semibold leading-none tracking-tight text-ink sm:text-3xl">
             {PRODUCT_NAME}
           </span>
         </Link>
