@@ -9,7 +9,7 @@ import { PROMISE_LINE, PROMISE_STORY } from "@/lib/brand";
 
 type AuthTab = "social" | "email";
 
-let pendingTab: AuthTab = "social";
+let pendingTab: AuthTab = "email";
 
 export function requestAuthTab(tab: AuthTab) {
   pendingTab = tab;
@@ -19,6 +19,7 @@ type AuthConfig = {
   google: boolean;
   github: boolean;
   email: boolean;
+  emailDelivery?: "resend" | "link";
   publicSignup: boolean;
   hasSecret: boolean;
 };
@@ -30,6 +31,7 @@ export function AuthModal() {
   const [email, setEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
+  const [magicUrl, setMagicUrl] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [config, setConfig] = useState<AuthConfig | null>(null);
 
@@ -38,7 +40,10 @@ export function AuthModal() {
     void fetch("/api/auth/config")
       .then((response) => response.json())
       .then((data: AuthConfig) => {
-        if (!cancelled) setConfig(data);
+        if (!cancelled) {
+          setConfig(data);
+          if (!data.google && !data.github && data.email) setMode("email");
+        }
       })
       .catch(() => {
         if (!cancelled) setConfig(null);
@@ -53,15 +58,16 @@ export function AuthModal() {
     setMode(pendingTab);
     setError(null);
     setInfo(null);
+    setMagicUrl(null);
   } else if (modal !== "auth" && open) {
     setOpen(false);
-    pendingTab = "social";
+    pendingTab = "email";
   }
 
   if (modal !== "auth") return null;
 
   const title = user ? "Your account" : "Sign in";
-  const anyProvider = Boolean(config?.google || config?.github || config?.email);
+  const hasSocial = Boolean(config?.google || config?.github);
 
   const providerLabel = (() => {
     if (user?.provider === "google") return "Google";
@@ -102,12 +108,6 @@ export function AuthModal() {
             </p>
           ) : null}
 
-          {!anyProvider && config?.hasSecret ? (
-            <p className="rounded-2xl border border-line bg-surface px-3 py-2 text-xs text-ink-soft">
-              Add Google, GitHub, or Resend email keys in Vercel to enable sign-in.
-            </p>
-          ) : null}
-
           {config && !config.publicSignup ? (
             <p className="text-xs text-ink-soft">
               Beta is invite-only.{" "}
@@ -118,7 +118,7 @@ export function AuthModal() {
             </p>
           ) : null}
 
-          {config?.email ? (
+          {config?.email && hasSocial ? (
             <div className="flex gap-2">
               <button
                 type="button"
@@ -145,16 +145,43 @@ export function AuthModal() {
                 setBusy(true);
                 setError(null);
                 setInfo(null);
-                const result = await signIn("resend", { email: email.trim(), redirect: false, callbackUrl: "/read" });
-                setBusy(false);
-                if (result?.error) {
-                  setError("Could not send sign-in link. Check your invite access and email.");
-                  return;
+                setMagicUrl(null);
+                try {
+                  const response = await fetch("/api/auth/magic-link", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email: email.trim() }),
+                  });
+                  const data = (await response.json()) as {
+                    ok?: boolean;
+                    error?: string;
+                    emailed?: boolean;
+                    url?: string;
+                  };
+                  if (!response.ok || !data.ok) {
+                    setError(data.error ?? "Could not create sign-in link.");
+                    return;
+                  }
+                  if (data.emailed) {
+                    setInfo("Check your inbox for a secure sign-in link (15 minutes).");
+                    return;
+                  }
+                  if (data.url) {
+                    setMagicUrl(data.url);
+                    setInfo("Beta mode: open this one-time link on this device to finish sign-in.");
+                  }
+                } catch {
+                  setError("Network error. Try again.");
+                } finally {
+                  setBusy(false);
                 }
-                setInfo("Check your inbox for a secure sign-in link.");
               }}
             >
-              <p className="text-xs text-ink-soft">No password — we email you a one-time link.</p>
+              <p className="text-xs text-ink-soft">
+                {config.emailDelivery === "resend"
+                  ? "No password — we email you a one-time link."
+                  : "No password — we generate a one-time link for you (add Resend on Vercel to email it automatically)."}
+              </p>
               <label className="block text-sm">
                 Email
                 <input
@@ -168,12 +195,20 @@ export function AuthModal() {
               </label>
               {error ? <p className="text-sm text-danger">{error}</p> : null}
               {info ? <p className="text-sm text-gold-deep">{info}</p> : null}
+              {magicUrl ? (
+                <a
+                  href={magicUrl}
+                  className="flex h-12 w-full items-center justify-center rounded-full border border-gold/40 bg-accent-soft text-sm font-semibold text-gold-deep"
+                >
+                  Open sign-in link
+                </a>
+              ) : null}
               <button
                 type="submit"
                 disabled={busy}
                 className="h-14 w-full cursor-pointer rounded-full bg-gold text-lg text-on-gold disabled:opacity-50"
               >
-                {busy ? "Sending…" : "Email me a sign-in link"}
+                {busy ? "Working…" : "Get sign-in link"}
               </button>
             </form>
           ) : (

@@ -1,9 +1,10 @@
 import NextAuth from "next-auth";
 import type { NextAuthConfig } from "next-auth";
+import Credentials from "next-auth/providers/credentials";
 import GitHub from "next-auth/providers/github";
 import Google from "next-auth/providers/google";
-import Resend from "next-auth/providers/resend";
 import { cookies } from "next/headers";
+import { verifyMagicToken } from "@/lib/magic-link";
 
 const BETA_COOKIE = "qurandeck-beta";
 
@@ -18,10 +19,24 @@ function buildProviders() {
     providers.push(GitHub);
   }
 
-  if (process.env.AUTH_RESEND_KEY) {
+  if (process.env.AUTH_SECRET) {
     providers.push(
-      Resend({
-        from: process.env.AUTH_EMAIL_FROM ?? "QuranDeck <onboarding@resend.dev>",
+      Credentials({
+        id: "magic-link",
+        name: "Email link",
+        credentials: {
+          token: { type: "text" },
+        },
+        async authorize(credentials) {
+          const secret = process.env.AUTH_SECRET;
+          const token = credentials?.token;
+          if (!secret || typeof token !== "string") return null;
+          const email = verifyMagicToken(token, secret);
+          if (!email) return null;
+          const local = email.split("@")[0] ?? email;
+          const name = local.replace(/[._-]+/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+          return { id: email, email, name };
+        },
       }),
     );
   }
@@ -57,7 +72,12 @@ export const authConfig = {
     async signIn({ user }) {
       return canSignUp(user.email);
     },
-    async jwt({ token, account, profile }) {
+    async jwt({ token, account, profile, user }) {
+      if (user) {
+        token.sub = user.id ?? token.sub;
+        token.email = user.email ?? token.email;
+        token.authProvider = account?.provider ?? "magic-link";
+      }
       if (account?.provider) token.authProvider = account.provider;
       if (profile?.email && !token.email) token.email = profile.email;
       return token;

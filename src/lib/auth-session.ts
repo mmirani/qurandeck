@@ -9,7 +9,7 @@ function displayNameFromEmail(email: string) {
 function mapProvider(id?: string): SessionUser["provider"] {
   if (id === "google") return "google";
   if (id === "github") return "github";
-  if (id === "resend") return "email";
+  if (id === "resend" || id === "magic-link" || id === "email") return "email";
   return "oauth";
 }
 
