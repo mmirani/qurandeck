@@ -55,46 +55,60 @@ function subscribeTheme(onChange: () => void) {
 
 export function SanaCompanion({
   mobileDock = false,
-  audioPlaying = false,
+  audioBarVisible = false,
 }: {
   mobileDock?: boolean;
-  audioPlaying?: boolean;
+  audioBarVisible?: boolean;
 }) {
-  if (mobileDock) return <SanaMobileDock audioPlaying={audioPlaying} />;
+  if (mobileDock) return <SanaMobileDock audioBarVisible={audioBarVisible} />;
   return <SanaFloatingCompanion />;
 }
 
-function SanaMobileDock({ audioPlaying }: { audioPlaying: boolean }) {
+function SanaMobileDock({ audioBarVisible }: { audioBarVisible: boolean }) {
   const { selectedVerseKey } = useMushaf();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [peek, setPeek] = useState(false);
   const filter = useSyncExternalStore(subscribeTheme, companionFilterFromDocument, () => "none");
+
+  const closeSheet = () => {
+    setMobileOpen(false);
+    setPeek(false);
+  };
 
   return (
     <>
       <button
         type="button"
-        className={`sana-mobile-pill fixed right-4 z-40 inline-flex h-12 min-h-11 cursor-pointer items-center gap-2 rounded-full border border-gold/35 bg-surface/95 px-3 shadow-[0_10px_28px_rgba(15,23,42,0.14)] backdrop-blur-md md:hidden ${
-          audioPlaying ? "bottom-[4.75rem]" : "bottom-4"
-        }`}
+        className={`sana-mobile-fab fixed right-3 z-40 inline-flex cursor-pointer items-center rounded-full border border-gold/30 bg-surface/95 shadow-[0_6px_18px_rgba(15,23,42,0.12)] backdrop-blur-md transition-[width,padding,gap] duration-200 md:hidden ${
+          peek ? "h-11 gap-2 px-3" : "h-10 w-10 justify-center p-0"
+        } ${audioBarVisible ? "bottom-[4.25rem]" : "bottom-3"}`}
         style={{ touchAction: "manipulation" }}
         aria-label={`Open ${COMPANION_NAME}`}
-        onClick={() => setMobileOpen(true)}
+        aria-expanded={peek || mobileOpen}
+        onClick={() => {
+          if (!peek) {
+            setPeek(true);
+            window.setTimeout(() => setMobileOpen(true), 160);
+            return;
+          }
+          setMobileOpen(true);
+        }}
       >
         <Image
           src={NUR_SRC}
           alt={companionAlt}
-          width={32}
-          height={32}
-          className="nur-face h-8 w-8 object-contain"
+          width={24}
+          height={24}
+          className="nur-face h-6 w-6 shrink-0 object-contain"
           style={{ filter }}
         />
-        <span className="text-sm font-semibold text-ink">{COMPANION_NAME}</span>
+        {peek ? <span className="text-xs font-semibold text-ink">{COMPANION_NAME}</span> : null}
       </button>
-      <BottomSheet open={mobileOpen} onClose={() => setMobileOpen(false)} title={COMPANION_NAME}>
+      <BottomSheet open={mobileOpen} onClose={closeSheet} title={COMPANION_NAME}>
         {selectedVerseKey ? (
           <p className="border-b border-line/60 px-4 pb-3 text-sm text-ink-soft">Near ayah {selectedVerseKey}</p>
         ) : null}
-        <SanaGuidePanel onClose={() => setMobileOpen(false)} onRest={() => setMobileOpen(false)} />
+        <SanaGuidePanel onClose={closeSheet} onRest={closeSheet} />
       </BottomSheet>
     </>
   );

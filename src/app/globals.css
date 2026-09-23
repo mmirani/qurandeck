@@ -695,24 +695,8 @@ body::before {
     padding: 1rem 0.25rem;
   }
 
-  .sana-mobile-pill {
-    animation: sana-pill-pulse 3.2s ease-in-out infinite;
-  }
-}
-
-@keyframes sana-pill-pulse {
-  0%,
-  100% {
-    box-shadow: 0 10px 28px color-mix(in srgb, var(--ink) 12%, transparent);
-  }
-  50% {
-    box-shadow: 0 10px 28px color-mix(in srgb, var(--gold) 28%, transparent);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .sana-mobile-pill {
-    animation: none;
+  .sana-mobile-fab {
+    max-width: calc(100% - 1.5rem);
   }
 }
 

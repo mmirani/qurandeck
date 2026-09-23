@@ -1,6 +1,6 @@
 "use client";
 
-import { Pause, Play, SkipBack, SkipForward } from "lucide-react";
+import { Pause, Play, SkipBack, SkipForward, X } from "lucide-react";
 import { useMushaf } from "@/components/providers/mushaf-provider";
 import { StyledSelect } from "@/components/ui/styled-select";
 import { ArabesqueDivider } from "@/components/art/ornaments";
@@ -17,9 +17,11 @@ function formatTime(value: number) {
 export function AudioPlayer({
   variant = "rail",
   mobileSticky = false,
+  onDismiss,
 }: {
   variant?: "rail" | "dock";
   mobileSticky?: boolean;
+  onDismiss?: () => void;
 }) {
   const {
     recitations,
@@ -115,11 +117,21 @@ export function AudioPlayer({
         <StyledSelect
           tone="surface"
           compact
-          className="w-[4.75rem] shrink-0"
+          className={`w-[4.75rem] shrink-0 ${mobileSticky ? "hidden" : ""}`}
           value={String(preferences.playbackRate)}
           onChange={(next) => updatePreferences({ playbackRate: Number(next) })}
           options={speedOptions}
         />
+        {onDismiss ? (
+          <button
+            type="button"
+            onClick={onDismiss}
+            aria-label="Close audio player"
+            className="inline-flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full border border-line text-ink-soft hover:bg-highlight"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        ) : null}
       </section>
     );
   }

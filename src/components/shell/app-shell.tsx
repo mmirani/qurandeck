@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { BookOpen } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 import { SurahSidebar } from "@/components/sidebar/surah-sidebar";
 import { StudySidebar } from "@/components/sidebar/study-sidebar";
@@ -23,6 +22,7 @@ export function AppShell() {
   const [navOpen, setNavOpen] = useState(false);
   const [studyOpen, setStudyOpen] = useState(false);
   const { preferences, isPlaying, togglePlay } = useMushaf();
+  const [audioDismissed, setAudioDismissed] = useState(false);
   const focus = preferences.focusMode;
   const { md: isMd, xl: isXl, xxl: is2xl } = useBreakpoints();
   const mobile = useMobileReader();
@@ -43,6 +43,13 @@ export function AppShell() {
   useEffect(() => {
     if (book && isPlaying) togglePlay();
   }, [book, isPlaying, togglePlay]);
+
+  useEffect(() => {
+    if (isPlaying) setAudioDismissed(false);
+  }, [isPlaying]);
+
+  const showMobileAudio = mobile && !focus && isPlaying && !audioDismissed;
+  const showDesktopDock = !mobile && !focus;
 
   return (
     <GuideProvider>
@@ -89,23 +96,34 @@ export function AppShell() {
             </RailColumn>
           </div>
 
-          {book ? null : (
+          {book ? null : showMobileAudio || showDesktopDock || focus ? (
             <div
               className={`fixed z-30 ${
-                mobile
-                  ? isPlaying
-                    ? "bottom-0 left-0 right-0"
-                    : "bottom-3 left-3 right-3"
+                showMobileAudio
+                  ? "bottom-0 left-0 right-0"
                   : focus
                     ? "bottom-5 left-1/2 w-[min(calc(100%-1.5rem),42rem)] -translate-x-1/2"
                     : "bottom-20 left-3 right-3 xl:hidden"
-              }`}
+              } ${showMobileAudio || showDesktopDock || focus ? "" : "hidden"}`}
             >
-              <AudioPlayer variant="dock" mobileSticky={mobile && isPlaying} />
+              <AudioPlayer
+                variant="dock"
+                mobileSticky={showMobileAudio}
+                onDismiss={
+                  showMobileAudio
+                    ? () => {
+                        setAudioDismissed(true);
+                        if (isPlaying) togglePlay();
+                      }
+                    : undefined
+                }
+              />
             </div>
-          )}
+          ) : null}
 
-          {book ? null : <SanaCompanion mobileDock={mobile && !focus} audioPlaying={mobile && isPlaying} />}
+          {book ? null : (
+            <SanaCompanion mobileDock={mobile && !focus} audioBarVisible={showMobileAudio} />
+          )}
 
           <BottomSheet open={navOpen && !focus} onClose={() => setNavOpen(false)} title="Surahs & Juz">
             <SurahSidebar />
