@@ -37,29 +37,27 @@ export function AccountModal() {
   return (
     <Modal title={greeting} onClose={closeModal} wide>
       <div>
-        <div className="flex items-center gap-1.5">
-          <div className="flex min-w-0 flex-1 gap-1.5" role="tablist" aria-label="Account">
-            <AccountTabButton active={tab === "progress"} onClick={() => setTab("progress")}>
-              Progress
-            </AccountTabButton>
-            <AccountTabButton active={tab === "saved"} onClick={() => setTab("saved")}>
-              Saved
-            </AccountTabButton>
-            <AccountTabButton active={tab === "settings"} onClick={() => setTab("settings")}>
-              Settings
-            </AccountTabButton>
-          </div>
+        <div className={`grid gap-1.5 ${user ? "grid-cols-4" : "grid-cols-3"}`} role="tablist" aria-label="Account">
+          <AccountTabButton active={tab === "progress"} onClick={() => setTab("progress")}>
+            Progress
+          </AccountTabButton>
+          <AccountTabButton active={tab === "saved"} onClick={() => setTab("saved")}>
+            Saved
+          </AccountTabButton>
+          <AccountTabButton active={tab === "settings"} onClick={() => setTab("settings")}>
+            Settings
+          </AccountTabButton>
           {user ? (
             <button
               type="button"
               onClick={signOut}
-              className="h-10 shrink-0 cursor-pointer rounded-full border border-line bg-surface px-4 text-sm font-medium text-ink-soft"
+              className="h-10 cursor-pointer whitespace-nowrap rounded-full border border-line bg-surface px-1 text-xs font-medium text-ink-soft sm:text-sm"
             >
               Sign out
             </button>
           ) : null}
         </div>
-        <div className="mt-10 border-t border-line/70 pt-8">
+        <div className="mt-12 border-t border-line/70 pt-10">
         {tab === "progress" ? <AccountDashboard /> : null}
         {tab === "saved" ? <SavedLibrary /> : null}
         {tab === "settings" ? (
@@ -227,7 +225,7 @@ function AccountTabButton({
       role="tab"
       aria-selected={active}
       onClick={onClick}
-      className={`h-10 flex-1 cursor-pointer rounded-full text-sm font-medium ${
+      className={`h-10 cursor-pointer whitespace-nowrap rounded-full px-1 text-xs font-medium sm:text-sm ${
         active ? "bg-gold text-on-gold" : "border border-line bg-surface text-ink-soft"
       }`}
     >
