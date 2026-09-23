@@ -56,7 +56,7 @@ export function SurahSidebar() {
             className="flex min-w-0 cursor-pointer items-center gap-3 text-ink hover:text-gold-deep"
             aria-label={`${PRODUCT_DISPLAY} home`}
           >
-            <MihrabMark className="h-11 w-11 shrink-0 text-gold" />
+            <MihrabMark className="h-11 w-11 shrink-0" />
             <span className="truncate font-display text-2xl font-semibold tracking-tight leading-none">
               {PRODUCT_DISPLAY}
             </span>

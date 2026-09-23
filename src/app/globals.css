@@ -144,6 +144,10 @@
   --radius: 10px;
 }
 
+html {
+  --companion-gold: var(--gold);
+}
+
 [data-theme="iris"] {
   --canvas: #e4dcff;
   --surface: #faf8ff;
@@ -155,6 +159,7 @@
   --accent: #06b6d4;
   --accent-soft: #a5f3fc;
   --gold: #7c3aed;
+  --companion-gold: #0f766e;
   --gold-deep: #5b21b6;
   --line: #c4b5fd;
   --highlight: #ede9fe;
@@ -945,6 +950,10 @@ body::before {
 :focus-visible {
   outline: 2px solid var(--gold);
   outline-offset: 3px;
+}
+
+.text-companion-gold {
+  color: var(--companion-gold);
 }
 
 [data-theme="iris"] .nur-halo,

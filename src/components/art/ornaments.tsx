@@ -108,10 +108,10 @@ export function MushafPage({
   );
 }
 
-export function MihrabMark({ className = "h-8 w-8 text-gold" }: { className?: string }) {
+export function MihrabMark({ className = "h-8 w-8" }: { className?: string }) {
   return (
     <span
-      className={`inline-block bg-current ${className}`}
+      className={`inline-block bg-current text-companion-gold ${className}`}
       style={{
         WebkitMaskImage: "url(/qd-mark.png)",
         maskImage: "url(/qd-mark.png)",
