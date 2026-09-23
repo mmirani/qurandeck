@@ -65,7 +65,7 @@ export function HomePage() {
   return (
     <div className="min-h-dvh overflow-x-hidden bg-canvas text-ink">
       <HomeNav signedIn={Boolean(hydrated && user)} />
-      <main id="main-content" className="pt-16">
+      <main id="main-content" className="pt-14 md:pt-16">
         {!hydrated ? <HomeHeroSkeleton /> : user ? <HomeSignedIn /> : <HomeGuestHero />}
         <HomeSana />
         <HomeFeatures />
@@ -81,24 +81,35 @@ export function HomePage() {
 function HomeNav({ signedIn }: { signedIn: boolean }) {
   return (
     <header className="fixed inset-x-0 top-0 z-50 border-b border-line/70 bg-canvas/95 backdrop-blur-md">
-      <div className="mx-auto flex h-16 max-w-6xl items-center gap-3 px-4 sm:px-6">
-        <Link href="/" className="flex min-w-0 cursor-pointer items-center gap-2.5">
-          <MihrabMark className="h-7 w-7 shrink-0 sm:h-8 sm:w-8" />
-          <BrandWordmark className="truncate text-2xl leading-none sm:text-3xl" />
+      <div className="mx-auto flex h-14 min-h-14 max-w-6xl items-center gap-2 px-4 sm:gap-3 sm:px-6 md:h-16 md:min-h-16">
+        <Link href="/" className="flex min-w-0 cursor-pointer items-center gap-2 sm:gap-2.5">
+          <MihrabMark className="h-6 w-6 shrink-0 sm:h-7 sm:w-7 md:h-8 md:w-8" />
+          <BrandWordmark className="truncate text-xl leading-none sm:text-2xl md:text-3xl" />
         </Link>
         <div className="ml-auto flex shrink-0 items-center justify-end gap-2">
           {signedIn ? (
             <>
               <Link
                 href="/read"
-                className="inline-flex h-11 cursor-pointer items-center rounded-full border border-gold/40 px-4 text-sm font-medium text-gold-deep hover:bg-highlight"
+                className="inline-flex h-11 min-h-11 cursor-pointer items-center rounded-full border border-gold/40 px-4 text-sm font-medium text-gold-deep hover:bg-highlight"
               >
-                Open mushaf
+                <span className="hidden sm:inline">Open mushaf</span>
+                <span className="sm:hidden">Read</span>
               </Link>
               <UserMenu />
             </>
           ) : (
-            <GuestAuthButtons size="nav" />
+            <>
+              <Link
+                href="/read"
+                className="inline-flex h-11 min-h-11 shrink-0 cursor-pointer items-center rounded-full bg-gold px-4 text-sm font-semibold text-on-gold md:hidden"
+              >
+                Start Reading
+              </Link>
+              <div className="hidden md:flex">
+                <GuestAuthButtons size="nav" />
+              </div>
+            </>
           )}
         </div>
       </div>
@@ -110,19 +121,19 @@ function HomeGuestHero() {
   const { openModal } = useMushaf();
 
   return (
-    <section className="mx-auto grid max-w-6xl gap-10 px-4 py-12 sm:px-6 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:items-center lg:py-16">
-      <div>
-        <h1 className="max-w-xl font-display text-4xl font-semibold tracking-tight text-ink sm:text-5xl lg:text-[3.25rem] lg:leading-[1.08]">
+    <section className="mx-auto grid max-w-6xl gap-8 px-4 py-8 sm:px-6 sm:py-10 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:items-center lg:gap-10 lg:py-16">
+      <div className="min-w-0 text-center md:text-left">
+        <h1 className="mx-auto max-w-xl font-display text-[clamp(2rem,6vw,2.5rem)] font-semibold leading-tight tracking-tight text-ink sm:text-4xl md:mx-0 lg:text-[3.25rem] lg:leading-[1.08]">
           A personal mushaf for {WORK_TITLE}
         </h1>
-        <p className="mt-4 max-w-lg text-base leading-7 text-ink-soft sm:text-lg">
+        <p className="mx-auto mt-3 max-w-lg text-base leading-7 text-ink-soft sm:mt-4 sm:text-lg md:mx-0">
           Search, recitation, notes, and a reading place that stays with you. Sleek enough for daily use. Free, private,
           forever.
         </p>
-        <div className="mt-7 flex flex-wrap items-center gap-x-5 gap-y-3">
+        <div className="mx-auto mt-6 flex max-w-md flex-col items-stretch gap-3 sm:mt-7 md:mx-0 md:max-w-none md:flex-row md:flex-wrap md:items-center md:gap-x-5">
           <Link
             href="/read"
-            className="inline-flex h-12 cursor-pointer items-center rounded-full bg-gold px-6 text-base font-semibold text-on-gold"
+            className="inline-flex h-[3.25rem] min-h-11 w-full cursor-pointer items-center justify-center rounded-full bg-gold px-6 text-base font-semibold text-on-gold md:w-auto"
           >
             Start Reading — Free
           </Link>
@@ -132,14 +143,16 @@ function HomeGuestHero() {
               requestAuthTab("signin");
               openModal("auth");
             }}
-            className="cursor-pointer text-sm font-medium text-ink-soft underline-offset-4 transition hover:text-ink hover:underline"
+            className="hidden min-h-11 cursor-pointer items-center justify-center text-sm font-medium text-ink-soft underline-offset-4 transition hover:text-ink hover:underline md:inline-flex"
           >
             Sign In
           </button>
         </div>
-        <p className="mt-4 text-sm text-muted">Free • Private • No ads or tracking</p>
+        <p className="mt-3 text-center text-sm text-muted md:text-left">Free • Private • No ads or tracking</p>
       </div>
-      <HomePreview />
+      <div className="min-w-0">
+        <HomePreview />
+      </div>
     </section>
   );
 }
@@ -415,8 +428,38 @@ function GuestAuthButtons({ size }: { size: "nav" | "hero" | "cta" }) {
 }
 
 function HomeFooter() {
+  const { user, hydrated, openModal } = useMushaf();
+  const showGuestLinks = hydrated && !user;
+
   return (
     <footer className="border-t border-line/70">
+      {showGuestLinks ? (
+        <div className="border-b border-line/60 bg-canvas/80 px-4 py-4 text-center md:hidden">
+          <button
+            type="button"
+            onClick={() => {
+              requestAuthTab("signin");
+              openModal("auth");
+            }}
+            className="min-h-11 cursor-pointer text-sm font-medium text-ink-soft underline-offset-4 hover:text-ink hover:underline"
+          >
+            Sign In
+          </button>
+          <span className="mx-2 text-muted" aria-hidden="true">
+            ·
+          </span>
+          <button
+            type="button"
+            onClick={() => {
+              requestAuthTab("signup");
+              openModal("auth");
+            }}
+            className="min-h-11 cursor-pointer text-sm font-medium text-gold-deep underline-offset-4 hover:underline"
+          >
+            Create account
+          </button>
+        </div>
+      ) : null}
       <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-8 text-sm text-ink-soft sm:px-6">
         <p>
           {PRODUCT_NAME} · {WORK_TITLE}

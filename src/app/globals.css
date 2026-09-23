@@ -1266,6 +1266,65 @@ body::before {
   height: 12px;
 }
 
+.nur-stage.is-demo-interactive {
+  touch-action: pan-y;
+}
+
+.nur-stage.is-demo-interactive .nur-orb {
+  touch-action: manipulation;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.nur-stage.is-demo-interactive .nur-orb.is-demo-idle {
+  animation: nur-bob 3.8s ease-in-out infinite;
+}
+
+@media (max-width: 767px) {
+  .nur-stage.is-demo-interactive .nur-orb.is-demo-idle {
+    animation: none;
+  }
+}
+
+.nur-stage.is-demo-interactive .nur-orb.is-tapped {
+  animation: nur-tap-bounce 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.nur-demo-bubble {
+  position: absolute;
+  top: -0.35rem;
+  left: 50%;
+  z-index: 2;
+  translate: -50% -100%;
+  white-space: nowrap;
+  border-radius: 999px;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--ink);
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  box-shadow: 0 8px 20px color-mix(in srgb, var(--ink) 12%, transparent);
+  pointer-events: none;
+}
+
+@keyframes nur-tap-bounce {
+  0% {
+    transform: translateY(0) scale(1);
+  }
+  35% {
+    transform: translateY(-10px) scale(1.04);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (max-width: 767px) {
+  .home-preview {
+    box-shadow: 0 16px 40px color-mix(in srgb, var(--ink) 10%, transparent);
+  }
+}
+
 .tour-root {
   position: fixed;
   inset: 0;

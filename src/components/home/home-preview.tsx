@@ -14,7 +14,7 @@ export function HomePreview() {
   return (
     <div
       aria-hidden="true"
-      className="home-preview pointer-events-none relative select-none overflow-hidden rounded-[1.75rem] border border-line bg-canvas shadow-[0_28px_70px_rgba(15,23,42,0.14)]"
+      className="home-preview pointer-events-none relative mx-auto w-full max-w-sm select-none overflow-hidden rounded-[1.75rem] border border-line bg-canvas shadow-[0_28px_70px_rgba(15,23,42,0.14)] md:max-w-none"
     >
       <div className="flex gap-2 p-2 sm:p-2.5">
         <aside className="hidden w-[9.5rem] shrink-0 flex-col rounded-2xl bg-surface p-3 shadow-[0_8px_24px_rgba(15,23,42,0.06)] md:flex lg:w-44">
@@ -60,22 +60,24 @@ export function HomePreview() {
 
         <article className="min-w-0 flex-1 overflow-hidden rounded-2xl border border-line/80 bg-surface">
           <div className="border-b border-line/40 bg-canvas/90 px-3 py-3 sm:px-5">
-            <div className="flex h-9 items-center gap-2 rounded-full border border-line bg-surface px-3 text-[11px] text-muted">
+            <div className="flex min-h-10 items-center gap-2 rounded-full border border-line bg-surface px-3 py-2 text-[11px] text-muted">
               Search by word, theme, or verse
             </div>
             <div className="mt-3 flex flex-wrap items-center gap-2">
-              <div>
+              <div className="min-w-0 flex-1">
                 <p className="text-[10px] text-ink-soft">Makkiyyah · 7 ayahs</p>
                 <p className="font-display text-lg font-semibold tracking-tight text-ink sm:text-xl">Al-Fatihah · The Opening</p>
               </div>
-              <span className="inline-flex h-8 items-center gap-1 rounded-full bg-gold px-3 text-[11px] font-semibold text-on-gold">
-                <Play className="h-3 w-3" /> Play surah
+              <span className="inline-flex min-h-10 min-w-10 items-center justify-center gap-1 rounded-full bg-gold px-3 py-2 text-[11px] font-semibold text-on-gold">
+                <Play className="h-3 w-3 shrink-0" /> Play surah
               </span>
             </div>
             <div className="mt-2 flex flex-wrap gap-1.5">
-              <span className="rounded-full bg-gold px-2.5 py-1 text-[10px] text-on-gold">Arabic</span>
-              <span className="rounded-full bg-gold px-2.5 py-1 text-[10px] text-on-gold">English</span>
-              <span className="rounded-full border border-gold/30 px-2.5 py-1 text-[10px] text-ink-soft">Tafsir</span>
+              <span className="inline-flex min-h-10 items-center rounded-full bg-gold px-3 py-2 text-[10px] text-on-gold">Arabic</span>
+              <span className="inline-flex min-h-10 items-center rounded-full bg-gold px-3 py-2 text-[10px] text-on-gold">English</span>
+              <span className="inline-flex min-h-10 items-center rounded-full border border-gold/30 px-3 py-2 text-[10px] text-ink-soft">
+                Tafsir
+              </span>
             </div>
           </div>
 
@@ -94,7 +96,7 @@ export function HomePreview() {
           </div>
         </article>
 
-        <aside className="hidden w-36 shrink-0 flex-col gap-2 rounded-2xl bg-surface p-3 shadow-[0_8px_24px_rgba(15,23,42,0.06)] xl:flex">
+        <aside className="hidden w-36 shrink-0 flex-col gap-2 rounded-2xl bg-surface p-3 shadow-[0_8px_24px_rgba(15,23,42,0.06)] md:flex">
           <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-gold-deep">Account</p>
           <p className="text-[11px] text-ink-soft">Free, private, forever.</p>
           <div className="rounded-xl bg-highlight p-2.5">
@@ -107,7 +109,7 @@ export function HomePreview() {
           </div>
         </aside>
       </div>
-      <div className="pointer-events-none absolute bottom-4 right-4 z-10 sm:bottom-5 sm:right-5">
+      <div className="pointer-events-none absolute bottom-4 right-4 z-10 hidden md:block sm:bottom-5 sm:right-5">
         <SanaVisual className="is-sm" />
       </div>
     </div>
@@ -128,19 +130,19 @@ function VerseShot({
   return (
     <div className={`rounded-2xl border p-3 ${active ? "border-gold/40 ring-2 ring-gold/25" : "border-line"}`}>
       <div className="flex items-start justify-between gap-2">
-        <span className="flex h-7 min-w-7 items-center justify-center rounded-full bg-accent-soft text-xs font-semibold text-gold-deep">
+        <span className="flex h-10 min-w-10 items-center justify-center rounded-full bg-accent-soft text-xs font-semibold text-gold-deep">
           {n}
         </span>
         <div className="flex gap-1">
-          <span className="inline-flex h-7 items-center gap-0.5 rounded-full border border-gold/30 px-2 text-[9px] text-ink-soft">
+          <span className="inline-flex min-h-10 min-w-10 items-center justify-center gap-0.5 rounded-full border border-gold/30 px-2.5 py-2 text-[9px] text-ink-soft">
             <Play className="h-2.5 w-2.5" /> Ayah
           </span>
-          <span className="hidden h-7 w-7 items-center justify-center rounded-full border border-gold/30 text-ink-soft sm:inline-flex">
+          <span className="hidden h-10 min-w-10 items-center justify-center rounded-full border border-gold/30 text-ink-soft sm:inline-flex">
             <Star className="h-2.5 w-2.5" />
           </span>
         </div>
       </div>
-      <p dir="rtl" lang="ar" className="mt-3 text-right font-arabic text-xl leading-[2.25] text-ink sm:text-2xl">
+      <p dir="rtl" lang="ar" className="mt-3 text-right font-arabic text-xl leading-[2.3] text-ink sm:text-2xl sm:leading-[2.25]">
         {arabic}
       </p>
       <p className="mt-2 font-reading text-[12px] leading-5 text-ink-soft sm:text-[13px]">{english}</p>
