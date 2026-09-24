@@ -5,6 +5,7 @@ import { AuthModal } from "@/components/modals/auth-modal";
 import { JuzModal } from "@/components/modals/juz-modal";
 import { BookmarksModal, HighlightsModal, NotesModal } from "@/components/modals/library-modals";
 import { SettingsModal } from "@/components/modals/settings-modal";
+import { StillReadingPrompt } from "@/components/modals/still-reading-prompt";
 import { ThemePicker } from "@/components/modals/theme-picker";
 import { FiltersModal } from "@/components/search/filters-modal";
 
@@ -20,6 +21,7 @@ export function AppModals() {
       <BookmarksModal />
       <HighlightsModal />
       <NotesModal />
+      <StillReadingPrompt />
     </>
   );
 }

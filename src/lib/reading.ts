@@ -14,6 +14,8 @@ export const SURAH_VERSE_COUNTS = [
 export const COMPLETION_PIECES = 160;
 
 export const RESUME_AFTER_MS = 10 * 60 * 1000;
+export const READING_TICK_SECONDS = 15;
+export const READING_IDLE_MS = 15 * 60 * 1000;
 
 export type ReadingProgress = {
   surahsRead: number[];
@@ -51,6 +53,16 @@ export function bumpStreak(progress: ReadingProgress, day = todayKey()): Reading
 
 export function addReadingSeconds(progress: ReadingProgress, seconds: number): ReadingProgress {
   return bumpStreak({ ...progress, totalSeconds: progress.totalSeconds + seconds });
+}
+
+export function subtractReadingSeconds(progress: ReadingProgress, seconds: number): ReadingProgress {
+  if (seconds <= 0) return progress;
+  return { ...progress, totalSeconds: Math.max(0, progress.totalSeconds - seconds) };
+}
+
+export function isMushafPath(pathname: string | null | undefined) {
+  if (!pathname) return false;
+  return pathname === "/read" || pathname.startsWith("/surah/") || pathname.startsWith("/juz/");
 }
 
 export function isResumeDue(progress: ReadingProgress, now = Date.now()) {

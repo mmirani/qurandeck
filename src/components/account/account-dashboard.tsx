@@ -134,7 +134,7 @@ function AccountDashboard() {
         <StatCard label="Verses read" value={`${progress.versesRead.length}`} hint={`of ${TOTAL_AYAHS}`} />
         <StatCard label="Surahs finished" value={`${progress.surahsRead.length}`} hint={`of ${TOTAL_SURAHS}`} />
         <StatCard label="Streak" value={`${progress.streak} day${progress.streak === 1 ? "" : "s"}`} hint={progress.lastReadDay ? `Last ${progress.lastReadDay}` : "Stay on an ayah to begin"} />
-        <StatCard label="Minutes" value={`${minutes}`} hint="While ayahs are on screen" />
+        <StatCard label="Minutes" value={`${minutes}`} hint="While reading in the mushaf" />
         <StatCard label="Favorites" value={`${bookmarks.length}`} hint="In Saved" />
         <StatCard label="Notes" value={`${notes.length}`} hint={`${highlights.length} highlights`} />
       </div>

@@ -212,7 +212,7 @@ function HomeSignedIn() {
           highlights={highlights.length}
         />
       </div>
-      <div className="mt-6">
+      <div className="mt-10">
         <CompletionMap />
       </div>
     </section>

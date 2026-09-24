@@ -69,11 +69,15 @@ import { layoutSignals, appliedTheme } from "@/lib/appearance";
 import {
   addReadingSeconds,
   defaultReadingProgress,
+  isMushafPath,
   isResumeDue,
   markSurahRead,
   markVerseRead,
+  READING_IDLE_MS,
+  READING_TICK_SECONDS,
   RESUME_AFTER_MS,
   saveReadingPlace,
+  subtractReadingSeconds,
 } from "@/lib/reading";
 import type { ReadingProgress } from "@/lib/reading";
 import {
@@ -181,6 +185,9 @@ type MushafContextValue = {
   updateAvatar: (avatar: string | null) => string | null;
   offerResume: boolean;
   clearResume: () => void;
+  stillReadingAsk: boolean;
+  confirmStillReading: () => void;
+  declineStillReading: () => void;
 };
 
 const MushafContext = createContext<MushafContextValue | null>(null);
@@ -237,12 +244,20 @@ export function MushafProvider({ children }: { children: ReactNode }) {
   const [introduction, setIntroduction] = useState("");
   const [progress, setProgress] = useState<ReadingProgress>(defaultReadingProgress);
   const [resumeCue, setResumeCue] = useState(false);
+  const [stillReadingAsk, setStillReadingAsk] = useState(false);
   const visibleRef = useRef(visibleVerseKeys);
   visibleRef.current = visibleVerseKeys;
   const placeRef = useRef<string | null>(null);
   const readingKey = playingVerseKey ?? visibleVerseKeys[0] ?? null;
   placeRef.current = readingKey;
   const hiddenAtRef = useRef(0);
+  const pathnameRef = useRef(pathname);
+  pathnameRef.current = pathname;
+  const lastActivityRef = useRef(Date.now());
+  const accruedSinceActivityRef = useRef(0);
+  const pausedForIdleRef = useRef(false);
+  const stillReadingAskRef = useRef(false);
+  stillReadingAskRef.current = stillReadingAsk;
 
   useEffect(() => {
     setPreferences(loadPreferences());
@@ -293,13 +308,84 @@ export function MushafProvider({ children }: { children: ReactNode }) {
     saveProgress(progress);
   }, [hydrated, progress]);
 
+  const markReadingActivity = useCallback(() => {
+    if (stillReadingAskRef.current) return;
+    lastActivityRef.current = Date.now();
+    accruedSinceActivityRef.current = 0;
+    if (pausedForIdleRef.current) pausedForIdleRef.current = false;
+  }, []);
+
   useEffect(() => {
+    if (isMushafPath(pathname)) {
+      lastActivityRef.current = Date.now();
+      return;
+    }
+    setVisibleVerseKeysState([]);
+    if (pausedForIdleRef.current && accruedSinceActivityRef.current > 0) {
+      const claw = accruedSinceActivityRef.current;
+      setProgress((current) => subtractReadingSeconds(current, claw));
+    }
+    accruedSinceActivityRef.current = 0;
+    pausedForIdleRef.current = false;
+    setStillReadingAsk(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!isMushafPath(pathname)) return;
+    const bump = () => markReadingActivity();
+    window.addEventListener("pointerdown", bump);
+    window.addEventListener("keydown", bump);
+    window.addEventListener("wheel", bump, { passive: true });
+    window.addEventListener("touchmove", bump, { passive: true });
+    return () => {
+      window.removeEventListener("pointerdown", bump);
+      window.removeEventListener("keydown", bump);
+      window.removeEventListener("wheel", bump);
+      window.removeEventListener("touchmove", bump);
+    };
+  }, [pathname, markReadingActivity]);
+
+  useEffect(() => {
+    if (!isMushafPath(pathname)) return;
+    if (visibleVerseKeys.length === 0) return;
+    markReadingActivity();
+  }, [markReadingActivity, pathname, visibleVerseKeys]);
+
+  useEffect(() => {
+    if (playingVerseKey) markReadingActivity();
+  }, [markReadingActivity, playingVerseKey]);
+
+  useEffect(() => {
+    const tickMs = READING_TICK_SECONDS * 1000;
     const tick = window.setInterval(() => {
       if (document.visibilityState !== "visible") return;
+      if (!isMushafPath(pathnameRef.current)) return;
+      if (pausedForIdleRef.current) return;
       if (visibleRef.current.length === 0) return;
-      setProgress((current) => addReadingSeconds(current, 15));
-    }, 15000);
+      if (Date.now() - lastActivityRef.current >= READING_IDLE_MS) {
+        pausedForIdleRef.current = true;
+        setStillReadingAsk(true);
+        return;
+      }
+      accruedSinceActivityRef.current += READING_TICK_SECONDS;
+      setProgress((current) => addReadingSeconds(current, READING_TICK_SECONDS));
+    }, tickMs);
     return () => window.clearInterval(tick);
+  }, []);
+
+  const confirmStillReading = useCallback(() => {
+    lastActivityRef.current = Date.now();
+    accruedSinceActivityRef.current = 0;
+    pausedForIdleRef.current = false;
+    setStillReadingAsk(false);
+  }, []);
+
+  const declineStillReading = useCallback(() => {
+    const claw = accruedSinceActivityRef.current;
+    accruedSinceActivityRef.current = 0;
+    pausedForIdleRef.current = true;
+    setStillReadingAsk(false);
+    if (claw > 0) setProgress((current) => subtractReadingSeconds(current, claw));
   }, []);
 
   useEffect(() => {
@@ -1043,6 +1129,9 @@ export function MushafProvider({ children }: { children: ReactNode }) {
       updateAvatar,
       offerResume: resumeCue,
       clearResume: () => setResumeCue(false),
+      stillReadingAsk,
+      confirmStillReading,
+      declineStillReading,
     }),
     [
       addSwatch,
@@ -1053,6 +1142,7 @@ export function MushafProvider({ children }: { children: ReactNode }) {
       bookmarks,
       chapter,
       chapters,
+      confirmStillReading,
       cueVerse,
       currentJuz,
       currentTime,
@@ -1060,6 +1150,7 @@ export function MushafProvider({ children }: { children: ReactNode }) {
       deleteHighlight,
       deleteHighlights,
       duration,
+      declineStillReading,
       error,
       filters,
       highlightAyah,
@@ -1099,6 +1190,7 @@ export function MushafProvider({ children }: { children: ReactNode }) {
       selectedWord,
       setVisibleVerseKeys,
       signOut,
+      stillReadingAsk,
       stopAudio,
       swatches,
       toggleBookmarkVerse,
