@@ -8,6 +8,16 @@ import {
   TOTAL_AYAHS,
 } from "@/lib/reading";
 
+/** Theme tokens that cycle by surah so neighbouring chapters can read apart. */
+const SURAH_TONES = ["var(--gold)", "var(--chip-alt)", "var(--accent)"] as const;
+
+function pieceFill(chapterId: number, value: number) {
+  if (value <= 0) return "var(--canvas)";
+  const tone = SURAH_TONES[(chapterId - 1) % SURAH_TONES.length];
+  const strength = Math.round(28 + value * 72);
+  return `color-mix(in srgb, ${tone} ${strength}%, var(--canvas))`;
+}
+
 export function CompletionMap() {
   const { progress, chapters, jumpToHit, closeModal } = useMushaf();
   const map = quranPieceMap(progress.versesRead);
@@ -34,9 +44,8 @@ export function CompletionMap() {
       <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-gold-deep">Quran completion</p>
       <p className="mt-2 text-sm text-ink-soft">
         This is a mushaf map, like a torrent bar. The Quran is laid left to right from Al-Fatihah to An-Nas. Each
-        sliver is a slice of ayahs. Gold means you have dwelt on, played, highlighted, or noted ayahs in that slice
-        — even if you hopped around. Empty slivers are still unread. Sequential reading fills a solid run; scattered
-        reading lights specks wherever you stayed.
+        sliver is a slice of ayahs. Colour follows the surah on a short theme cycle so neighbouring chapters can read
+        apart. Brighter means more of that slice is lit. Empty slivers are still unread.
       </p>
       <div
         className="mt-4 grid h-11 gap-px overflow-hidden rounded-xl bg-line/80 p-px"
@@ -46,7 +55,8 @@ export function CompletionMap() {
       >
         {map.coverage.map((value, piece) => {
           const range = pieceAyahRange(piece);
-          const from = range.start ? `${name(range.start.chapterId)} ${range.start.chapterId}:${range.start.verseNumber}` : "";
+          const chapterId = range.start?.chapterId ?? 1;
+          const from = range.start ? `${name(chapterId)} ${chapterId}:${range.start.verseNumber}` : "";
           const to = range.end ? `${range.end.chapterId}:${range.end.verseNumber}` : "";
           return (
             <button
@@ -56,10 +66,7 @@ export function CompletionMap() {
               aria-label={`${from} to ${to}, ${value > 0 ? "read" : "unread"}`}
               onClick={() => openPiece(piece)}
               className="h-full min-w-0 cursor-pointer"
-              style={{
-                background:
-                  value <= 0 ? "var(--canvas)" : `color-mix(in srgb, var(--gold) ${Math.round(22 + value * 78)}%, var(--canvas))`,
-              }}
+              style={{ background: pieceFill(chapterId, value) }}
             />
           );
         })}
