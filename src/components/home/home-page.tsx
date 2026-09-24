@@ -72,9 +72,9 @@ export function HomePage() {
       <HomeNav signedIn={Boolean(hydrated && user)} />
       <main id="main-content" className="pt-14 md:pt-16">
         {!hydrated ? <HomeHeroSkeleton /> : user ? <HomeSignedIn /> : <HomeGuestHero />}
-        <HomeSana />
         {hydrated && !user ? (
           <>
+            <HomeSana />
             <HomeFeatures />
             <HomeMore />
             <HomeCta />
@@ -190,7 +190,7 @@ function HomeSignedIn() {
       </h1>
       <p className="mt-3 max-w-2xl text-ink-soft">Your place, your notes, your map of {WORK_TITLE} — saved with your account.</p>
 
-      <div className="mt-8 grid items-stretch gap-4 lg:grid-cols-[minmax(0,0.82fr)_minmax(0,1.18fr)]">
+      <div className="mt-8 grid items-stretch gap-4 lg:grid-cols-[minmax(0,0.58fr)_minmax(0,1.42fr)]">
         <div className="flex h-full flex-col rounded-3xl border-2 border-gold bg-highlight p-6">
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-gold-deep">Continue reading</p>
           <p className="mt-2 font-display text-3xl font-semibold text-ink">{place.title}</p>
