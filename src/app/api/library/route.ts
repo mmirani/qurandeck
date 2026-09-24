@@ -1,4 +1,5 @@
 import { auth } from "@/auth";
+import { validateAvatar } from "@/lib/avatar";
 import { getSql } from "@/lib/db";
 import { validateDisplayName } from "@/lib/display-name";
 import { normalizeLibrary, type LibrarySnapshot } from "@/lib/library";
@@ -58,6 +59,11 @@ export async function PUT(request: Request) {
   if (library.displayName) {
     const nameError = validateDisplayName(library.displayName);
     if (nameError) return Response.json({ error: nameError }, { status: 400 });
+  }
+  const submitted = body.library as { avatar?: unknown };
+  if (typeof submitted.avatar === "string" && submitted.avatar) {
+    const avatarError = validateAvatar(submitted.avatar);
+    if (avatarError) return Response.json({ error: avatarError }, { status: 400 });
   }
 
   try {

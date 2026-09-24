@@ -1,3 +1,4 @@
+import { validateAvatar } from "@/lib/avatar";
 import { cleanDisplayName, validateDisplayName } from "@/lib/display-name";
 import { defaultPreferences, preferencesFromUnknown } from "@/lib/storage";
 import { defaultReadingProgress, type ReadingProgress } from "@/lib/reading";
@@ -12,6 +13,8 @@ export type LibrarySnapshot = {
   progress: ReadingProgress;
   displayName?: string;
   displayNameUpdatedAt?: string;
+  avatar?: string;
+  avatarUpdatedAt?: string;
 };
 
 function byId<T extends { id: string }>(items: T[]) {
@@ -53,11 +56,17 @@ export function mergeLibraries(local: LibrarySnapshot, remote: LibrarySnapshot):
   const remoteNameAt = remote.displayNameUpdatedAt ?? "";
   const displayName = localNameAt >= remoteNameAt ? local.displayName : remote.displayName;
   const displayNameUpdatedAt = localNameAt >= remoteNameAt ? local.displayNameUpdatedAt : remote.displayNameUpdatedAt;
+  const localAvatarAt = local.avatarUpdatedAt ?? "";
+  const remoteAvatarAt = remote.avatarUpdatedAt ?? "";
+  const avatar = localAvatarAt >= remoteAvatarAt ? local.avatar : remote.avatar;
+  const avatarUpdatedAt = localAvatarAt >= remoteAvatarAt ? local.avatarUpdatedAt : remote.avatarUpdatedAt;
 
   return {
     preferences: { ...defaultPreferences, ...preferences },
     displayName: displayName?.trim() || undefined,
     displayNameUpdatedAt: displayNameUpdatedAt || undefined,
+    avatar: avatar || undefined,
+    avatarUpdatedAt: avatarUpdatedAt || undefined,
     bookmarks: [...verseBookmarks.values(), ...wordBookmarks.values(), ...byId(otherBookmarks)],
     notes: [...notes.values()],
     highlights: byId([...remote.highlights, ...local.highlights]),
@@ -112,6 +121,16 @@ export function normalizeLibrary(value: unknown): LibrarySnapshot | null {
       versesRead: Array.isArray(raw.progress?.versesRead) ? raw.progress.versesRead : [],
     },
     ...safeDisplayName(raw.displayName, raw.displayNameUpdatedAt),
+    ...safeAvatar(raw.avatar, raw.avatarUpdatedAt),
   };
+}
+
+function safeAvatar(avatar: unknown, updatedAt: unknown) {
+  const stamp = typeof updatedAt === "string" && updatedAt ? updatedAt : undefined;
+  if (typeof avatar === "string" && avatar && !validateAvatar(avatar)) {
+    return { avatar, avatarUpdatedAt: stamp || new Date(0).toISOString() };
+  }
+  if (stamp) return { avatarUpdatedAt: stamp };
+  return {};
 }
 

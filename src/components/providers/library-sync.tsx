@@ -22,7 +22,9 @@ function localLibrary(email?: string): LibrarySnapshot {
     swatches: loadSwatches(),
     progress: loadProgress(),
     displayName: profile?.name,
-    displayNameUpdatedAt: profile?.updatedAt,
+    displayNameUpdatedAt: profile?.name ? profile.updatedAt : undefined,
+    avatar: profile?.avatar,
+    avatarUpdatedAt: profile?.avatarUpdatedAt,
   };
 }
 

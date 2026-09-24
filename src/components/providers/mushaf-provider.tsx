@@ -60,6 +60,7 @@ import {
   savePreferences,
   saveProgress,
   saveDisplayProfile,
+  saveAvatar,
   saveSession,
   saveSwatches,
 } from "@/lib/storage";
@@ -88,6 +89,7 @@ import {
 } from "@/lib/highlights";
 import { wordByWordAudioUrl } from "@/lib/quran/sources";
 import { requestWelcomeTour } from "@/lib/guide/progress";
+import { validateAvatar } from "@/lib/avatar";
 import { LibrarySync } from "@/components/providers/library-sync";
 import type { LibrarySnapshot } from "@/lib/library";
 
@@ -176,6 +178,7 @@ type MushafContextValue = {
   signOut: () => void;
   applyLibrary: (library: LibrarySnapshot) => void;
   updateDisplayName: (name: string) => string | null;
+  updateAvatar: (avatar: string | null) => string | null;
   offerResume: boolean;
   clearResume: () => void;
 };
@@ -256,7 +259,8 @@ export function MushafProvider({ children }: { children: ReactNode }) {
     if (authSession?.user?.id) {
       const mapped = sessionUserFromAuth(authSession);
       const profile = mapped.email ? loadDisplayProfile(mapped.email) : null;
-      if (profile) mapped.displayName = profile.name;
+      if (profile?.name) mapped.displayName = profile.name;
+      if (profile?.avatar) mapped.avatar = profile.avatar;
       saveSession(mapped);
       setUser(mapped);
       setHydrated(true);
@@ -891,18 +895,33 @@ export function MushafProvider({ children }: { children: ReactNode }) {
     setSwatches(library.swatches.length ? library.swatches : defaultSwatches);
     setProgress(library.progress);
     setUser((current) => {
-      if (!current?.email || !library.displayName || validateDisplayName(library.displayName)) return current;
-      const profile = {
-        name: cleanDisplayName(library.displayName),
-        updatedAt: library.displayNameUpdatedAt || new Date().toISOString(),
-      };
+      if (!current?.email) return current;
       const key = current.email.trim().toLowerCase();
-      const existing = loadDisplayProfile(key);
-      if (!existing || profile.updatedAt >= existing.updatedAt) {
-        const saved = saveDisplayProfile(key, profile.name);
-        return { ...current, displayName: saved.name };
+      let next = { ...current };
+      if (library.displayName && !validateDisplayName(library.displayName)) {
+        const incoming = {
+          name: cleanDisplayName(library.displayName),
+          updatedAt: library.displayNameUpdatedAt || new Date().toISOString(),
+        };
+        const existing = loadDisplayProfile(key);
+        if (!existing || incoming.updatedAt >= existing.updatedAt) {
+          next = { ...next, displayName: saveDisplayProfile(key, incoming.name).name };
+        } else if (existing.name) {
+          next = { ...next, displayName: existing.name };
+        }
       }
-      return { ...current, displayName: existing.name };
+      if (library.avatarUpdatedAt) {
+        const existing = loadDisplayProfile(key);
+        if (!existing?.avatarUpdatedAt || library.avatarUpdatedAt >= existing.avatarUpdatedAt) {
+          next = { ...next, avatar: saveAvatar(key, library.avatar ?? null).avatar };
+        } else {
+          next = { ...next, avatar: existing.avatar };
+        }
+      } else {
+        const existing = loadDisplayProfile(key);
+        if (existing?.avatar) next = { ...next, avatar: existing.avatar };
+      }
+      return next;
     });
   }, []);
 
@@ -916,6 +935,18 @@ export function MushafProvider({ children }: { children: ReactNode }) {
     return null;
   }, [user?.email]);
 
+  const updateAvatar = useCallback((avatar: string | null) => {
+    const email = user?.email?.trim().toLowerCase();
+    if (!email) return "Sign in to save a profile photo.";
+    if (avatar) {
+      const error = validateAvatar(avatar);
+      if (error) return error;
+    }
+    const saved = saveAvatar(email, avatar);
+    setUser((current) => (current ? { ...current, avatar: saved.avatar } : current));
+    return null;
+  }, [user?.email]);
+
   const librarySnapshot = useMemo<LibrarySnapshot>(() => {
     const profile = user?.email ? loadDisplayProfile(user.email) : null;
     return {
@@ -925,10 +956,12 @@ export function MushafProvider({ children }: { children: ReactNode }) {
       highlights,
       swatches,
       progress,
-      displayName: profile?.name,
-      displayNameUpdatedAt: profile?.updatedAt,
+      displayName: profile?.name || undefined,
+      displayNameUpdatedAt: profile?.name ? profile.updatedAt : undefined,
+      avatar: profile?.avatar,
+      avatarUpdatedAt: profile?.avatarUpdatedAt,
     };
-  }, [bookmarks, highlights, notes, preferences, progress, swatches, user?.displayName, user?.email]);
+  }, [bookmarks, highlights, notes, preferences, progress, swatches, user?.avatar, user?.displayName, user?.email]);
 
   const value = useMemo<MushafContextValue>(
     () => ({
@@ -1007,6 +1040,7 @@ export function MushafProvider({ children }: { children: ReactNode }) {
       signOut,
       applyLibrary,
       updateDisplayName,
+      updateAvatar,
       offerResume: resumeCue,
       clearResume: () => setResumeCue(false),
     }),
@@ -1014,6 +1048,7 @@ export function MushafProvider({ children }: { children: ReactNode }) {
       addSwatch,
       applyLibrary,
       updateDisplayName,
+      updateAvatar,
       applyFilters,
       bookmarks,
       chapter,

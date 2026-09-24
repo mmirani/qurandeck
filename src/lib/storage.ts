@@ -169,23 +169,57 @@ export function saveProgress(value: ReadingProgress) {
   write(KEYS.progress, value);
 }
 
-export type DisplayProfile = { name: string; updatedAt: string };
+export type DisplayProfile = {
+  name: string;
+  updatedAt: string;
+  avatar?: string;
+  avatarUpdatedAt?: string;
+};
 
 export function loadDisplayProfile(email: string): DisplayProfile | null {
   const value = parse(KEYS.displayNames);
   if (!value || typeof value !== "object") return null;
   const profile = (value as Record<string, DisplayProfile>)[email.trim().toLowerCase()];
-  if (!profile || typeof profile.name !== "string" || !profile.name.trim()) return null;
-  return { name: profile.name.trim(), updatedAt: profile.updatedAt || new Date(0).toISOString() };
+  if (!profile || typeof profile !== "object") return null;
+  const name = typeof profile.name === "string" ? profile.name.trim() : "";
+  const avatar = typeof profile.avatar === "string" ? profile.avatar : undefined;
+  const avatarUpdatedAt = typeof profile.avatarUpdatedAt === "string" ? profile.avatarUpdatedAt : undefined;
+  if (!name && !avatar && !avatarUpdatedAt) return null;
+  return {
+    name,
+    updatedAt: profile.updatedAt || new Date(0).toISOString(),
+    avatar,
+    avatarUpdatedAt,
+  };
 }
 
-export function saveDisplayProfile(email: string, name: string) {
+function writeDisplayProfile(email: string, patch: Partial<DisplayProfile>) {
   const key = email.trim().toLowerCase();
   const current = parse(KEYS.displayNames);
   const map = current && typeof current === "object" ? { ...(current as Record<string, DisplayProfile>) } : {};
-  map[key] = { name: name.trim(), updatedAt: new Date().toISOString() };
+  const previous = map[key];
+  const touchesAvatar = Object.prototype.hasOwnProperty.call(patch, "avatar");
+  const next: DisplayProfile = {
+    name: patch.name ?? previous?.name ?? "",
+    updatedAt: patch.updatedAt ?? previous?.updatedAt ?? new Date(0).toISOString(),
+    avatar: touchesAvatar ? patch.avatar || undefined : previous?.avatar,
+    avatarUpdatedAt: patch.avatarUpdatedAt ?? previous?.avatarUpdatedAt,
+  };
+  if (!next.avatar) delete next.avatar;
+  map[key] = next;
   write(KEYS.displayNames, map);
-  return map[key];
+  return next;
+}
+
+export function saveDisplayProfile(email: string, name: string) {
+  return writeDisplayProfile(email, { name: name.trim(), updatedAt: new Date().toISOString() });
+}
+
+export function saveAvatar(email: string, avatar: string | null) {
+  return writeDisplayProfile(email, {
+    avatar: avatar ?? undefined,
+    avatarUpdatedAt: new Date().toISOString(),
+  });
 }
 
 export function saveSession(value: SessionUser | null) {

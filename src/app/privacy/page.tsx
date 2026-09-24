@@ -51,7 +51,7 @@ export default function PrivacyPage() {
       <LegalSection title="The library we sync">
         <p>
           After you sign in, QuranDeck can save a library for that email: reading preferences, favorites, notes,
-          highlights, color swatches, progress, and display name. The same library is merged back onto a device when
+          highlights, color swatches, progress, display name, and profile photo or icon. The same library is merged back onto a device when
           you sign in there.
         </p>
         <p>

@@ -149,6 +149,7 @@ export type SessionUser = {
   username: string;
   displayName: string;
   email?: string;
+  avatar?: string;
   provider?: "local" | "google" | "github" | "email" | "oauth";
 };
 

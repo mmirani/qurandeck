@@ -7,6 +7,7 @@ import { RailToggle } from "@/components/shell/rail-toggle";
 import { ReadingSettings } from "@/components/modals/settings-modal";
 import { Modal } from "@/components/ui/modal";
 import { PROMISE_LINE, PROMISE_WHY } from "@/lib/brand";
+import { AvatarPicker } from "@/components/account/profile-avatar";
 import { CompletionMap } from "@/components/account/completion-map";
 import {
   formatReadingMinutes,
@@ -63,7 +64,9 @@ export function AccountModal() {
         {tab === "settings" ? (
           <div className="space-y-6">
             {user ? (
-              <form
+              <div className="space-y-8">
+                <AvatarPicker />
+                <form
                 className="max-w-md space-y-2"
                 onSubmit={(event) => {
                   event.preventDefault();
@@ -88,6 +91,7 @@ export function AccountModal() {
                   Save name
                 </button>
               </form>
+              </div>
             ) : null}
             <ReadingSettings />
           </div>
