@@ -70,7 +70,9 @@ function Stat({
         )}
       </div>
       <dt className="mt-2 text-sm font-medium text-ink sm:text-[0.9375rem]">{label}</dt>
-      {hint ? <dd className="mt-0.5 text-xs leading-4 text-ink-soft">{hint}</dd> : <dd className="sr-only">{label}</dd>}
+      <dd className={`mt-0.5 min-h-4 text-xs leading-4 ${hint ? "text-ink-soft" : "sr-only"}`}>
+        {hint ?? label}
+      </dd>
     </div>
   );
 }
