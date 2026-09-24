@@ -2,7 +2,7 @@ import { asMushafInk } from "./appearance";
 import { sanitizeTranslationIds, withTranslationIds } from "./quran/languages";
 import { DEFAULT_RECITATION_ID, DEFAULT_TAFSIR_ID, DEFAULT_TRANSLATION_ID } from "./quran/sources";
 import { DEFAULT_SWATCH_ID, defaultSwatches } from "./highlights";
-import { defaultReadingProgress, normalizeVerseVisits, type ReadingProgress } from "./reading";
+import { defaultReadingProgress, normalizeVerseVisits, syncSurahsRead, type ReadingProgress } from "./reading";
 import { mergeStudyCards } from "./study-cards";
 import type {
   Bookmark,
@@ -156,7 +156,7 @@ export function loadProgress(): ReadingProgress {
   if (!value || typeof value !== "object") return defaultReadingProgress;
   const raw = value as Partial<ReadingProgress>;
   const versesRead = Array.isArray(raw.versesRead) ? raw.versesRead.filter((key) => typeof key === "string") : [];
-  return {
+  const loaded = {
     ...defaultReadingProgress,
     ...raw,
     surahsRead: Array.isArray(raw.surahsRead) ? raw.surahsRead.filter((id) => Number.isInteger(id)) : [],
@@ -165,6 +165,7 @@ export function loadProgress(): ReadingProgress {
     lastVerseKey: typeof raw.lastVerseKey === "string" ? raw.lastVerseKey : null,
     lastActiveAt: typeof raw.lastActiveAt === "number" ? raw.lastActiveAt : null,
   };
+  return syncSurahsRead(loaded);
 }
 
 export function saveProgress(value: ReadingProgress) {

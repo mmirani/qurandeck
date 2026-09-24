@@ -71,13 +71,14 @@ import {
   defaultReadingProgress,
   isMushafPath,
   isResumeDue,
-  markSurahRead,
   markVerseRead,
   READING_IDLE_MS,
   READING_TICK_SECONDS,
   RESUME_AFTER_MS,
   saveReadingPlace,
   subtractReadingSeconds,
+  syncSurahsRead,
+  VERSE_READ_DWELL_MS,
 } from "@/lib/reading";
 import type { ReadingProgress } from "@/lib/reading";
 import {
@@ -845,12 +846,31 @@ export function MushafProvider({ children }: { children: ReactNode }) {
     );
   }, []);
 
+  const previouslyVisibleRef = useRef<Set<string>>(new Set());
+
   useEffect(() => {
+    const current = new Set(visibleVerseKeys);
+    const left: string[] = [];
+    for (const key of previouslyVisibleRef.current) {
+      if (!current.has(key)) left.push(key);
+    }
+    previouslyVisibleRef.current = current;
+
+    if (left.length > 0) {
+      setProgress((progress) => {
+        let next = progress;
+        for (const key of left) {
+          if (!next.versesRead.includes(key)) next = markVerseRead(next, key);
+        }
+        return next;
+      });
+    }
+
     if (visibleVerseKeys.length === 0) return;
     const timers = visibleVerseKeys.map((key) =>
       window.setTimeout(() => {
         setProgress((current) => markVerseRead(current, key));
-      }, 4000),
+      }, VERSE_READ_DWELL_MS),
     );
     return () => {
       for (const timer of timers) window.clearTimeout(timer);
@@ -858,12 +878,11 @@ export function MushafProvider({ children }: { children: ReactNode }) {
   }, [visibleVerseKeys]);
 
   useEffect(() => {
-    if (mode !== "surah" || !chapter || verses.length === 0) return;
-    const keys = verses.map((item) => item.verseKey);
-    if (!keys.every((key) => progress.versesRead.includes(key))) return;
-    if (progress.surahsRead.includes(chapter.id)) return;
-    setProgress((current) => markSurahRead(current, chapter.id));
-  }, [chapter, mode, progress.surahsRead, progress.versesRead, verses]);
+    setProgress((current) => {
+      const next = syncSurahsRead(current);
+      return next === current ? current : next;
+    });
+  }, [progress.versesRead]);
 
   const highlightAyah = useCallback(
     (verse: Verse, swatchId?: string) => {

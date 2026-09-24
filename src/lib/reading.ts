@@ -87,12 +87,58 @@ export function saveReadingPlace(
   return { ...progress, lastVerseKey: verseKey, lastActiveAt: Date.now() };
 }
 
+export function isSurahFullyRead(versesRead: string[], chapterId: number) {
+  if (!Number.isInteger(chapterId) || chapterId < 1 || chapterId > TOTAL_SURAHS) return false;
+  const ayahs = SURAH_VERSE_COUNTS[chapterId - 1];
+  const set = new Set(versesRead);
+  for (let verseNumber = 1; verseNumber <= ayahs; verseNumber += 1) {
+    if (!set.has(`${chapterId}:${verseNumber}`)) return false;
+  }
+  return true;
+}
+
+/** Add any surah whose every ayah is already in versesRead. */
+export function syncSurahsRead(progress: ReadingProgress): ReadingProgress {
+  const set = new Set(progress.versesRead);
+  const extra: number[] = [];
+  for (let chapterId = 1; chapterId <= TOTAL_SURAHS; chapterId += 1) {
+    if (progress.surahsRead.includes(chapterId)) continue;
+    const ayahs = SURAH_VERSE_COUNTS[chapterId - 1];
+    let complete = true;
+    for (let verseNumber = 1; verseNumber <= ayahs; verseNumber += 1) {
+      if (!set.has(`${chapterId}:${verseNumber}`)) {
+        complete = false;
+        break;
+      }
+    }
+    if (complete) extra.push(chapterId);
+  }
+  if (extra.length === 0) return progress;
+  return {
+    ...progress,
+    surahsRead: [...progress.surahsRead, ...extra].sort((a, b) => a - b),
+  };
+}
+
 export function markVerseRead(progress: ReadingProgress, verseKey: string): ReadingProgress {
   const next = bumpStreak(progress);
   const visits = { ...next.verseVisits };
   visits[verseKey] = (visits[verseKey] ?? 0) + 1;
   const versesRead = next.versesRead.includes(verseKey) ? next.versesRead : [...next.versesRead, verseKey];
-  return { ...next, versesRead, verseVisits: visits };
+  let result: ReadingProgress = { ...next, versesRead, verseVisits: visits };
+
+  const place = parseVerseKey(verseKey);
+  if (place && !result.surahsRead.includes(place.chapterId)) {
+    const ayahs = SURAH_VERSE_COUNTS[place.chapterId - 1];
+    // Reaching the last ayah counts as finishing the surah (normal continuous reading).
+    if (place.verseNumber === ayahs || isSurahFullyRead(versesRead, place.chapterId)) {
+      result = {
+        ...result,
+        surahsRead: [...result.surahsRead, place.chapterId].sort((a, b) => a - b),
+      };
+    }
+  }
+  return result;
 }
 
 export function normalizeVerseVisits(visits: unknown, versesRead: string[]): Record<string, number> {
@@ -167,6 +213,9 @@ export function markSurahRead(progress: ReadingProgress, surahId: number): Readi
   if (progress.surahsRead.includes(surahId)) return bumpStreak(progress);
   return bumpStreak({ ...progress, surahsRead: [...progress.surahsRead, surahId].sort((a, b) => a - b) });
 }
+
+/** Dwell before an on-screen ayah counts as read (ms). Short enough for normal scrolling. */
+export const VERSE_READ_DWELL_MS = 900;
 
 export function formatReadingMinutes(totalSeconds: number) {
   return Math.floor(totalSeconds / 60);

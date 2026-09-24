@@ -1,7 +1,7 @@
 import { validateAvatar } from "@/lib/avatar";
 import { cleanDisplayName, validateDisplayName } from "@/lib/display-name";
 import { defaultPreferences, preferencesFromUnknown } from "@/lib/storage";
-import { defaultReadingProgress, mergeVerseVisits, normalizeVerseVisits, type ReadingProgress } from "@/lib/reading";
+import { defaultReadingProgress, mergeVerseVisits, normalizeVerseVisits, syncSurahsRead, type ReadingProgress } from "@/lib/reading";
 import type { Bookmark, Highlight, HighlightSwatch, Note, Preferences } from "@/lib/quran/types";
 
 export type LibrarySnapshot = {
@@ -71,7 +71,7 @@ export function mergeLibraries(local: LibrarySnapshot, remote: LibrarySnapshot):
     notes: [...notes.values()],
     highlights: byId([...remote.highlights, ...local.highlights]),
     swatches: byId([...remote.swatches, ...local.swatches]),
-    progress: {
+    progress: syncSurahsRead({
       surahsRead: [...new Set([...remote.progress.surahsRead, ...local.progress.surahsRead])].sort((a, b) => a - b),
       versesRead: [...new Set([...remote.progress.versesRead, ...local.progress.versesRead])],
       verseVisits: mergeVerseVisits(
@@ -83,7 +83,7 @@ export function mergeLibraries(local: LibrarySnapshot, remote: LibrarySnapshot):
       lastReadDay: laterIso(remote.progress.lastReadDay ?? undefined, local.progress.lastReadDay ?? undefined) ?? null,
       lastVerseKey,
       lastActiveAt: Math.max(localActive, remoteActive) || null,
-    },
+    }),
   };
 }
 
