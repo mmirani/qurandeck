@@ -16,7 +16,7 @@ import {
   TOTAL_SURAHS,
 } from "@/lib/reading";
 
-type AccountTab = "progress" | "saved" | "settings";
+type AccountTab = "progress" | "saved" | "settings" | "account";
 
 export function AccountModal() {
   const { modal, closeModal, user, signOut, updateDisplayName } = useMushaf();
@@ -31,6 +31,7 @@ export function AccountModal() {
   } else if (modal !== "account" && open) {
     setOpen(false);
   }
+  if (!user && tab === "account") setTab("progress");
   if (modal !== "account") return null;
 
   const greeting = user?.displayName ? `Assalamu alaykum, ${user.displayName}.` : "Assalamu alaykum.";
@@ -49,51 +50,52 @@ export function AccountModal() {
             Settings
           </AccountTabButton>
           {user ? (
-            <button
-              type="button"
-              onClick={signOut}
-              className="h-10 cursor-pointer whitespace-nowrap rounded-full border border-line bg-surface px-1 text-xs font-medium text-ink-soft sm:text-sm"
-            >
-              Sign out
-            </button>
+            <AccountTabButton active={tab === "account"} onClick={() => setTab("account")}>
+              Account
+            </AccountTabButton>
           ) : null}
         </div>
         <div className="mt-12 border-t border-line/70 pt-10">
         {tab === "progress" ? <AccountDashboard /> : null}
         {tab === "saved" ? <SavedLibrary /> : null}
-        {tab === "settings" ? (
-          <div className="space-y-6">
-            {user ? (
-              <div className="space-y-8">
-                <AvatarPicker />
-                <form
-                className="max-w-md space-y-2"
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  const message = updateDisplayName(name);
-                  setNameError(message);
-                }}
+        {tab === "settings" ? <ReadingSettings /> : null}
+        {tab === "account" && user ? (
+          <div className="max-w-md space-y-8">
+            <AvatarPicker />
+            <form
+              className="space-y-2"
+              onSubmit={(event) => {
+                event.preventDefault();
+                const message = updateDisplayName(name);
+                setNameError(message);
+              }}
+            >
+              <label className="block text-sm">
+                Display name
+                <input
+                  className="mt-1 h-11 w-full rounded-2xl border border-line bg-surface px-3"
+                  value={name}
+                  onChange={(event) => {
+                    setName(event.target.value);
+                    setNameError(null);
+                  }}
+                  maxLength={40}
+                />
+              </label>
+              {nameError ? <p className="text-sm text-danger">{nameError}</p> : null}
+              <button type="submit" className="h-11 cursor-pointer rounded-full bg-gold px-5 text-sm font-semibold text-on-gold">
+                Save name
+              </button>
+            </form>
+            <div className="border-t border-line/70 pt-8">
+              <button
+                type="button"
+                onClick={signOut}
+                className="h-11 cursor-pointer rounded-full border border-line px-5 text-sm font-medium text-ink-soft"
               >
-                <label className="block text-sm">
-                  Display name
-                  <input
-                    className="mt-1 h-11 w-full rounded-2xl border border-line bg-surface px-3"
-                    value={name}
-                    onChange={(event) => {
-                      setName(event.target.value);
-                      setNameError(null);
-                    }}
-                    maxLength={40}
-                  />
-                </label>
-                {nameError ? <p className="text-sm text-danger">{nameError}</p> : null}
-                <button type="submit" className="h-11 cursor-pointer rounded-full bg-gold px-5 text-sm font-semibold text-on-gold">
-                  Save name
-                </button>
-              </form>
-              </div>
-            ) : null}
-            <ReadingSettings />
+                Sign out
+              </button>
+            </div>
           </div>
         ) : null}
         </div>
