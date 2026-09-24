@@ -2,11 +2,11 @@
 
 import Link from "next/link";
 import { useMushaf } from "@/components/providers/mushaf-provider";
-import { readerHref, topAyahsByVisits, topSurahsByVisits } from "@/lib/reading";
+import { readerHref, topAyahsByVisits, topCompletedSurahs } from "@/lib/reading";
 
 export function HomeReadingRanks() {
   const { progress, chapters } = useMushaf();
-  const surahs = topSurahsByVisits(progress, 5);
+  const surahs = topCompletedSurahs(progress, 5);
   const ayahs = topAyahsByVisits(progress, 5);
   if (surahs.length === 0 && ayahs.length === 0) return null;
 
@@ -14,9 +14,9 @@ export function HomeReadingRanks() {
 
   return (
     <>
-      <RankCard title="Most read surahs" detail="Surahs you return to most">
+      <RankCard title="Most read surahs" detail="Surahs you finished in full">
         {surahs.length === 0 ? (
-          <p className="mt-3 text-sm text-ink-soft">Read a few surahs and they will rank here.</p>
+          <p className="mt-3 text-sm text-ink-soft">Finish a surah and it will show here.</p>
         ) : (
           <ol className="mt-3 flex-1 divide-y divide-line/60">
             {surahs.map((item, index) => (
@@ -29,7 +29,9 @@ export function HomeReadingRanks() {
                     <span className="mr-1.5 text-xs tabular-nums text-gold-deep">{index + 1}</span>
                     <span className="text-sm font-medium text-ink">{surahName(item.chapterId)}</span>
                   </span>
-                  <span className="shrink-0 text-xs tabular-nums text-ink-soft">{formatVisits(item.visits)}</span>
+                  <span className="shrink-0 text-xs tabular-nums text-ink-soft">
+                    {formatCompletions(item.completions)}
+                  </span>
                 </Link>
               </li>
             ))}
@@ -81,6 +83,10 @@ function RankCard({
       {children}
     </section>
   );
+}
+
+function formatCompletions(count: number) {
+  return count === 1 ? "1 full read" : `${count.toLocaleString("en-US")} full reads`;
 }
 
 function formatVisits(count: number) {

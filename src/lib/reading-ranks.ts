@@ -4,7 +4,6 @@ import {
   normalizeVerseVisits,
   parseVerseKey,
   type RankedAyah,
-  type RankedSurah,
 } from "@/lib/reading";
 
 const MAX_DELTA_PER_KEY = 50;
@@ -16,8 +15,10 @@ export type ReadingRankRow = {
   visits: number;
 };
 
+export type PlatformRankedSurah = { chapterId: number; visits: number; ayahs: number };
+
 export type PlatformRanks = {
-  surahs: RankedSurah[];
+  surahs: PlatformRankedSurah[];
   ayahs: RankedAyah[];
 };
 
@@ -114,7 +115,7 @@ function rankAyahs(visits: Record<string, number>, limit: number): RankedAyah[] 
     .slice(0, limit);
 }
 
-function rankSurahs(visits: Record<string, number>, limit: number): RankedSurah[] {
+function rankSurahs(visits: Record<string, number>, limit: number): PlatformRankedSurah[] {
   const bySurah = new Map<number, { visits: number; ayahs: number }>();
   for (const [key, count] of Object.entries(visits)) {
     const place = parseVerseKey(key);

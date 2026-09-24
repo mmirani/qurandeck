@@ -32,7 +32,7 @@ export function HomeStats({
       <dl className="mt-6 grid grid-cols-2 gap-x-6 gap-y-6 border-t border-line/70 pt-6 sm:grid-cols-4 sm:gap-x-8">
         <Stat icon={Star} label="Favorites" value={favorites} iconClassName="fill-gold text-gold" />
         <Stat icon={NotebookPen} label="Notes" value={notes} />
-        <Stat icon={Highlighter} label="Highlights" value={highlights} marked />
+        <Stat icon={Highlighter} label="Highlights" value={highlights} />
         <Stat icon={Map} label="Of mushaf" value={mushafPercent} suffix="%" />
       </dl>
     </div>
@@ -45,7 +45,6 @@ function Stat({
   value,
   hint,
   suffix,
-  marked = false,
   iconClassName = "text-gold",
 }: {
   icon: LucideIcon;
@@ -53,7 +52,6 @@ function Stat({
   value: number;
   hint?: string;
   suffix?: string;
-  marked?: boolean;
   iconClassName?: string;
 }) {
   const count = `${formatCount(value)}${suffix ?? ""}`;
@@ -61,13 +59,7 @@ function Stat({
     <div className="min-w-0">
       <div className="flex items-center gap-2.5">
         <Icon className={`h-6 w-6 shrink-0 ${iconClassName}`} aria-hidden="true" strokeWidth={1.75} />
-        {marked ? (
-          <span className="rounded-md bg-[#F5D76E] px-2.5 py-1 font-display text-[1.75rem] font-semibold leading-none text-[#1c140c] tabular-nums">
-            {count}
-          </span>
-        ) : (
-          <span className="font-display text-[1.75rem] font-semibold leading-none text-ink tabular-nums">{count}</span>
-        )}
+        <span className="font-display text-[1.75rem] font-semibold leading-none text-ink tabular-nums">{count}</span>
       </div>
       <dt className="mt-2 text-sm font-medium text-ink sm:text-[0.9375rem]">{label}</dt>
       <dd className={`mt-0.5 min-h-4 text-xs leading-4 ${hint ? "text-ink-soft" : "sr-only"}`}>

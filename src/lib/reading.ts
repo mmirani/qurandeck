@@ -120,24 +120,34 @@ export function mergeVerseVisits(a: Record<string, number>, b: Record<string, nu
   return out;
 }
 
-export type RankedSurah = { chapterId: number; visits: number; ayahs: number };
+export type RankedSurah = { chapterId: number; completions: number; ayahs: number };
 export type RankedAyah = { verseKey: string; chapterId: number; verseNumber: number; visits: number };
 
-export function topSurahsByVisits(progress: ReadingProgress, limit = 5): RankedSurah[] {
+/**
+ * Surahs from progress.surahsRead only — the same list as “Surahs finished”.
+ * Completions ≈ how many times every ayah in that surah has been visited (min), at least 1.
+ */
+export function topCompletedSurahs(progress: ReadingProgress, limit = 5): RankedSurah[] {
   const visits = normalizeVerseVisits(progress.verseVisits, progress.versesRead);
-  const bySurah = new Map<number, { visits: number; ayahs: number }>();
-  for (const [key, count] of Object.entries(visits)) {
-    const place = parseVerseKey(key);
-    if (!place) continue;
-    const current = bySurah.get(place.chapterId) ?? { visits: 0, ayahs: 0 };
-    current.visits += count;
-    current.ayahs += 1;
-    bySurah.set(place.chapterId, current);
-  }
-  return [...bySurah.entries()]
-    .map(([chapterId, stats]) => ({ chapterId, visits: stats.visits, ayahs: stats.ayahs }))
-    .sort((a, b) => b.visits - a.visits || a.chapterId - b.chapterId)
+
+  return progress.surahsRead
+    .filter((chapterId) => Number.isInteger(chapterId) && chapterId >= 1 && chapterId <= TOTAL_SURAHS)
+    .map((chapterId) => {
+      const ayahs = SURAH_VERSE_COUNTS[chapterId - 1];
+      let minVisits = Infinity;
+      for (let verseNumber = 1; verseNumber <= ayahs; verseNumber += 1) {
+        minVisits = Math.min(minVisits, visits[`${chapterId}:${verseNumber}`] ?? 0);
+      }
+      const completions = Math.max(1, Number.isFinite(minVisits) && minVisits > 0 ? minVisits : 1);
+      return { chapterId, completions, ayahs };
+    })
+    .sort((a, b) => b.completions - a.completions || a.chapterId - b.chapterId)
     .slice(0, limit);
+}
+
+/** @deprecated Use topCompletedSurahs */
+export function topSurahsByVisits(progress: ReadingProgress, limit = 5): RankedSurah[] {
+  return topCompletedSurahs(progress, limit);
 }
 
 export function topAyahsByVisits(progress: ReadingProgress, limit = 5): RankedAyah[] {
