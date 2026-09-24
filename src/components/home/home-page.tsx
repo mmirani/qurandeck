@@ -20,7 +20,7 @@ import {
   UserRound,
 } from "lucide-react";
 import { CompletionMap } from "@/components/account/completion-map";
-import { StatCard } from "@/components/account/account-dashboard";
+import { HomeStats } from "@/components/home/home-stats";
 import { BrandWordmark } from "@/components/brand/brand-wordmark";
 import { HomeSana } from "@/components/home/home-sana";
 import { AppModals } from "@/components/shell/app-modals";
@@ -30,12 +30,7 @@ import { UserMenu } from "@/components/user/user-menu";
 import { MihrabMark } from "@/components/art/ornaments";
 import { PRODUCT_NAME, PROMISE_LINE, PROMISE_STORY, WORK_TITLE } from "@/lib/brand";
 import { HOME_FEATURES, HOME_MORE, HOME_PROMISES, HOME_STARTS } from "@/lib/home";
-import {
-  formatReadingMinutes,
-  TOTAL_AYAHS,
-  TOTAL_SURAHS,
-  versePlaceLabel,
-} from "@/lib/reading";
+import { formatReadingMinutes, versePlaceLabel } from "@/lib/reading";
 
 const FEATURE_ICONS = {
   search: Search,
@@ -192,7 +187,7 @@ function HomeSignedIn() {
       <p className="mt-3 max-w-2xl text-ink-soft">Your place, your notes, your map of {WORK_TITLE} — saved with your account.</p>
 
       <div className="mt-8 grid gap-4 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
-        <div className="rounded-3xl border-2 border-gold bg-highlight p-6">
+        <div className="self-start rounded-3xl border-2 border-gold bg-highlight p-6">
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-gold-deep">Continue reading</p>
           <p className="mt-2 font-display text-3xl font-semibold text-ink">{place.title}</p>
           <p className="mt-1 text-sm text-ink">Ayah {place.ayah}</p>
@@ -203,22 +198,17 @@ function HomeSignedIn() {
             Continue reading
           </Link>
         </div>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <StatCard
-            label="Verses read"
-            value={`${progress.versesRead.length}`}
-            hint={`of ${TOTAL_AYAHS} · dwell, play, highlight, or note`}
-          />
-          <StatCard label="Surahs finished" value={`${progress.surahsRead.length}`} hint={`of ${TOTAL_SURAHS}`} />
-          <StatCard
-            label="Streak"
-            value={`${progress.streak} day${progress.streak === 1 ? "" : "s"}`}
-            hint={progress.lastReadDay ? `Last ${progress.lastReadDay}` : "Stay on an ayah to begin"}
-          />
-          <StatCard label="Library" value={`${bookmarks.length} / ${notes.length} / ${highlights.length}`} hint="Favorites · notes · highlights" />
-        </div>
+        <HomeStats
+          versesRead={progress.versesRead.length}
+          surahsFinished={progress.surahsRead.length}
+          streak={progress.streak}
+          lastReadDay={progress.lastReadDay}
+          minutes={minutes}
+          favorites={bookmarks.length}
+          notes={notes.length}
+          highlights={highlights.length}
+        />
       </div>
-      <p className="mt-3 text-sm text-ink-soft">Active minutes: {minutes}</p>
       <div className="mt-6">
         <CompletionMap />
       </div>
