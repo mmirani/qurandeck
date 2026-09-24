@@ -73,9 +73,13 @@ export function HomePage() {
       <main id="main-content" className="pt-14 md:pt-16">
         {!hydrated ? <HomeHeroSkeleton /> : user ? <HomeSignedIn /> : <HomeGuestHero />}
         <HomeSana />
-        <HomeFeatures />
-        <HomeMore />
-        {!hydrated || user ? null : <HomeCta />}
+        {hydrated && !user ? (
+          <>
+            <HomeFeatures />
+            <HomeMore />
+            <HomeCta />
+          </>
+        ) : null}
       </main>
       <HomeFooter />
       <AppModals />
