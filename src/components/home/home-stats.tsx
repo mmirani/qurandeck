@@ -22,14 +22,14 @@ export function HomeStats({
   const mushafPercent = Math.min(100, Math.round((versesRead / TOTAL_AYAHS) * 1000) / 10);
 
   return (
-    <div className="rounded-3xl border border-line bg-surface px-4 py-4 sm:px-5">
-      <dl className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-4">
+    <div className="flex h-full flex-col justify-center rounded-3xl border border-line bg-surface px-5 py-5 sm:px-6">
+      <dl className="grid grid-cols-2 gap-x-5 gap-y-5 sm:grid-cols-4">
         <Stat icon={BookMarked} label="Ayahs read" value={versesRead} hint={`of ${formatCount(TOTAL_AYAHS)}`} />
         <Stat icon={BookOpen} label="Surahs finished" value={surahsFinished} hint={`of ${TOTAL_SURAHS}`} />
         <Stat icon={CalendarDays} label="Day streak" value={streak} />
         <Stat icon={Clock} label="Minutes" value={minutes} />
       </dl>
-      <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-3 border-t border-line/70 pt-3 sm:grid-cols-4">
+      <dl className="mt-5 grid grid-cols-2 gap-x-5 gap-y-5 border-t border-line/70 pt-5 sm:grid-cols-4">
         <Stat icon={Star} label="Favorites" value={favorites} iconClassName="fill-gold text-gold" />
         <Stat icon={NotebookPen} label="Notes" value={notes} />
         <Stat icon={Highlighter} label="Highlights" value={highlights} marked />
@@ -59,18 +59,18 @@ function Stat({
   const count = `${formatCount(value)}${suffix ?? ""}`;
   return (
     <div className="min-w-0">
-      <div className="flex items-center gap-1.5">
-        <Icon className={`h-4 w-4 shrink-0 ${iconClassName}`} aria-hidden="true" />
+      <div className="flex items-center gap-2">
+        <Icon className={`h-5 w-5 shrink-0 ${iconClassName}`} aria-hidden="true" strokeWidth={1.75} />
         {marked ? (
-          <span className="rounded-md bg-[#F5D76E] px-1.5 py-0.5 font-display text-xl font-semibold leading-none text-[#1c140c] tabular-nums">
+          <span className="rounded-md bg-[#F5D76E] px-2 py-0.5 font-display text-2xl font-semibold leading-none text-[#1c140c] tabular-nums">
             {count}
           </span>
         ) : (
-          <span className="font-display text-xl font-semibold leading-none text-ink tabular-nums">{count}</span>
+          <span className="font-display text-2xl font-semibold leading-none text-ink tabular-nums">{count}</span>
         )}
       </div>
-      <dt className="mt-1 text-xs font-medium text-ink">{label}</dt>
-      {hint ? <dd className="text-[11px] leading-4 text-ink-soft">{hint}</dd> : <dd className="sr-only">{label}</dd>}
+      <dt className="mt-1.5 text-sm font-medium text-ink">{label}</dt>
+      {hint ? <dd className="mt-0.5 text-xs leading-4 text-ink-soft">{hint}</dd> : <dd className="sr-only">{label}</dd>}
     </div>
   );
 }

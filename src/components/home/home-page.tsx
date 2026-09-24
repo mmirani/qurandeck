@@ -186,14 +186,14 @@ function HomeSignedIn() {
       </h1>
       <p className="mt-3 max-w-2xl text-ink-soft">Your place, your notes, your map of {WORK_TITLE} — saved with your account.</p>
 
-      <div className="mt-8 grid items-start gap-4 lg:grid-cols-[minmax(0,0.82fr)_minmax(0,1.18fr)]">
-        <div className="rounded-3xl border-2 border-gold bg-highlight p-6">
+      <div className="mt-8 grid items-stretch gap-4 lg:grid-cols-[minmax(0,0.82fr)_minmax(0,1.18fr)]">
+        <div className="flex h-full flex-col rounded-3xl border-2 border-gold bg-highlight p-6">
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-gold-deep">Continue reading</p>
           <p className="mt-2 font-display text-3xl font-semibold text-ink">{place.title}</p>
           <p className="mt-1 text-sm text-ink">Ayah {place.ayah}</p>
           <Link
             href={place.href}
-            className="mt-5 inline-flex h-12 w-full cursor-pointer items-center justify-center rounded-full bg-gold text-base font-semibold text-on-gold"
+            className="mt-auto inline-flex h-12 w-full cursor-pointer items-center justify-center rounded-full bg-gold text-base font-semibold text-on-gold"
           >
             Continue reading
           </Link>
