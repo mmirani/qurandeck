@@ -191,18 +191,21 @@ function HomeSignedIn() {
       </h1>
       <p className="mt-3 max-w-2xl text-ink-soft">Your place, your notes, your map of {WORK_TITLE} — saved with your account.</p>
 
-      <div className="mt-8 grid items-stretch gap-4 lg:grid-cols-[minmax(0,0.58fr)_minmax(0,1.42fr)]">
-        <div className="flex h-full flex-col rounded-3xl border-2 border-gold bg-highlight p-6">
+      <div className="mt-8 grid items-stretch gap-4 lg:grid-cols-3">
+        <div className="flex h-full flex-col rounded-3xl border-2 border-gold bg-highlight p-5 sm:p-6">
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-gold-deep">Continue reading</p>
-          <p className="mt-2 font-display text-3xl font-semibold text-ink">{place.title}</p>
+          <p className="mt-2 font-display text-2xl font-semibold text-ink sm:text-3xl">{place.title}</p>
           <p className="mt-1 text-sm text-ink">Ayah {place.ayah}</p>
           <Link
             href={place.href}
-            className="mt-auto inline-flex h-12 w-full cursor-pointer items-center justify-center rounded-full bg-gold text-base font-semibold text-on-gold"
+            className="mt-auto inline-flex h-11 w-full cursor-pointer items-center justify-center rounded-full bg-gold text-sm font-semibold text-on-gold sm:h-12 sm:text-base"
           >
             Continue reading
           </Link>
         </div>
+        <HomeReadingRanks />
+      </div>
+      <div className="mt-4">
         <HomeStats
           versesRead={progress.versesRead.length}
           surahsFinished={progress.surahsRead.length}
@@ -216,7 +219,6 @@ function HomeSignedIn() {
       <div className="mt-10">
         <CompletionMap />
       </div>
-      <HomeReadingRanks />
     </section>
   );
 }
