@@ -23,6 +23,8 @@ export type ReadingProgress = {
   streak: number;
   totalSeconds: number;
   versesRead: string[];
+  /** Times each ayah was dwelt on, played, highlighted, or noted. */
+  verseVisits: Record<string, number>;
   lastVerseKey: string | null;
   lastActiveAt: number | null;
 };
@@ -33,6 +35,7 @@ export const defaultReadingProgress: ReadingProgress = {
   streak: 0,
   totalSeconds: 0,
   versesRead: [],
+  verseVisits: {},
   lastVerseKey: null,
   lastActiveAt: null,
 };
@@ -86,8 +89,68 @@ export function saveReadingPlace(
 
 export function markVerseRead(progress: ReadingProgress, verseKey: string): ReadingProgress {
   const next = bumpStreak(progress);
-  if (next.versesRead.includes(verseKey)) return next;
-  return { ...next, versesRead: [...next.versesRead, verseKey] };
+  const visits = { ...next.verseVisits };
+  visits[verseKey] = (visits[verseKey] ?? 0) + 1;
+  const versesRead = next.versesRead.includes(verseKey) ? next.versesRead : [...next.versesRead, verseKey];
+  return { ...next, versesRead, verseVisits: visits };
+}
+
+export function normalizeVerseVisits(visits: unknown, versesRead: string[]): Record<string, number> {
+  const out: Record<string, number> = {};
+  if (visits && typeof visits === "object" && !Array.isArray(visits)) {
+    for (const [key, value] of Object.entries(visits as Record<string, unknown>)) {
+      if (typeof key !== "string" || !key.includes(":")) continue;
+      if (typeof value !== "number" || !Number.isFinite(value) || value < 1) continue;
+      out[key] = Math.min(100_000, Math.floor(value));
+    }
+  }
+  if (Object.keys(out).length === 0) {
+    for (const key of versesRead) {
+      if (typeof key === "string" && key.includes(":")) out[key] = 1;
+    }
+  }
+  return out;
+}
+
+export function mergeVerseVisits(a: Record<string, number>, b: Record<string, number>): Record<string, number> {
+  const out = { ...a };
+  for (const [key, value] of Object.entries(b)) {
+    out[key] = Math.max(out[key] ?? 0, value);
+  }
+  return out;
+}
+
+export type RankedSurah = { chapterId: number; visits: number; ayahs: number };
+export type RankedAyah = { verseKey: string; chapterId: number; verseNumber: number; visits: number };
+
+export function topSurahsByVisits(progress: ReadingProgress, limit = 5): RankedSurah[] {
+  const visits = normalizeVerseVisits(progress.verseVisits, progress.versesRead);
+  const bySurah = new Map<number, { visits: number; ayahs: number }>();
+  for (const [key, count] of Object.entries(visits)) {
+    const place = parseVerseKey(key);
+    if (!place) continue;
+    const current = bySurah.get(place.chapterId) ?? { visits: 0, ayahs: 0 };
+    current.visits += count;
+    current.ayahs += 1;
+    bySurah.set(place.chapterId, current);
+  }
+  return [...bySurah.entries()]
+    .map(([chapterId, stats]) => ({ chapterId, visits: stats.visits, ayahs: stats.ayahs }))
+    .sort((a, b) => b.visits - a.visits || a.chapterId - b.chapterId)
+    .slice(0, limit);
+}
+
+export function topAyahsByVisits(progress: ReadingProgress, limit = 5): RankedAyah[] {
+  const visits = normalizeVerseVisits(progress.verseVisits, progress.versesRead);
+  return Object.entries(visits)
+    .map(([verseKey, count]) => {
+      const place = parseVerseKey(verseKey);
+      if (!place) return null;
+      return { verseKey, chapterId: place.chapterId, verseNumber: place.verseNumber, visits: count };
+    })
+    .filter((item): item is RankedAyah => Boolean(item))
+    .sort((a, b) => b.visits - a.visits || a.chapterId - b.chapterId || a.verseNumber - b.verseNumber)
+    .slice(0, limit);
 }
 
 export function markSurahRead(progress: ReadingProgress, surahId: number): ReadingProgress {

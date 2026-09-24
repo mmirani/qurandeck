@@ -51,8 +51,8 @@ export default function PrivacyPage() {
       <LegalSection title="The library we sync">
         <p>
           After you sign in, QuranDeck can save a library for that email: reading preferences, favorites, notes,
-          highlights, color swatches, progress, display name, and profile photo or icon. The same library is merged back onto a device when
-          you sign in there.
+          highlights, color swatches, progress (including how often an ayah was returned to), display name, and profile
+          photo or icon. The same library is merged back onto a device when you sign in there.
         </p>
         <p>
           In the database, the row is not labeled with your email address. The account key is a one-way hash of the
@@ -63,6 +63,19 @@ export default function PrivacyPage() {
           QuranDeck holds the key that unlocks a library so it can sync back to you while you are signed in. This is
           storage for the service, not a claim that the operator is unable to open a library. We do not sell your
           reading, notes, or progress.
+        </p>
+      </LegalSection>
+
+      <LegalSection title="Platform reading ranks">
+        <p>
+          When a signed-in library syncs, QuranDeck can add anonymous visit counts for the ayahs that increased since
+          the last sync for that account. Those counts go into a separate table of surah and ayah totals for the
+          product. That table stores only an ayah key and a number. It does not store your email, account hash, display
+          name, notes, or photo.
+        </p>
+        <p>
+          Guest reading does not feed those totals. The ranks may be shown later as “most read on QuranDeck” style
+          lists. They are product counters, not an advertising profile, and they are not sold.
         </p>
       </LegalSection>
 
@@ -85,9 +98,9 @@ export default function PrivacyPage() {
 
       <LegalSection title="Hosting">
         <p>
-          The site runs on Vercel. The sealed library is stored in Neon Postgres. Those hosts keep ordinary connection
-          logs, such as IP address and time, to operate and protect the service. QuranDeck does not use those logs to
-          build an advertising profile.
+          The site runs on Vercel. The sealed library and the anonymous reading-rank counters are stored in Neon
+          Postgres. Those hosts keep ordinary connection logs, such as IP address and time, to operate and protect the
+          service. QuranDeck does not use those logs to build an advertising profile.
         </p>
       </LegalSection>
 
@@ -96,7 +109,8 @@ export default function PrivacyPage() {
           Guest data stays in the browser until you clear it. A signed-in library stays until you ask for it to be
           deleted or the account is removed. Sign-in links expire after about 15 minutes. There is not yet a delete
           button in the account panel. Ask through the repository and the sealed library for that email will be
-          deleted.
+          deleted. Anonymous platform rank totals are not tied to your row, so deleting a library does not unwind
+          counts already added to those totals.
         </p>
       </LegalSection>
 

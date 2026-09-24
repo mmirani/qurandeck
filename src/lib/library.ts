@@ -1,7 +1,7 @@
 import { validateAvatar } from "@/lib/avatar";
 import { cleanDisplayName, validateDisplayName } from "@/lib/display-name";
 import { defaultPreferences, preferencesFromUnknown } from "@/lib/storage";
-import { defaultReadingProgress, type ReadingProgress } from "@/lib/reading";
+import { defaultReadingProgress, mergeVerseVisits, normalizeVerseVisits, type ReadingProgress } from "@/lib/reading";
 import type { Bookmark, Highlight, HighlightSwatch, Note, Preferences } from "@/lib/quran/types";
 
 export type LibrarySnapshot = {
@@ -74,6 +74,10 @@ export function mergeLibraries(local: LibrarySnapshot, remote: LibrarySnapshot):
     progress: {
       surahsRead: [...new Set([...remote.progress.surahsRead, ...local.progress.surahsRead])].sort((a, b) => a - b),
       versesRead: [...new Set([...remote.progress.versesRead, ...local.progress.versesRead])],
+      verseVisits: mergeVerseVisits(
+        normalizeVerseVisits(remote.progress.verseVisits, remote.progress.versesRead),
+        normalizeVerseVisits(local.progress.verseVisits, local.progress.versesRead),
+      ),
       totalSeconds: Math.max(remote.progress.totalSeconds, local.progress.totalSeconds),
       streak: Math.max(remote.progress.streak, local.progress.streak),
       lastReadDay: laterIso(remote.progress.lastReadDay ?? undefined, local.progress.lastReadDay ?? undefined) ?? null,
@@ -119,6 +123,10 @@ export function normalizeLibrary(value: unknown): LibrarySnapshot | null {
       ...(raw.progress && typeof raw.progress === "object" ? raw.progress : {}),
       surahsRead: Array.isArray(raw.progress?.surahsRead) ? raw.progress.surahsRead : [],
       versesRead: Array.isArray(raw.progress?.versesRead) ? raw.progress.versesRead : [],
+      verseVisits: normalizeVerseVisits(
+        raw.progress && typeof raw.progress === "object" ? (raw.progress as ReadingProgress).verseVisits : undefined,
+        Array.isArray(raw.progress?.versesRead) ? raw.progress.versesRead : [],
+      ),
     },
     ...safeDisplayName(raw.displayName, raw.displayNameUpdatedAt),
     ...safeAvatar(raw.avatar, raw.avatarUpdatedAt),

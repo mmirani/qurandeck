@@ -57,6 +57,11 @@ export default function TermsPage() {
           and sync that library so the feature works, including in sealed form in the database described in the privacy
           policy. QuranDeck does not claim ownership of your reflections and does not sell them.
         </p>
+        <p>
+          When a signed-in library syncs, QuranDeck may also add anonymous visit counts to shared platform ranks (ayah
+          keys and totals only). Those ranks can power product features such as most-read surahs and ayahs across
+          QuranDeck. They are not linked to your email in that table.
+        </p>
       </LegalSection>
 
       <LegalSection title="Conduct">
@@ -64,6 +69,7 @@ export default function TermsPage() {
         <ul className="list-disc space-y-2 pl-5">
           <li>break into another person’s account or library</li>
           <li>probe, disrupt, or overload the site or its database</li>
+          <li>inflate or game reading ranks or other shared counters</li>
           <li>use a display name that includes offensive language</li>
           <li>store unlawful content in notes</li>
           <li>resell access to QuranDeck or wrap it as a paid product</li>

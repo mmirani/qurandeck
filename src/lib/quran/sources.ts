@@ -21,8 +21,9 @@
  * - Tanzil: https://tanzil.net/docs/resources — canonical Uthmani text dumps
  * - EveryAyah: https://everyayah.com — recitation mp3s and timing files
  *
- * User data (bookmarks, notes, accounts) stays local in this first slice.
- * Quran Foundation also has authenticated User APIs for cloud sync later.
+ * Guest bookmarks, notes, and progress stay in the browser.
+ * A signed-in library is sealed and synced through /api/library (Neon).
+ * Quran Foundation also has authenticated User APIs; QuranDeck does not use those.
  */
 
 export const QURAN_COM_API = "https://api.quran.com/api/v4";

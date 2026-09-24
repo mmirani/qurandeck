@@ -20,6 +20,7 @@ import {
   UserRound,
 } from "lucide-react";
 import { CompletionMap } from "@/components/account/completion-map";
+import { HomeReadingRanks } from "@/components/home/home-reading-ranks";
 import { HomeStats } from "@/components/home/home-stats";
 import { BrandWordmark } from "@/components/brand/brand-wordmark";
 import { HomeSana } from "@/components/home/home-sana";
@@ -215,6 +216,7 @@ function HomeSignedIn() {
       <div className="mt-10">
         <CompletionMap />
       </div>
+      <HomeReadingRanks />
     </section>
   );
 }

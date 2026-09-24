@@ -2,7 +2,7 @@ import { asMushafInk } from "./appearance";
 import { sanitizeTranslationIds, withTranslationIds } from "./quran/languages";
 import { DEFAULT_RECITATION_ID, DEFAULT_TAFSIR_ID, DEFAULT_TRANSLATION_ID } from "./quran/sources";
 import { DEFAULT_SWATCH_ID, defaultSwatches } from "./highlights";
-import { defaultReadingProgress, type ReadingProgress } from "./reading";
+import { defaultReadingProgress, normalizeVerseVisits, type ReadingProgress } from "./reading";
 import { mergeStudyCards } from "./study-cards";
 import type {
   Bookmark,
@@ -155,11 +155,13 @@ export function loadProgress(): ReadingProgress {
   const value = parse(KEYS.progress);
   if (!value || typeof value !== "object") return defaultReadingProgress;
   const raw = value as Partial<ReadingProgress>;
+  const versesRead = Array.isArray(raw.versesRead) ? raw.versesRead.filter((key) => typeof key === "string") : [];
   return {
     ...defaultReadingProgress,
     ...raw,
     surahsRead: Array.isArray(raw.surahsRead) ? raw.surahsRead.filter((id) => Number.isInteger(id)) : [],
-    versesRead: Array.isArray(raw.versesRead) ? raw.versesRead.filter((key) => typeof key === "string") : [],
+    versesRead,
+    verseVisits: normalizeVerseVisits(raw.verseVisits, versesRead),
     lastVerseKey: typeof raw.lastVerseKey === "string" ? raw.lastVerseKey : null,
     lastActiveAt: typeof raw.lastActiveAt === "number" ? raw.lastActiveAt : null,
   };

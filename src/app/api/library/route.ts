@@ -4,6 +4,7 @@ import { getSql } from "@/lib/db";
 import { validateDisplayName } from "@/lib/display-name";
 import { normalizeLibrary, type LibrarySnapshot } from "@/lib/library";
 import { accountId, openLibrary, prepareLibraryStore, sealLibrary } from "@/lib/library-seal";
+import { applyReadingRankDeltas, visitDeltas } from "@/lib/reading-ranks";
 
 const MAX_BYTES = 500_000;
 
@@ -69,13 +70,37 @@ export async function PUT(request: Request) {
   try {
     await prepareLibraryStore();
     const sql = getSql();
+    const id = accountId(email);
+    const existing = (await sql`
+      SELECT sealed
+      FROM libraries
+      WHERE account_id = ${id}
+      LIMIT 1
+    `) as { sealed?: string }[];
+
+    let previous: LibrarySnapshot | null = null;
+    if (existing[0]?.sealed) {
+      try {
+        previous = normalizeLibrary(openLibrary(existing[0].sealed));
+      } catch {
+        previous = null;
+      }
+    }
+
     const rows = (await sql`
       INSERT INTO libraries (account_id, sealed, updated_at)
-      VALUES (${accountId(email)}, ${sealLibrary(library)}, now())
+      VALUES (${id}, ${sealLibrary(library)}, now())
       ON CONFLICT (account_id) DO UPDATE
       SET sealed = EXCLUDED.sealed, updated_at = now()
       RETURNING updated_at
     `) as { updated_at?: string }[];
+
+    try {
+      await applyReadingRankDeltas(visitDeltas(previous, library));
+    } catch {
+      // Library sync already succeeded; ranks can catch up on a later put.
+    }
+
     const updatedAt = rows[0]?.updated_at ?? null;
     return Response.json({ ok: true, updatedAt });
   } catch {
