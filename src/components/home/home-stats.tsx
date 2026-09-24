@@ -1,4 +1,4 @@
-import { BookMarked, BookOpen, CalendarDays, Clock, Highlighter, NotebookPen, Star } from "lucide-react";
+import { BookMarked, BookOpen, CalendarDays, Clock, Highlighter, Map, NotebookPen, Star } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { TOTAL_AYAHS, TOTAL_SURAHS } from "@/lib/reading";
 
@@ -19,6 +19,8 @@ export function HomeStats({
   notes: number;
   highlights: number;
 }) {
+  const mushafPercent = Math.min(100, Math.round((versesRead / TOTAL_AYAHS) * 1000) / 10);
+
   return (
     <div className="rounded-3xl border border-line bg-surface px-4 py-4 sm:px-5">
       <dl className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-4">
@@ -27,10 +29,11 @@ export function HomeStats({
         <Stat icon={CalendarDays} label="Day streak" value={streak} />
         <Stat icon={Clock} label="Minutes" value={minutes} />
       </dl>
-      <dl className="mt-3 grid grid-cols-3 gap-3 border-t border-line/70 pt-3">
+      <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-3 border-t border-line/70 pt-3 sm:grid-cols-4">
         <Stat icon={Star} label="Favorites" value={favorites} iconClassName="fill-gold text-gold" />
         <Stat icon={NotebookPen} label="Notes" value={notes} />
         <Stat icon={Highlighter} label="Highlights" value={highlights} marked />
+        <Stat icon={Map} label="Of mushaf" value={mushafPercent} suffix="%" />
       </dl>
     </div>
   );
@@ -41,6 +44,7 @@ function Stat({
   label,
   value,
   hint,
+  suffix,
   marked = false,
   iconClassName = "text-gold",
 }: {
@@ -48,10 +52,11 @@ function Stat({
   label: string;
   value: number;
   hint?: string;
+  suffix?: string;
   marked?: boolean;
   iconClassName?: string;
 }) {
-  const count = formatCount(value);
+  const count = `${formatCount(value)}${suffix ?? ""}`;
   return (
     <div className="min-w-0">
       <div className="flex items-center gap-1.5">
