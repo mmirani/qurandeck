@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Bookmark } from "lucide-react";
+import { Bookmark, Download, FileJson, FileSpreadsheet } from "lucide-react";
 import { useMushaf } from "@/components/providers/mushaf-provider";
 import { UserMenu } from "@/components/user/user-menu";
 import { RailToggle } from "@/components/shell/rail-toggle";
@@ -10,6 +10,11 @@ import { Modal } from "@/components/ui/modal";
 import { PROMISE_LINE, PROMISE_WHY } from "@/lib/brand";
 import { AvatarPicker } from "@/components/account/profile-avatar";
 import { CompletionMap } from "@/components/account/completion-map";
+import {
+  downloadLibraryJson,
+  downloadStatsCsv,
+  type LibraryExportInput,
+} from "@/lib/export-library";
 import {
   formatReadingMinutes,
   parseVerseKey,
@@ -88,6 +93,7 @@ export function AccountModal() {
                 Save name
               </button>
             </form>
+            <DataExportPanel />
             <div className="border-t border-line/70 pt-8">
               <button
                 type="button"
@@ -140,6 +146,7 @@ function AccountDashboard() {
         <StatCard label="Notes" value={`${notes.length}`} hint={`${highlights.length} highlights`} />
       </div>
       <CompletionMap />
+      {!user ? <DataExportPanel compact /> : null}
       {user ? null : (
         <button
           type="button"
@@ -150,6 +157,72 @@ function AccountDashboard() {
         </button>
       )}
     </div>
+  );
+}
+
+function DataExportPanel({ compact = false }: { compact?: boolean }) {
+  const { progress, bookmarks, notes, highlights, swatches, preferences, user } = useMushaf();
+  const [flash, setFlash] = useState<string | null>(null);
+
+  const payload = (): LibraryExportInput => ({
+    progress,
+    bookmarks,
+    notes,
+    highlights,
+    swatches,
+    preferences,
+    user,
+  });
+
+  const flashMessage = (message: string) => {
+    setFlash(message);
+    window.setTimeout(() => setFlash(null), 2200);
+  };
+
+  return (
+    <section
+      className={
+        compact
+          ? "rounded-2xl border border-line bg-surface px-4 py-4"
+          : "border-t border-line/70 pt-8"
+      }
+    >
+      <div className="flex items-start gap-2">
+        <Download className="mt-0.5 h-4 w-4 shrink-0 text-gold-deep" aria-hidden="true" />
+        <div className="min-w-0">
+          <h3 className="text-sm font-semibold text-ink">Download your data</h3>
+          <p className="mt-1 text-sm text-ink-soft">
+            Stats as a spreadsheet, or a full library backup you can keep offline. Profile photos are left out to keep
+            the file small.
+          </p>
+        </div>
+      </div>
+      <div className={`flex flex-col gap-2 sm:flex-row ${compact ? "mt-3" : "mt-4"}`}>
+        <button
+          type="button"
+          onClick={() => {
+            downloadStatsCsv(payload());
+            flashMessage("Stats CSV downloaded");
+          }}
+          className="inline-flex h-11 cursor-pointer items-center justify-center gap-2 rounded-full border border-line bg-surface px-4 text-sm font-medium text-ink hover:bg-highlight"
+        >
+          <FileSpreadsheet className="h-4 w-4 text-gold-deep" aria-hidden="true" />
+          Stats (CSV)
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            downloadLibraryJson(payload());
+            flashMessage("Library JSON downloaded");
+          }}
+          className="inline-flex h-11 cursor-pointer items-center justify-center gap-2 rounded-full bg-gold px-4 text-sm font-semibold text-on-gold"
+        >
+          <FileJson className="h-4 w-4" aria-hidden="true" />
+          Full library (JSON)
+        </button>
+      </div>
+      {flash ? <p className="mt-2 text-xs text-gold-deep">{flash}</p> : null}
+    </section>
   );
 }
 
