@@ -19,6 +19,8 @@ export const READING_IDLE_MS = 15 * 60 * 1000;
 
 export type ReadingProgress = {
   surahsRead: number[];
+  /** How many times each finished surah was completed (not ayah glance counts). */
+  surahCompletions: Record<number, number>;
   lastReadDay: string | null;
   streak: number;
   totalSeconds: number;
@@ -31,6 +33,7 @@ export type ReadingProgress = {
 
 export const defaultReadingProgress: ReadingProgress = {
   surahsRead: [],
+  surahCompletions: {},
   lastReadDay: null,
   streak: 0,
   totalSeconds: 0,
@@ -114,10 +117,45 @@ export function syncSurahsRead(progress: ReadingProgress): ReadingProgress {
     if (complete) extra.push(chapterId);
   }
   if (extra.length === 0) return progress;
+  const surahCompletions = { ...normalizeSurahCompletions(progress.surahCompletions, progress.surahsRead) };
+  for (const chapterId of extra) {
+    surahCompletions[chapterId] = Math.max(1, surahCompletions[chapterId] ?? 0);
+  }
   return {
     ...progress,
     surahsRead: [...progress.surahsRead, ...extra].sort((a, b) => a - b),
+    surahCompletions,
   };
+}
+
+export function normalizeSurahCompletions(
+  raw: unknown,
+  surahsRead: number[],
+): Record<number, number> {
+  const out: Record<number, number> = {};
+  if (raw && typeof raw === "object" && !Array.isArray(raw)) {
+    for (const [key, value] of Object.entries(raw as Record<string, unknown>)) {
+      const chapterId = Number(key);
+      if (!Number.isInteger(chapterId) || chapterId < 1 || chapterId > TOTAL_SURAHS) continue;
+      if (typeof value !== "number" || !Number.isFinite(value) || value < 1) continue;
+      out[chapterId] = Math.min(10_000, Math.floor(value));
+    }
+  }
+  for (const chapterId of surahsRead) {
+    if (!Number.isInteger(chapterId) || chapterId < 1 || chapterId > TOTAL_SURAHS) continue;
+    if (!out[chapterId]) out[chapterId] = 1;
+  }
+  return out;
+}
+
+function recordSurahCompletion(progress: ReadingProgress, chapterId: number): ReadingProgress {
+  const surahCompletions = { ...normalizeSurahCompletions(progress.surahCompletions, progress.surahsRead) };
+  const already = progress.surahsRead.includes(chapterId);
+  surahCompletions[chapterId] = already ? (surahCompletions[chapterId] ?? 1) + 1 : 1;
+  const surahsRead = already
+    ? progress.surahsRead
+    : [...progress.surahsRead, chapterId].sort((a, b) => a - b);
+  return { ...progress, surahsRead, surahCompletions };
 }
 
 export function markVerseRead(progress: ReadingProgress, verseKey: string): ReadingProgress {
@@ -125,18 +163,20 @@ export function markVerseRead(progress: ReadingProgress, verseKey: string): Read
   const visits = { ...next.verseVisits };
   visits[verseKey] = (visits[verseKey] ?? 0) + 1;
   const versesRead = next.versesRead.includes(verseKey) ? next.versesRead : [...next.versesRead, verseKey];
-  let result: ReadingProgress = { ...next, versesRead, verseVisits: visits };
+  let result: ReadingProgress = {
+    ...next,
+    versesRead,
+    verseVisits: visits,
+    surahCompletions: normalizeSurahCompletions(next.surahCompletions, next.surahsRead),
+  };
 
   const place = parseVerseKey(verseKey);
-  if (place && !result.surahsRead.includes(place.chapterId)) {
-    const ayahs = SURAH_VERSE_COUNTS[place.chapterId - 1];
-    // Reaching the last ayah counts as finishing the surah (normal continuous reading).
-    if (place.verseNumber === ayahs || isSurahFullyRead(versesRead, place.chapterId)) {
-      result = {
-        ...result,
-        surahsRead: [...result.surahsRead, place.chapterId].sort((a, b) => a - b),
-      };
-    }
+  if (!place || result.surahsRead.includes(place.chapterId)) return result;
+
+  const ayahs = SURAH_VERSE_COUNTS[place.chapterId - 1];
+  // First finish: last ayah reached, or every ayah already marked.
+  if (place.verseNumber === ayahs || isSurahFullyRead(versesRead, place.chapterId)) {
+    return recordSurahCompletion(result, place.chapterId);
   }
   return result;
 }
@@ -166,27 +206,34 @@ export function mergeVerseVisits(a: Record<string, number>, b: Record<string, nu
   return out;
 }
 
+export function mergeSurahCompletions(
+  a: Record<number, number>,
+  b: Record<number, number>,
+): Record<number, number> {
+  const out = { ...a };
+  for (const [key, value] of Object.entries(b)) {
+    const chapterId = Number(key);
+    out[chapterId] = Math.max(out[chapterId] ?? 0, value);
+  }
+  return out;
+}
+
 export type RankedSurah = { chapterId: number; completions: number; ayahs: number };
 export type RankedAyah = { verseKey: string; chapterId: number; verseNumber: number; visits: number };
 
 /**
- * Surahs from progress.surahsRead only — the same list as “Surahs finished”.
- * Completions ≈ how many times every ayah in that surah has been visited (min), at least 1.
+ * Surahs from progress.surahsRead — same list as “Surahs finished”.
+ * Completions come from surahCompletions (one per real finish), not ayah glance counts.
  */
 export function topCompletedSurahs(progress: ReadingProgress, limit = 5): RankedSurah[] {
-  const visits = normalizeVerseVisits(progress.verseVisits, progress.versesRead);
-
+  const completions = normalizeSurahCompletions(progress.surahCompletions, progress.surahsRead);
   return progress.surahsRead
     .filter((chapterId) => Number.isInteger(chapterId) && chapterId >= 1 && chapterId <= TOTAL_SURAHS)
-    .map((chapterId) => {
-      const ayahs = SURAH_VERSE_COUNTS[chapterId - 1];
-      let minVisits = Infinity;
-      for (let verseNumber = 1; verseNumber <= ayahs; verseNumber += 1) {
-        minVisits = Math.min(minVisits, visits[`${chapterId}:${verseNumber}`] ?? 0);
-      }
-      const completions = Math.max(1, Number.isFinite(minVisits) && minVisits > 0 ? minVisits : 1);
-      return { chapterId, completions, ayahs };
-    })
+    .map((chapterId) => ({
+      chapterId,
+      completions: completions[chapterId] ?? 1,
+      ayahs: SURAH_VERSE_COUNTS[chapterId - 1],
+    }))
     .sort((a, b) => b.completions - a.completions || a.chapterId - b.chapterId)
     .slice(0, limit);
 }
@@ -210,8 +257,9 @@ export function topAyahsByVisits(progress: ReadingProgress, limit = 5): RankedAy
 }
 
 export function markSurahRead(progress: ReadingProgress, surahId: number): ReadingProgress {
-  if (progress.surahsRead.includes(surahId)) return bumpStreak(progress);
-  return bumpStreak({ ...progress, surahsRead: [...progress.surahsRead, surahId].sort((a, b) => a - b) });
+  const base = bumpStreak(progress);
+  if (base.surahsRead.includes(surahId)) return base;
+  return recordSurahCompletion(base, surahId);
 }
 
 /** Dwell before an on-screen ayah counts as read (ms). Short enough for normal scrolling. */

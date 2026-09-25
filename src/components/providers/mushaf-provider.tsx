@@ -112,6 +112,9 @@ type MushafContextValue = {
   mode: "surah" | "juz";
   currentJuz: number | null;
   selectedVerseKey: string | null;
+  /** Ayah to scroll into view once after the reader finishes loading (deep links). */
+  pendingScrollVerseKey: string | null;
+  clearPendingScrollVerse: () => void;
   selectedWord: Word | null;
   playingVerseKey: string | null;
   playingWordLocation: string | null;
@@ -220,6 +223,7 @@ export function MushafProvider({ children }: { children: ReactNode }) {
   const [mode, setMode] = useState<"surah" | "juz">("surah");
   const [currentJuz, setCurrentJuz] = useState<number | null>(null);
   const [selectedVerseKey, setSelectedVerseKey] = useState<string | null>(null);
+  const [pendingScrollVerseKey, setPendingScrollVerseKey] = useState<string | null>(null);
   const [selectedWord, setSelectedWord] = useState<Word | null>(null);
   const [playingVerseKey, setPlayingVerseKey] = useState<string | null>(null);
   const [playingWordLocation, setPlayingWordLocation] = useState<string | null>(null);
@@ -452,10 +456,14 @@ export function MushafProvider({ children }: { children: ReactNode }) {
         setChapter(data.chapter);
         setVerses(data.verses);
         setIntroduction(data.introduction ?? "");
-        const key = verseNumber
-          ? `${id}:${verseNumber}`
-          : data.verses[0]?.verseKey ?? null;
+        const key =
+          verseNumber && Number.isInteger(verseNumber) && verseNumber > 0
+            ? `${id}:${verseNumber}`
+            : (data.verses[0]?.verseKey ?? null);
         setSelectedVerseKey(key);
+        setPendingScrollVerseKey(
+          verseNumber && Number.isInteger(verseNumber) && verseNumber > 0 ? `${id}:${verseNumber}` : null,
+        );
         setSelectedWord(null);
       } catch (err: unknown) {
         setError(err instanceof Error ? err.message : "Could not load surah");
@@ -492,11 +500,21 @@ export function MushafProvider({ children }: { children: ReactNode }) {
   const openSurah = useCallback(
     (id: number, verseNumber?: number) => {
       const href = verseNumber ? `/surah/${id}#ayah-${verseNumber}` : `/surah/${id}`;
-      if (pathname !== `/surah/${id}`) router.push(href);
-      else void loadSurah(id, verseNumber);
+      if (pathname !== `/surah/${id}`) {
+        if (verseNumber && Number.isInteger(verseNumber) && verseNumber > 0) {
+          setPendingScrollVerseKey(`${id}:${verseNumber}`);
+        }
+        router.push(href);
+      } else {
+        void loadSurah(id, verseNumber);
+      }
     },
     [loadSurah, pathname, router],
   );
+
+  const clearPendingScrollVerse = useCallback(() => {
+    setPendingScrollVerseKey(null);
+  }, []);
 
   const openJuz = useCallback(
     (n: number) => {
@@ -1081,6 +1099,8 @@ export function MushafProvider({ children }: { children: ReactNode }) {
       mode,
       currentJuz,
       selectedVerseKey,
+      pendingScrollVerseKey,
+      clearPendingScrollVerse,
       selectedWord,
       playingVerseKey,
       playingWordLocation,
@@ -1162,6 +1182,7 @@ export function MushafProvider({ children }: { children: ReactNode }) {
       chapter,
       chapters,
       confirmStillReading,
+      clearPendingScrollVerse,
       cueVerse,
       currentJuz,
       currentTime,
@@ -1188,6 +1209,7 @@ export function MushafProvider({ children }: { children: ReactNode }) {
       notes,
       openJuz,
       openSurah,
+      pendingScrollVerseKey,
       playFrom,
       playMode,
       playVerse,

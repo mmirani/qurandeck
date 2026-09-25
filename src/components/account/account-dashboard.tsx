@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Bookmark } from "lucide-react";
 import { useMushaf } from "@/components/providers/mushaf-provider";
 import { UserMenu } from "@/components/user/user-menu";
 import { RailToggle } from "@/components/shell/rail-toggle";
@@ -271,7 +272,7 @@ export function ContinueCard({ compact = false }: { compact?: boolean }) {
       chapterId: target.chapterId,
       verseNumber: target.verseNumber,
       textArabic: "",
-      textTranslation: "Current place",
+      textTranslation: "Auto Bookmark",
       source: "jump",
     });
   };
@@ -284,7 +285,10 @@ export function ContinueCard({ compact = false }: { compact?: boolean }) {
           : "mt-3 rounded-2xl border-2 border-gold bg-highlight p-4"
       }
     >
-      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-gold-deep">Current place</p>
+      <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-gold-deep">
+        <Bookmark className="h-3.5 w-3.5 shrink-0" aria-hidden="true" strokeWidth={2.25} />
+        Auto Bookmark
+      </p>
       <p className={`mt-1 font-display font-semibold tracking-tight text-ink ${compact ? "text-xl" : "text-2xl"}`}>
         {title}
       </p>

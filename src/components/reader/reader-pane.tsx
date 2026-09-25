@@ -24,6 +24,8 @@ export function ReaderPane() {
     setSearchOpen,
     preferences,
     selectedVerseKey,
+    pendingScrollVerseKey,
+    clearPendingScrollVerse,
     setVisibleVerseKeys,
     introduction,
     currentJuz,
@@ -41,6 +43,42 @@ export function ReaderPane() {
     const node = scroller.current?.querySelector(`[data-verse-key="${playingVerseKey}"]`);
     node?.scrollIntoView({ behavior: "smooth", block: "center" });
   }, [ayahMode, playingVerseKey, preferences.autoFollow]);
+
+  useEffect(() => {
+    if (loading || !pendingScrollVerseKey) return;
+    if (ayahMode) {
+      clearPendingScrollVerse();
+      return;
+    }
+    const root = scroller.current;
+    if (!root) return;
+
+    let cancelled = false;
+    const scrollToTarget = () => {
+      if (cancelled) return false;
+      const node = root.querySelector(`[data-verse-key="${pendingScrollVerseKey}"]`);
+      if (!node) return false;
+      node.scrollIntoView({ behavior: "smooth", block: "center" });
+      clearPendingScrollVerse();
+      return true;
+    };
+
+    let frame = 0;
+    frame = requestAnimationFrame(() => {
+      frame = requestAnimationFrame(() => {
+        scrollToTarget();
+      });
+    });
+    const retry = window.setTimeout(() => {
+      scrollToTarget();
+    }, 160);
+
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(frame);
+      window.clearTimeout(retry);
+    };
+  }, [ayahMode, clearPendingScrollVerse, loading, pendingScrollVerseKey, verses]);
 
   useEffect(() => {
     const root = scroller.current;

@@ -5,7 +5,7 @@ import { useMushaf } from "@/components/providers/mushaf-provider";
 import { readerHref, topAyahsByVisits, topCompletedSurahs } from "@/lib/reading";
 
 export function HomeReadingRanks() {
-  const { progress, chapters } = useMushaf();
+  const { progress, chapters, openSurah } = useMushaf();
   const surahs = topCompletedSurahs(progress, 5);
   const ayahs = topAyahsByVisits(progress, 5);
   if (surahs.length === 0 && ayahs.length === 0) return null;
@@ -48,6 +48,10 @@ export function HomeReadingRanks() {
               <li key={item.verseKey}>
                 <Link
                   href={readerHref(item.verseKey)}
+                  onClick={(event) => {
+                    event.preventDefault();
+                    openSurah(item.chapterId, item.verseNumber);
+                  }}
                   className="flex min-h-11 items-center justify-between gap-2 py-1.5 hover:text-gold-deep"
                 >
                   <span className="min-w-0 truncate">

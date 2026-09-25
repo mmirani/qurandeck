@@ -505,6 +505,17 @@ function ArabicBlock({
     <div dir="rtl" lang="ar" className={`arabic-text mushaf-arabic-mobile text-right ${highlighting ? "select-none" : ""}`}>
       {verse.words.length > 0
         ? verse.words.map((word) => {
+            if (word.charType === "end") {
+              return (
+                <span
+                  key={`${word.location}-end`}
+                  className="verse-ayah-mark"
+                  aria-label={`Ayah ${verse.verseKey}`}
+                >
+                  {word.textUthmani || verse.verseNumber}
+                </span>
+              );
+            }
             if (word.charType !== "word") {
               return (
                 <span key={`${word.location}-end`} className="mx-1 inline-block text-gold-deep">
@@ -550,7 +561,14 @@ function ArabicBlock({
               </button>
             );
           })
-        : verse.textUthmani}
+        : (
+            <>
+              {verse.textUthmani}{" "}
+              <span className="verse-ayah-mark" aria-label={`Ayah ${verse.verseKey}`}>
+                {verse.verseNumber}
+              </span>
+            </>
+          )}
     </div>
   );
 }

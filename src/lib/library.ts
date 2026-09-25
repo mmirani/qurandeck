@@ -1,7 +1,15 @@
 import { validateAvatar } from "@/lib/avatar";
 import { cleanDisplayName, validateDisplayName } from "@/lib/display-name";
 import { defaultPreferences, preferencesFromUnknown } from "@/lib/storage";
-import { defaultReadingProgress, mergeVerseVisits, normalizeVerseVisits, syncSurahsRead, type ReadingProgress } from "@/lib/reading";
+import {
+  defaultReadingProgress,
+  mergeSurahCompletions,
+  mergeVerseVisits,
+  normalizeSurahCompletions,
+  normalizeVerseVisits,
+  syncSurahsRead,
+  type ReadingProgress,
+} from "@/lib/reading";
 import type { Bookmark, Highlight, HighlightSwatch, Note, Preferences } from "@/lib/quran/types";
 
 export type LibrarySnapshot = {
@@ -73,6 +81,10 @@ export function mergeLibraries(local: LibrarySnapshot, remote: LibrarySnapshot):
     swatches: byId([...remote.swatches, ...local.swatches]),
     progress: syncSurahsRead({
       surahsRead: [...new Set([...remote.progress.surahsRead, ...local.progress.surahsRead])].sort((a, b) => a - b),
+      surahCompletions: mergeSurahCompletions(
+        normalizeSurahCompletions(remote.progress.surahCompletions, remote.progress.surahsRead),
+        normalizeSurahCompletions(local.progress.surahCompletions, local.progress.surahsRead),
+      ),
       versesRead: [...new Set([...remote.progress.versesRead, ...local.progress.versesRead])],
       verseVisits: mergeVerseVisits(
         normalizeVerseVisits(remote.progress.verseVisits, remote.progress.versesRead),
@@ -118,16 +130,19 @@ export function normalizeLibrary(value: unknown): LibrarySnapshot | null {
     notes: Array.isArray(raw.notes) ? raw.notes : [],
     highlights: Array.isArray(raw.highlights) ? raw.highlights : [],
     swatches: Array.isArray(raw.swatches) ? raw.swatches : base.swatches,
-    progress: {
-      ...defaultReadingProgress,
-      ...(raw.progress && typeof raw.progress === "object" ? raw.progress : {}),
-      surahsRead: Array.isArray(raw.progress?.surahsRead) ? raw.progress.surahsRead : [],
-      versesRead: Array.isArray(raw.progress?.versesRead) ? raw.progress.versesRead : [],
-      verseVisits: normalizeVerseVisits(
-        raw.progress && typeof raw.progress === "object" ? (raw.progress as ReadingProgress).verseVisits : undefined,
-        Array.isArray(raw.progress?.versesRead) ? raw.progress.versesRead : [],
-      ),
-    },
+    progress: (() => {
+      const surahsRead = Array.isArray(raw.progress?.surahsRead) ? raw.progress.surahsRead : [];
+      const versesRead = Array.isArray(raw.progress?.versesRead) ? raw.progress.versesRead : [];
+      const rawProgress = raw.progress && typeof raw.progress === "object" ? (raw.progress as ReadingProgress) : null;
+      return {
+        ...defaultReadingProgress,
+        ...(rawProgress ?? {}),
+        surahsRead,
+        surahCompletions: normalizeSurahCompletions(rawProgress?.surahCompletions, surahsRead),
+        versesRead,
+        verseVisits: normalizeVerseVisits(rawProgress?.verseVisits, versesRead),
+      };
+    })(),
     ...safeDisplayName(raw.displayName, raw.displayNameUpdatedAt),
     ...safeAvatar(raw.avatar, raw.avatarUpdatedAt),
   };
