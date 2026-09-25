@@ -17,7 +17,7 @@ import {
 import type { Highlight, HighlightLayer, HighlightSwatch, Preferences, Verse, Word } from "@/lib/quran/types";
 import { groupForId, isRtlLanguage } from "@/lib/quran/languages";
 import { PRODUCT_NAME } from "@/lib/brand";
-import { shareOrCopy, verseShareText } from "@/lib/reading";
+import { shareOrCopy, toArabicIndicDigits, verseShareText } from "@/lib/reading";
 import { useAyahFitScale } from "@/lib/use-ayah-fit-scale";
 
 export function VerseCard({
@@ -136,10 +136,13 @@ export function VerseCard({
                 event.stopPropagation();
                 onAyahClick();
               }}
-              className="ayah-num flex h-11 min-w-11 cursor-pointer items-center justify-center rounded-full bg-accent-soft font-display text-lg font-semibold text-gold-deep"
+              className="ayah-num flex h-11 min-w-11 cursor-pointer items-center justify-center gap-1.5 rounded-full bg-accent-soft px-2.5 font-display text-lg font-semibold text-gold-deep"
               aria-label={`Select verse ${verse.verseKey}`}
             >
-              {verse.verseNumber}
+              <span className="tabular-nums">{verse.verseNumber}</span>
+              <span className="tabular-nums" dir="rtl" lang="ar" style={{ fontFamily: "var(--font-arabic), serif" }}>
+                {toArabicIndicDigits(verse.verseNumber)}
+              </span>
             </button>
             {note ? (
               <span className="absolute -right-1 -top-1 h-3.5 w-3.5 rounded-full bg-gold ring-2 ring-surface" title="Has a note" />

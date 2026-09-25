@@ -276,6 +276,11 @@ export function parseVerseKey(key: string | null | undefined) {
   return { chapterId, verseNumber };
 }
 
+/** Western digits → Arabic-Indic (٠١٢٣٤٥٦٧٨٩). */
+export function toArabicIndicDigits(value: number | string) {
+  return String(value).replace(/\d/g, (digit) => "٠١٢٣٤٥٦٧٨٩"[Number(digit)] ?? digit);
+}
+
 export function readerHref(verseKey?: string | null) {
   const place = parseVerseKey(verseKey);
   if (!place) return "/read";
