@@ -163,7 +163,7 @@ export function markVerseRead(progress: ReadingProgress, verseKey: string): Read
   const visits = { ...next.verseVisits };
   visits[verseKey] = (visits[verseKey] ?? 0) + 1;
   const versesRead = next.versesRead.includes(verseKey) ? next.versesRead : [...next.versesRead, verseKey];
-  let result: ReadingProgress = {
+  const result: ReadingProgress = {
     ...next,
     versesRead,
     verseVisits: visits,
@@ -357,16 +357,29 @@ export function pieceAyahRange(piece: number, pieceCount = COMPLETION_PIECES) {
   return { start: ayahAtIndex(start), end: ayahAtIndex(Math.max(start, end)) };
 }
 
+export function announce(message: string, text?: string) {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new CustomEvent("qurandeck-toast", { detail: { message, text } }));
+}
+
 export async function shareOrCopy(title: string, text: string) {
+  const link = typeof window !== "undefined" ? window.location.href : "";
+  const payload = link && !text.includes(link) ? `${text}\n${link}` : text;
   try {
-    if (navigator.share) {
-      await navigator.share({ title, text });
+    if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
+      await navigator.share({ title, text: payload });
+      announce("Shared");
       return;
     }
   } catch (error) {
     if (error instanceof Error && error.name === "AbortError") return;
   }
-  await navigator.clipboard.writeText(text);
+  try {
+    await navigator.clipboard.writeText(payload);
+    announce("Link copied");
+  } catch {
+    announce("Copy this link", payload);
+  }
 }
 
 export function verseShareText(verse: Pick<Verse, "verseKey" | "textUthmani" | "translation" | "translations">) {

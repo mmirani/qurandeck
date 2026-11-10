@@ -15,7 +15,7 @@ import {
   wordHighlight,
 } from "@/lib/highlights";
 import type { Highlight, HighlightLayer, HighlightSwatch, Preferences, Verse, Word } from "@/lib/quran/types";
-import { groupForId, isRtlLanguage } from "@/lib/quran/languages";
+import { groupForId, isRtlLanguage, scriptClass } from "@/lib/quran/languages";
 import { PRODUCT_NAME } from "@/lib/brand";
 import { shareOrCopy, toArabicIndicDigits, verseShareText } from "@/lib/reading";
 import { useAyahFitScale } from "@/lib/use-ayah-fit-scale";
@@ -104,7 +104,8 @@ export function VerseCard({
     <article
       id={`ayah-${verse.verseNumber}`}
       data-verse-key={verse.verseKey}
-      className={`scroll-mt-28 ${ayahFocus ? "reader-ayah-card" : "cursor-pointer"} ${active || reciting ? "is-live rounded-3xl" : ""}`}
+      translate="no"
+      className={`scroll-mt-4 scroll-mb-28 ${ayahFocus ? "reader-ayah-card" : "cursor-pointer"} ${active || reciting ? "is-live rounded-3xl" : ""}`}
       onClick={ayahFocus ? undefined : onAyahClick}
     >
       {showSurahLabel ? (
@@ -271,7 +272,7 @@ export function VerseCard({
                 const rtl = group ? isRtlLanguage(group.key) : false;
                 const primary = column.id === preferences.translationId;
                 return (
-                  <div key={column.id} dir={rtl ? "rtl" : "ltr"} lang={group?.key}>
+                  <div key={column.id} dir={rtl ? "rtl" : "ltr"} lang={group?.key} className="order-2 @min-[42rem]:order-none">
                     {translationCols.length > 1 || group ? (
                       <p className="kufic-label mb-2 text-[10px] text-gold-deep">
                         {group?.label ?? "Translation"}
@@ -284,7 +285,7 @@ export function VerseCard({
                       text={column.text}
                       marks={primary ? marks.filter((item) => item.layer === "translation") : []}
                       swatches={swatches}
-                      className="reading-text mt-3 text-sm leading-relaxed text-ink md:mt-0 md:text-base"
+                      className={`reading-text mt-3 text-sm leading-relaxed text-ink md:mt-0 md:text-base ${group ? scriptClass(group.key) : ""}`}
                       onSelect={(start, end, text, x, y) => {
                         if (!primary) return;
                         setPicker({ x, y, layer: "translation", start, end, text });
@@ -296,6 +297,7 @@ export function VerseCard({
               })}
 
               {showArabic ? (
+                <div className="order-1 @min-[42rem]:order-none">
                 <ArabicBlock
                   verse={verse}
                   marks={marks}
@@ -310,6 +312,7 @@ export function VerseCard({
                   toggleWordHighlight={toggleWordHighlight}
                   paint={paint}
                 />
+                </div>
               ) : null}
 
               {showTransliteration && verse.transliteration ? (
@@ -317,7 +320,7 @@ export function VerseCard({
                   text={verse.transliteration}
                   marks={marks.filter((item) => item.layer === "transliteration")}
                   swatches={swatches}
-                  className={`translit-text ${
+                  className={`translit-text order-3 @min-[42rem]:order-none ${
                     triple
                       ? "@min-[42rem]:col-start-1 @min-[42rem]:row-start-2 @min-[58rem]:col-start-auto @min-[58rem]:row-start-auto"
                       : ""
@@ -505,7 +508,12 @@ function ArabicBlock({
   paint: React.MutableRefObject<{ start: number; last: number } | null>;
 }) {
   return (
-    <div dir="rtl" lang="ar" className={`arabic-text mushaf-arabic-mobile text-right ${highlighting ? "select-none" : ""}`}>
+    <div
+      dir="rtl"
+      lang="ar"
+      translate="no"
+      className={`arabic-text mushaf-arabic-mobile text-right ${highlighting ? "select-none" : ""}`}
+    >
       {verse.words.length > 0
         ? verse.words.map((word) => {
             if (word.charType === "end") {

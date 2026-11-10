@@ -6,6 +6,8 @@ import { Check, ChevronDown, X } from "lucide-react";
 import { getTafsir, getTafsirs } from "@/lib/quran/client";
 import { useMushaf } from "@/components/providers/mushaf-provider";
 import { DEFAULT_TAFSIR_ID } from "@/lib/quran/sources";
+import { readableExcerpt } from "@/lib/text";
+import { ScriptText } from "@/components/reader/script-text";
 import type { TafsirPassage, TafsirResource } from "@/lib/quran/types";
 
 const catalogWait: { current: Promise<TafsirResource[]> | null } = { current: null };
@@ -89,6 +91,20 @@ export function VerseTafsir({ verseKey }: { verseKey: string }) {
   const [loading, setLoading] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const work = catalog.find((item) => item.id === preferences.tafsirId);
+  const passageKey = `${preferences.tafsirId}:${verseKey}`;
+  const [tracked, setTracked] = useState(passageKey);
+  const [wasReady, setWasReady] = useState(ready);
+  if (tracked !== passageKey) {
+    setTracked(passageKey);
+    setPassage(null);
+    setError(null);
+    setExpanded(false);
+    setLoading(ready);
+  }
+  if (ready !== wasReady) {
+    setWasReady(ready);
+    if (ready) setLoading(true);
+  }
 
   useEffect(() => {
     if (!host) return;
@@ -121,9 +137,6 @@ export function VerseTafsir({ verseKey }: { verseKey: string }) {
   useEffect(() => {
     if (!ready) return;
     let cancelled = false;
-    setLoading(true);
-    setError(null);
-    setExpanded(false);
     loadPassage(verseKey, preferences.tafsirId)
       .then((next) => {
         if (!cancelled) setPassage(next);
@@ -143,8 +156,8 @@ export function VerseTafsir({ verseKey }: { verseKey: string }) {
   }, [preferences.tafsirId, ready, verseKey]);
 
   const body = passage?.text.trim() ?? "";
-  const preview = body.slice(0, 420);
-  const truncated = body.length > 420;
+  const excerpt = readableExcerpt(body);
+  const spansSurah = (passage?.verseKeys.length ?? 0) > 1;
 
   return (
     <aside
@@ -173,15 +186,15 @@ export function VerseTafsir({ verseKey }: { verseKey: string }) {
         <p className="mt-2 text-sm text-danger">{error}</p>
       ) : body ? (
         <>
-          {passage && passage.verseKeys.length > 1 ? (
-            <p className="mt-2 text-[10px] uppercase tracking-[0.14em] text-gold">
-              Covers {passage.verseKeys[0]} – {passage.verseKeys[passage.verseKeys.length - 1]}
+          {spansSurah ? (
+            <p className="mt-2 text-sm text-ink-soft">
+              This note also introduces the surrounding ayahs ({passage?.verseKeys[0]} – {passage?.verseKeys[passage.verseKeys.length - 1]}).
             </p>
           ) : null}
-          <p dir="auto" className="verse-tafsir-body mt-2 whitespace-pre-wrap">
-            {expanded || !truncated ? body : `${preview.trim()}…`}
-          </p>
-          {truncated ? (
+          <div dir="auto" translate="no" className="verse-tafsir-body mt-2 whitespace-pre-wrap">
+            <ScriptText text={expanded || !excerpt.truncated ? body : `${excerpt.excerpt}…`} />
+          </div>
+          {excerpt.truncated ? (
             <button
               type="button"
               onClick={() => setExpanded((value) => !value)}

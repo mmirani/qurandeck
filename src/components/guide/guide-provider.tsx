@@ -67,7 +67,6 @@ export function GuideProvider({ children }: { children: ReactNode }) {
     setSteps(nextSteps);
     setKind(nextKind);
     setIndex(startAt);
-    setReply(null);
   }, [updatePreferences]);
 
   const startWelcome = useCallback(() => {

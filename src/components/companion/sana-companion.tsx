@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import Image from "next/image";
-import { useReducedMotion } from "motion/react";
 import { COMPANION_NAME } from "@/lib/brand";
 import { BottomSheet } from "@/components/shell/bottom-sheet";
 import { SanaGuidePanel } from "@/components/guide/sana-guide-panel";
@@ -53,15 +52,17 @@ function subscribeTheme(onChange: () => void) {
   return () => mo.disconnect();
 }
 
-export function SanaCompanion({
-  mobileDock = false,
-  audioBarVisible = false,
-}: {
-  mobileDock?: boolean;
-  audioBarVisible?: boolean;
-}) {
-  if (mobileDock) return <SanaMobileDock audioBarVisible={audioBarVisible} />;
-  return <SanaFloatingCompanion />;
+export function SanaCompanion({ audioBarVisible = false }: { audioBarVisible?: boolean }) {
+  return (
+    <>
+      <div className="lg:hidden">
+        <SanaMobileDock audioBarVisible={audioBarVisible} />
+      </div>
+      <div className="hidden lg:contents">
+        <SanaFloatingCompanion />
+      </div>
+    </>
+  );
 }
 
 function SanaMobileDock({ audioBarVisible }: { audioBarVisible: boolean }) {
@@ -115,7 +116,6 @@ function SanaMobileDock({ audioBarVisible }: { audioBarVisible: boolean }) {
 }
 
 function SanaFloatingCompanion() {
-  const reduce = useReducedMotion();
   const { active: guiding } = useGuide();
   const mounted = useSyncExternalStore(subscribeNever, () => true, () => false);
   const pose = useSyncExternalStore(subscribePose, loadCompanionPose, () => defaultPose);
@@ -130,9 +130,7 @@ function SanaFloatingCompanion() {
     writePose(next);
   }, []);
 
-  useEffect(() => {
-    if (guiding) setOpen(false);
-  }, [guiding]);
+  if (guiding && open) setOpen(false);
 
   useEffect(() => {
     if (!open) return;
@@ -224,7 +222,7 @@ function SanaFloatingCompanion() {
       <span className="nur-floor" aria-hidden="true" />
       <button
         type="button"
-        className={`nur-orb ${reduce ? "" : "is-alive"}`}
+        className="nur-orb"
         aria-label={`${COMPANION_NAME}, reading companion. Drag to move, click to talk.`}
         aria-expanded={open}
         onPointerDown={startDrag}

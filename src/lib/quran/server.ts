@@ -1,4 +1,6 @@
-import { translationQuery } from "./languages";
+import { canonicalLanguage, translationQuery } from "./languages";
+import { hasArabicScript } from "@/lib/text";
+import { fetchQuranJson } from "./qf";
 import {
   ALQURAN_API,
   DEFAULT_TRANSLATION_ID,
@@ -22,17 +24,8 @@ import type {
   Word,
 } from "./types";
 
-const revalidate = { next: { revalidate: 86400 } } as const;
-
 async function getJson<T>(url: string): Promise<T> {
-  const res = await fetch(url, {
-    ...revalidate,
-    headers: { Accept: "application/json" },
-  });
-  if (!res.ok) {
-    throw new Error(`Request failed ${res.status} for ${url}`);
-  }
-  return res.json() as Promise<T>;
+  return fetchQuranJson<T>(url);
 }
 
 function mapChapter(raw: Record<string, unknown>): Chapter {
@@ -291,26 +284,80 @@ export async function fetchAudioMap(recitationId: number, chapterId: number) {
   return Object.fromEntries(map.entries());
 }
 
-export async function searchQuran(query: string, translationId = DEFAULT_TRANSLATION_ID): Promise<SearchHit[]> {
+const LANGUAGE_EDITION: Record<string, string> = {
+  english: "en.sahih",
+  urdu: "ur.jalandhry",
+  persian: "fa.makarem",
+  arabic: "quran-uthmani",
+  french: "fr.hamidullah",
+  turkish: "tr.diyanet",
+  indonesian: "id.indonesian",
+  german: "de.aburida",
+  spanish: "es.cortes",
+  russian: "ru.kuliev",
+  bengali: "bn.bengali",
+  hindi: "hi.hindi",
+  chinese: "zh.jian",
+  malay: "ms.basmeih",
+  bosnian: "bs.mlivo",
+  dutch: "nl.keyzer",
+  italian: "it.piccardo",
+  portuguese: "pt.elhayek",
+  albanian: "sq.ahmeti",
+  swedish: "sv.bernstrom",
+  japanese: "ja.japanese",
+  korean: "ko.korean",
+  tamil: "ta.tamil",
+  somali: "so.abduh",
+  uzbek: "uz.sodik",
+};
+
+function editionFor(translationId: number, language?: string) {
+  if (TRANSLATION_EDITION_MAP[translationId]) return TRANSLATION_EDITION_MAP[translationId];
+  const key = language ? canonicalLanguage(language).key : "english";
+  return LANGUAGE_EDITION[key] ?? "en.sahih";
+}
+
+function assignSnippet(hit: SearchHit, raw: string) {
+  const text = stripHtml(raw);
+  if (!text) return;
+  if (hasArabicScript(text)) {
+    if (!hit.textArabic) hit.textArabic = text;
+    return;
+  }
+  if (!hit.textTranslation) hit.textTranslation = text;
+}
+
+export async function searchQuran(
+  query: string,
+  translationId = DEFAULT_TRANSLATION_ID,
+  language?: string,
+): Promise<SearchHit[]> {
   const cleaned = query.trim();
   if (!cleaned) return [];
 
   const verseKey = cleaned.match(/^(\d{1,3})\s*:\s*(\d{1,3})$/);
   if (verseKey) {
+    const chapterId = Number(verseKey[1]);
+    const verseNumber = Number(verseKey[2]);
+    const chapters = await fetchChapters().catch(() => []);
+    const chapter = chapters.find((item) => item.id === chapterId);
     return [
       {
-        verseKey: `${Number(verseKey[1])}:${Number(verseKey[2])}`,
-        chapterId: Number(verseKey[1]),
-        verseNumber: Number(verseKey[2]),
+        verseKey: `${chapterId}:${verseNumber}`,
+        chapterId,
+        verseNumber,
         textArabic: "",
         textTranslation: "Jump to this verse",
         source: "jump",
+        chapterName: chapter?.nameSimple,
+        translatedName: chapter?.translatedName,
       },
     ];
   }
 
-  const edition = TRANSLATION_EDITION_MAP[translationId] ?? "en.sahih";
-  const [foundation, cloud] = await Promise.allSettled([
+  const edition = editionFor(translationId, language);
+  const [foundation, cloud, chapters] = await Promise.allSettled([
     getJson<{
       search: {
         results: Array<{
@@ -319,52 +366,85 @@ export async function searchQuran(query: string, translationId = DEFAULT_TRANSLA
           translations?: Array<{ text: string }>;
         }>;
       };
-    }>(`${QURAN_COM_API}/search?q=${encodeURIComponent(cleaned)}&size=20&language=en&page=1`),
+    }>(`${QURAN_COM_API}/search?q=${encodeURIComponent(cleaned)}&size=20&page=1`),
     getJson<{
       data: {
         matches: Array<{
           text: string;
           numberInSurah: number;
-          surah: { number: number };
+          surah: { number: number; englishName?: string; name?: string };
         }>;
       };
     }>(`${ALQURAN_API}/search/${encodeURIComponent(cleaned)}/all/${edition}`),
+    fetchChapters(),
   ]);
 
   const hits = new Map<string, SearchHit>();
+  const catalog = chapters.status === "fulfilled" ? chapters.value : [];
+  const nameFor = (chapterId: number) => catalog.find((item) => item.id === chapterId);
 
   if (foundation.status === "fulfilled") {
     for (const item of foundation.value.search?.results ?? []) {
       const [chapterId, verseNumber] = item.verse_key.split(":").map(Number);
-      hits.set(item.verse_key, {
+      const chapter = nameFor(chapterId);
+      const hit: SearchHit = {
         verseKey: item.verse_key,
         chapterId,
         verseNumber,
-        textArabic: item.text,
-        textTranslation: stripHtml(item.translations?.[0]?.text ?? ""),
+        textArabic: "",
+        textTranslation: "",
         source: "quran.com",
-      });
+        chapterName: chapter?.nameSimple,
+        translatedName: chapter?.translatedName,
+      };
+      assignSnippet(hit, item.text ?? "");
+      assignSnippet(hit, item.translations?.[0]?.text ?? "");
+      hits.set(item.verse_key, hit);
     }
   }
 
   if (cloud.status === "fulfilled") {
     for (const item of cloud.value.data?.matches ?? []) {
       const verseKeyValue = `${item.surah.number}:${item.numberInSurah}`;
+      const chapter = nameFor(item.surah.number);
       const existing = hits.get(verseKeyValue);
       if (existing) {
-        existing.textTranslation = existing.textTranslation || item.text;
+        assignSnippet(existing, item.text);
+        existing.chapterName ||= chapter?.nameSimple ?? item.surah.englishName;
+        existing.translatedName ||= chapter?.translatedName;
         continue;
       }
-      hits.set(verseKeyValue, {
+      const hit: SearchHit = {
         verseKey: verseKeyValue,
         chapterId: item.surah.number,
         verseNumber: item.numberInSurah,
         textArabic: "",
-        textTranslation: item.text,
+        textTranslation: "",
         source: "alquran.cloud",
-      });
+        chapterName: chapter?.nameSimple ?? item.surah.englishName,
+        translatedName: chapter?.translatedName,
+      };
+      assignSnippet(hit, item.text);
+      if (item.surah.name) assignSnippet(hit, item.surah.name);
+      hits.set(verseKeyValue, hit);
     }
   }
 
-  return Array.from(hits.values()).slice(0, 40);
+  const list = Array.from(hits.values()).slice(0, 20);
+  await Promise.all(
+    list.slice(0, 8).map(async (hit) => {
+      if (hit.textArabic) return;
+      try {
+        const arabic = await getJson<{ data?: { text?: string } }>(
+          `${ALQURAN_API}/ayah/${hit.chapterId}:${hit.verseNumber}/quran-uthmani`,
+        );
+        const text = stripHtml(arabic.data?.text ?? "");
+        if (text) hit.textArabic = text;
+      } catch {
+        // A missing Arabic snippet still leaves the translation row usable.
+      }
+    }),
+  );
+
+  return list;
 }

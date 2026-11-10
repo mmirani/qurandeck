@@ -15,11 +15,21 @@ import { TourOverlay } from "@/components/guide/tour-overlay";
 import { BottomSheet } from "@/components/shell/bottom-sheet";
 import { SyncPrompt } from "@/components/account/sync-prompt";
 import { ReaderChromeProvider } from "@/components/shell/reader-chrome";
-import { useMobileReader } from "@/lib/use-media-query";
+import { useMediaQuery, useMobileReader } from "@/lib/use-media-query";
+import { SurahSeedProvider } from "@/components/reader/reading-seed";
+import type { SurahSeed } from "@/lib/quran/surah-seed";
 
 const CALM = { type: "tween" as const, duration: 0.8, ease: [0.33, 0.05, 0.2, 1] as const };
 
-export function AppShell() {
+export function AppShell({ initialSurah = null }: { initialSurah?: SurahSeed | null }) {
+  return (
+    <SurahSeedProvider seed={initialSurah}>
+      <AppShellFrame />
+    </SurahSeedProvider>
+  );
+}
+
+function AppShellFrame() {
   const [navOpen, setNavOpen] = useState(false);
   const [studyOpen, setStudyOpen] = useState(false);
   const { preferences, isPlaying, togglePlay } = useMushaf();
@@ -30,16 +40,18 @@ export function AppShell() {
     if (isPlaying) setAudioDismissed(false);
   }
   const focus = preferences.focusMode;
-  const { md: isMd, xl: isXl, xxl: is2xl } = useBreakpoints();
+  const showNavBp = useMediaQuery("(min-width: 1280px)");
+  const showStudyBp = useMediaQuery("(min-width: 1536px)");
+  const wide = useMediaQuery("(min-width: 1536px)");
   const mobile = useMobileReader();
   const reduce = useReducedMotion();
   const transition = reduce ? { duration: 0 } : CALM;
 
-  const navWidth = is2xl ? 300 : 280;
-  const studyWidth = is2xl ? 380 : 340;
+  const navWidth = wide ? 300 : 268;
+  const studyWidth = wide ? 360 : 320;
   const strip = 40;
-  const showNav = Boolean(isMd && !focus);
-  const showStudy = Boolean(isXl && !focus);
+  const showNav = Boolean(showNavBp && !focus);
+  const showStudy = Boolean(showStudyBp && !focus);
   const arabicOnly = preferences.showArabic && !preferences.showTranslation && !preferences.showTransliteration;
   const book = Boolean(focus && arabicOnly);
   const navOpenRail = Boolean(showNav && preferences.showNavRail);
@@ -50,8 +62,7 @@ export function AppShell() {
     if (book && isPlaying) togglePlay();
   }, [book, isPlaying, togglePlay]);
 
-  const showMobileAudio = mobile && !focus && isPlaying && !audioDismissed;
-  const showDesktopDock = !mobile && !focus;
+  const showMobileAudio = !focus && isPlaying && !audioDismissed;
   const mobileAyahMode = mobile && !focus && preferences.mobileReadingMode === "ayah";
 
   return (
@@ -100,34 +111,29 @@ export function AppShell() {
             </RailColumn>
           </div>
 
-          {book ? null : showMobileAudio || showDesktopDock || focus ? (
-            <div
-              className={`fixed z-30 ${
-                showMobileAudio
-                  ? "bottom-0 left-0 right-0"
-                  : focus
-                    ? "bottom-5 left-1/2 w-[min(calc(100%-1.5rem),42rem)] -translate-x-1/2"
-                    : "bottom-20 left-3 right-3 xl:hidden"
-              } ${showMobileAudio || showDesktopDock || focus ? "" : "hidden"}`}
-            >
+          {book || focus ? null : (
+            <div className="hidden shrink-0 px-1 pt-3 lg:block">
+              <AudioPlayer variant="dock" />
+            </div>
+          )}
+          {book ? null : focus ? (
+            <div className="fixed bottom-5 left-1/2 z-30 w-[min(calc(100%-1.5rem),42rem)] -translate-x-1/2">
+              <AudioPlayer variant="dock" />
+            </div>
+          ) : showMobileAudio ? (
+            <div className="fixed inset-x-0 bottom-0 z-30 lg:hidden">
               <AudioPlayer
                 variant="dock"
-                mobileSticky={showMobileAudio}
-                onDismiss={
-                  showMobileAudio
-                    ? () => {
-                        setAudioDismissed(true);
-                        if (isPlaying) togglePlay();
-                      }
-                    : undefined
-                }
+                mobileSticky
+                onDismiss={() => {
+                  setAudioDismissed(true);
+                  if (isPlaying) togglePlay();
+                }}
               />
             </div>
           ) : null}
 
-          {book || mobileAyahMode ? null : (
-            <SanaCompanion mobileDock={mobile && !focus} audioBarVisible={showMobileAudio} />
-          )}
+          {book || mobileAyahMode ? null : <SanaCompanion audioBarVisible={showMobileAudio} />}
 
           <BottomSheet open={navOpen && !focus} onClose={() => setNavOpen(false)} title="Surahs & Juz">
             <SurahSidebar />
@@ -177,22 +183,3 @@ function RailColumn({
   );
 }
 
-function useBreakpoints() {
-  const [bp, setBp] = useState({ md: false, xl: false, xxl: false });
-  useEffect(() => {
-    const md = window.matchMedia("(min-width: 768px)");
-    const xl = window.matchMedia("(min-width: 1280px)");
-    const xxl = window.matchMedia("(min-width: 1536px)");
-    const sync = () => setBp({ md: md.matches, xl: xl.matches, xxl: xxl.matches });
-    sync();
-    md.addEventListener("change", sync);
-    xl.addEventListener("change", sync);
-    xxl.addEventListener("change", sync);
-    return () => {
-      md.removeEventListener("change", sync);
-      xl.removeEventListener("change", sync);
-      xxl.removeEventListener("change", sync);
-    };
-  }, []);
-  return bp;
-}

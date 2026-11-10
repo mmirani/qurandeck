@@ -45,32 +45,24 @@ function ayahRatio(verses: Verse[], selectedVerseKey: string | null) {
 
 export function useReadingProgressRatio(ayahMode: boolean) {
   const { verses, selectedVerseKey } = useMushaf();
-  const [ratio, setRatio] = useState(0);
+  const [scrollRatio, setScrollRatio] = useState(0);
+  const derived = verses.length === 0 ? 0 : ayahMode ? ayahRatio(verses, selectedVerseKey) : null;
 
   useEffect(() => {
-    if (verses.length === 0) {
-      setRatio(0);
-      return;
-    }
-
-    if (ayahMode) {
-      setRatio(ayahRatio(verses, selectedVerseKey));
-      return;
-    }
-
+    if (derived !== null) return;
     const root = document.getElementById("main-reader");
     if (!root) return;
 
     let frame = 0;
     const publish = () => {
-      setRatio(measureScrollRatio(root, verses.length));
+      setScrollRatio(measureScrollRatio(root, verses.length));
     };
     const onScroll = () => {
       cancelAnimationFrame(frame);
       frame = requestAnimationFrame(publish);
     };
 
-    publish();
+    frame = requestAnimationFrame(publish);
     root.addEventListener("scroll", onScroll, { passive: true });
     const observer = new ResizeObserver(onScroll);
     observer.observe(root);
@@ -82,9 +74,9 @@ export function useReadingProgressRatio(ayahMode: boolean) {
       root.removeEventListener("scroll", onScroll);
       observer.disconnect();
     };
-  }, [ayahMode, selectedVerseKey, verses]);
+  }, [derived, verses.length]);
 
-  return ratio;
+  return derived ?? scrollRatio;
 }
 
 export function ReadingProgressTrack({

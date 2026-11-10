@@ -12,7 +12,7 @@ export function SanaGuidePanel({
   onClose: () => void;
   onRest: () => void;
 }) {
-  const { startWelcome } = useGuide();
+  const { ask, reply, startWelcome } = useGuide();
   const [q, setQ] = useState("");
   const [mic, setMic] = useState(false);
 
@@ -35,6 +35,7 @@ export function SanaGuidePanel({
         className="nur-ask"
         onSubmit={(event) => {
           event.preventDefault();
+          ask(q);
         }}
       >
         <label className="sr-only" htmlFor="sana-ask">
@@ -47,6 +48,9 @@ export function SanaGuidePanel({
           placeholder={`Ask ${COMPANION_NAME}…`}
           autoComplete="off"
         />
+        <button type="submit" className="sr-only">
+          Ask
+        </button>
         <button
           type="button"
           className={`nur-mic ${mic ? "is-on" : ""}`}
@@ -58,6 +62,13 @@ export function SanaGuidePanel({
           <Mic className="h-4 w-4" />
         </button>
       </form>
+      {reply ? (
+        <p className="nur-reply" aria-live="polite">
+          {reply}
+        </p>
+      ) : (
+        <p className="nur-hint">Try &quot;play this surah&quot;, &quot;bigger&quot;, or &quot;where is search&quot;.</p>
+      )}
       <button type="button" className="nur-tour" onClick={startWelcome}>
         Start tour
       </button>

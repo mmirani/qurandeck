@@ -1,8 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 import {
   Bookmark,
   BookOpen,
@@ -29,6 +27,7 @@ import { useMushaf } from "@/components/providers/mushaf-provider";
 import { UserMenu } from "@/components/user/user-menu";
 import { MihrabMark } from "@/components/art/ornaments";
 import { PRODUCT_NAME, PROMISE_LINE, PROMISE_STORY, WORK_TITLE } from "@/lib/brand";
+import { QuranCredit } from "@/components/site/quran-credit";
 import { HOME_FEATURES, HOME_MORE, HOME_PROMISES, HOME_STARTS } from "@/lib/home";
 import { formatReadingMinutes, versePlaceLabel } from "@/lib/reading";
 
@@ -56,30 +55,22 @@ const MORE_ICONS = {
 } as const;
 
 export function HomePage() {
-  const { user, hydrated, openModal } = useMushaf();
-  const searchParams = useSearchParams();
-
-  useEffect(() => {
-    if (searchParams.get("auth") !== "1") return;
-    openModal("auth");
-    const url = new URL(window.location.href);
-    url.searchParams.delete("auth");
-    window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
-  }, [openModal, searchParams]);
+  const { user, hydrated } = useMushaf();
+  const signedIn = Boolean(hydrated && user);
 
   return (
     <div className="min-h-dvh overflow-x-hidden bg-canvas text-ink">
-      <HomeNav signedIn={Boolean(hydrated && user)} />
+      <HomeNav signedIn={signedIn} />
       <main id="main-content" className="pt-14 md:pt-16">
-        {!hydrated ? <HomeHeroSkeleton /> : user ? <HomeSignedIn /> : <HomeGuestHero />}
-        {hydrated && !user ? (
+        {signedIn ? <HomeSignedIn /> : <HomeGuestHero />}
+        {signedIn ? null : (
           <>
             <HomeSana />
             <HomeFeatures />
             <HomeMore />
             <HomeCta />
           </>
-        ) : null}
+        )}
       </main>
       <HomeFooter />
       <AppModals />
@@ -155,20 +146,6 @@ function HomeGuestHero() {
           </button>
         </div>
         <p className="mt-3 text-center text-sm text-muted md:text-left">Free • Private • No ads or tracking</p>
-      </div>
-    </section>
-  );
-}
-
-function HomeHeroSkeleton() {
-  return (
-    <section className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:py-16" aria-hidden="true">
-      <div className="h-4 w-40 rounded-full bg-line/70" />
-      <div className="mt-4 h-12 w-full max-w-xl rounded-2xl bg-line/50" />
-      <div className="mt-4 h-16 max-w-lg rounded-2xl bg-line/40" />
-      <div className="mt-7 flex flex-wrap items-center gap-4">
-        <div className="h-12 w-44 rounded-full bg-gold/30" />
-        <div className="h-4 w-16 rounded-full bg-line/50" />
       </div>
     </section>
   );
@@ -435,7 +412,13 @@ function HomeFooter() {
         <p>
           {PRODUCT_NAME} · {WORK_TITLE}
         </p>
-        <nav aria-label="Legal" className="flex items-center gap-4">
+        <nav aria-label="Site" className="flex flex-wrap items-center gap-x-4 gap-y-2">
+          <Link href="/about" className="underline-offset-4 hover:text-ink hover:underline">
+            About
+          </Link>
+          <Link href="/contact" className="underline-offset-4 hover:text-ink hover:underline">
+            Contact
+          </Link>
           <Link href="/privacy" className="underline-offset-4 hover:text-ink hover:underline">
             Privacy
           </Link>
@@ -444,6 +427,7 @@ function HomeFooter() {
           </Link>
         </nav>
         <p>{PROMISE_LINE}</p>
+        <QuranCredit className="basis-full" />
         <div className="flex items-center gap-2">
           <Languages className="h-4 w-4 text-gold" aria-hidden="true" />
           <span>Arabic first. Translations you choose.</span>

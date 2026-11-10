@@ -54,7 +54,7 @@ export function defaultCorner(size = NUR_SIZE) {
   const mobile = !xl;
   const rightGutter = xl ? 372 : 16;
   const left = window.innerWidth - size - rightGutter;
-  const top = window.innerHeight - size - (mobile ? 152 : 24);
+  const top = window.innerHeight - size - (mobile ? 152 : 108);
   return clampPose(left, top, size);
 }
 

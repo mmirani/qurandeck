@@ -7,16 +7,29 @@ const RTL = new Set([
   "arabic",
   "urdu",
   "persian",
-  "farsi",
   "hebrew",
   "pashto",
   "sindhi",
-  "uighur",
   "uyghur",
   "kurdish",
   "divehi",
-  "dhivehi",
+  "punjabi",
+  "kashmiri",
 ]);
+
+const LANGUAGE_ALIASES: Record<string, { key: string; label: string }> = {
+  farsi: { key: "persian", label: "Persian" },
+  persian: { key: "persian", label: "Persian" },
+  uighur: { key: "uyghur", label: "Uyghur" },
+  uyghur: { key: "uyghur", label: "Uyghur" },
+  dhivehi: { key: "divehi", label: "Divehi" },
+  divehi: { key: "divehi", label: "Divehi" },
+  maldivian: { key: "divehi", label: "Divehi" },
+  sinhalese: { key: "sinhala", label: "Sinhala" },
+  sinhala: { key: "sinhala", label: "Sinhala" },
+  yuw: { key: "yau", label: "Yau" },
+  yau: { key: "yau", label: "Yau" },
+};
 
 const PREFERRED: Record<string, number> = {
   english: DEFAULT_TRANSLATION_ID,
@@ -34,13 +47,29 @@ export function languageKey(name: string) {
 }
 
 export function languageLabel(name: string) {
-  return name
-    .trim()
-    .replace(/\w+/g, (word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase());
+  return canonicalLanguage(name).label;
+}
+
+export function canonicalLanguage(name: string): { key: string; label: string } {
+  const normalized = name.trim().toLowerCase().replace(/\s*,\s*/g, ", ");
+  const first = normalized.split(",")[0]?.trim() || "other";
+  const alias = LANGUAGE_ALIASES[normalized] ?? LANGUAGE_ALIASES[first];
+  if (alias) return alias;
+  const label = first.replace(/\p{L}+/gu, (word) => word.charAt(0).toUpperCase() + word.slice(1));
+  return { key: first || "other", label: label || "Other" };
 }
 
 export function isRtlLanguage(name: string) {
-  return RTL.has(languageKey(name));
+  return RTL.has(canonicalLanguage(name).key);
+}
+
+export function scriptClass(name: string) {
+  const key = canonicalLanguage(name).key;
+  if (key === "urdu" || key === "sindhi" || key === "punjabi" || key === "kashmiri") return "script-nastaliq";
+  if (key === "hebrew") return "script-hebrew";
+  if (key === "divehi") return "script-thaana";
+  if (isRtlLanguage(key)) return "script-naskh";
+  return "";
 }
 
 export function sanitizeTranslationIds(ids: unknown): number[] {
@@ -69,7 +98,7 @@ export function parseTranslationQuery(raw: string | null | undefined) {
 export function groupLanguages(resources: TranslationResource[]): LanguageGroup[] {
   const map = new Map<string, TranslationResource[]>();
   for (const item of resources) {
-    const key = languageKey(item.languageName) || "other";
+    const key = canonicalLanguage(item.languageName || "other").key;
     const list = map.get(key) ?? [];
     list.push(item);
     map.set(key, list);
@@ -80,7 +109,7 @@ export function groupLanguages(resources: TranslationResource[]): LanguageGroup[
       const preferredId = preferred && editions.some((item) => item.id === preferred) ? preferred : editions[0].id;
       return {
         key,
-        label: languageLabel(editions[0].languageName || key),
+        label: canonicalLanguage(editions[0].languageName || key).label,
         editions,
         preferredId,
       };

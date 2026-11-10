@@ -13,8 +13,8 @@ export default function PrivacyPage() {
     <LegalPage title="Privacy policy" updated={UPDATED}>
       <LegalSection title="Who this covers">
         <p>
-          QuranDeck is a personal mushaf for The Noble Quran. This policy describes what the beta at
-          qurandeck.vercel.app does with information when you read as a guest or sign in.
+          QuranDeck is a personal mushaf for The Noble Quran. This policy describes what QuranDeck does with
+          information when you read as a guest or sign in.
         </p>
         <p>
           Questions about your library can go to the operator through the{" "}
@@ -43,7 +43,7 @@ export default function PrivacyPage() {
           passkey can open the same library. GitHub is not offered for sign-in.
         </p>
         <p>
-          If Google or GitHub sign-in is offered and you choose it, that service handles the login under its own
+          If Google or Sign in with Apple is offered and you choose it, that service handles the login under its own
           policy and shares your name and verified email with QuranDeck. The email remains the account key. Your
           display name is separate: it is the name shown in the app, it does not have to be unique, and names with
           offensive language are refused.
@@ -77,8 +77,8 @@ export default function PrivacyPage() {
           name, notes, or photo.
         </p>
         <p>
-          Guest reading does not feed those totals. The ranks may be shown later as “most read on QuranDeck” style
-          lists. They are product counters, not an advertising profile, and they are not sold.
+          Guest reading does not feed those totals. Any shared list is a count of openings on QuranDeck. It is not a
+          spiritual score, a hasanat counter, or a leaderboard, and it is not sold.
         </p>
       </LegalSection>
 
@@ -92,9 +92,11 @@ export default function PrivacyPage() {
 
       <LegalSection title="Quran text, tafsir, and audio">
         <p>
-          Arabic text, translations, tafsir, search, and recitation are fetched for you from public Quran sources,
-          including the Quran Foundation content API, AlQuran Cloud, and their audio hosts. Those requests ask for the
-          surah, ayah, translation, or reciter you opened. They do not include your notes, favorites, or email.
+          Arabic text, translations, tafsir, search, and recitation are fetched for you from Quran Foundation when
+          server credentials are configured, and otherwise from the public Quran.com API, with some search lines from
+          AlQuran Cloud. Quran data provided by Quran.Foundation. Those requests ask for the surah, ayah, translation,
+          or reciter you opened. They do not include your notes, favorites, or email. Responses are cached for at most
+          a few days.
         </p>
         <p>Those providers handle the request under their own policies.</p>
       </LegalSection>

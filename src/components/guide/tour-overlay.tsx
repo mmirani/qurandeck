@@ -48,10 +48,7 @@ export function TourOverlay() {
   const [hole, setHole] = useState<Hole | null>(null);
 
   useEffect(() => {
-    if (!active || !step) {
-      setHole(null);
-      return;
-    }
+    if (!active || !step) return;
     const node = visibleTarget(step.target);
     node?.scrollIntoView({ block: "center", behavior: reduce ? "auto" : "smooth" });
     const sync = () => setHole(measure(step.target));

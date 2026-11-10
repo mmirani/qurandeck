@@ -4,6 +4,7 @@ import { useCallback, useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useMushaf } from "@/components/providers/mushaf-provider";
 import { VerseCard } from "@/components/reader/verse-card";
+import { QuranCredit } from "@/components/site/quran-credit";
 import type { Verse } from "@/lib/quran/types";
 
 export function AyahReaderMobile({ verses, mode }: { verses: Verse[]; mode: string }) {
@@ -77,6 +78,7 @@ export function AyahReaderMobile({ verses, mode }: { verses: Verse[]; mode: stri
       </div>
 
       <footer className="reader-ayah-footer shrink-0 border-t border-line/60 bg-canvas/95 px-3 py-3">
+        <QuranCredit compact className="mb-2 text-center" />
         <div className="flex gap-2">
           <button
             type="button"

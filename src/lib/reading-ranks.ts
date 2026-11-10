@@ -8,6 +8,7 @@ import {
 
 const MAX_DELTA_PER_KEY = 50;
 const MAX_KEYS_PER_SYNC = 400;
+export const RANK_DAY_CAP = 40;
 const VERSE_KEY = /^([1-9]\d{0,2}):([1-9]\d{0,2})$/;
 
 export type ReadingRankRow = {
@@ -34,7 +35,28 @@ export async function prepareReadingRanksStore() {
       updated_at timestamptz NOT NULL DEFAULT now()
     )
   `;
+  await sql`
+    CREATE TABLE IF NOT EXISTS reading_rank_grants (
+      account_id text NOT NULL,
+      verse_key text NOT NULL,
+      day text NOT NULL,
+      PRIMARY KEY (account_id, verse_key, day)
+    )
+  `;
   prepared = true;
+}
+
+export function grantsToApply(alreadyToday: number, verseKeys: string[], alreadyGranted: Set<string>) {
+  const room = Math.max(0, RANK_DAY_CAP - alreadyToday);
+  const next: string[] = [];
+  const seen = new Set(alreadyGranted);
+  for (const key of verseKeys) {
+    if (next.length >= room) break;
+    if (!isRankVerseKey(key) || seen.has(key)) continue;
+    seen.add(key);
+    next.push(key);
+  }
+  return next;
 }
 
 export function visitDeltas(previous: LibrarySnapshot | null, next: LibrarySnapshot) {
@@ -61,20 +83,45 @@ export function isRankVerseKey(key: string) {
   return chapterId >= 1 && chapterId <= 114 && verseNumber >= 1 && verseNumber <= 286;
 }
 
-export async function applyReadingRankDeltas(deltas: ReadingRankRow[]) {
-  if (deltas.length === 0) return;
+export async function applyReadingRankDeltas(account: string, deltas: ReadingRankRow[]) {
+  if (!account || deltas.length === 0) return;
   await prepareReadingRanksStore();
   const sql = getSql();
-  for (const item of deltas) {
-    if (!isRankVerseKey(item.verseKey) || item.visits < 1) continue;
+  const day = new Date().toISOString().slice(0, 10);
+  const existing = (await sql`
+    SELECT verse_key
+    FROM reading_rank_grants
+    WHERE account_id = ${account} AND day = ${day}
+  `) as { verse_key: string }[];
+  const granted = new Set(existing.map((row) => row.verse_key));
+  const keys = grantsToApply(
+    granted.size,
+    deltas.map((item) => item.verseKey),
+    granted,
+  );
+  for (const verseKey of keys) {
+    const inserted = (await sql`
+      INSERT INTO reading_rank_grants (account_id, verse_key, day)
+      VALUES (${account}, ${verseKey}, ${day})
+      ON CONFLICT (account_id, verse_key, day) DO NOTHING
+      RETURNING verse_key
+    `) as { verse_key: string }[];
+    if (inserted.length === 0) continue;
     await sql`
       INSERT INTO reading_ranks (verse_key, visits, updated_at)
-      VALUES (${item.verseKey}, ${item.visits}, now())
+      VALUES (${verseKey}, 1, now())
       ON CONFLICT (verse_key) DO UPDATE
-      SET visits = reading_ranks.visits + EXCLUDED.visits,
+      SET visits = reading_ranks.visits + 1,
           updated_at = now()
     `;
   }
+}
+
+export async function resetPlatformRanks() {
+  await prepareReadingRanksStore();
+  const sql = getSql();
+  await sql`DELETE FROM reading_rank_grants`;
+  await sql`DELETE FROM reading_ranks`;
 }
 
 export async function loadPlatformRanks(limits: { surahs?: number; ayahs?: number } = {}): Promise<PlatformRanks> {

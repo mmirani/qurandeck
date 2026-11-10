@@ -4,6 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import { ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import { MushafPage } from "@/components/art/ornaments";
 import { useMushaf } from "@/components/providers/mushaf-provider";
+import { useDisplayedReading } from "@/components/reader/reading-seed";
+import { ReaderHint } from "@/components/reader/reader-hint";
+import { QuranCredit } from "@/components/site/quran-credit";
 import { MushafStream } from "@/components/reader/mushaf-stream";
 import { ReaderToolbar } from "@/components/reader/reader-toolbar";
 import { AyahReaderMobile } from "@/components/reader/ayah-reader-mobile";
@@ -13,10 +16,6 @@ import { useMobileReader } from "@/lib/use-media-query";
 
 export function ReaderPane() {
   const {
-    verses,
-    loading,
-    error,
-    chapter,
     openSurah,
     playingVerseKey,
     isPlaying,
@@ -27,9 +26,9 @@ export function ReaderPane() {
     pendingScrollVerseKey,
     clearPendingScrollVerse,
     setVisibleVerseKeys,
-    introduction,
     currentJuz,
   } = useMushaf();
+  const { verses, loading, error, chapter, introduction } = useDisplayedReading();
   const scroller = useRef<HTMLDivElement>(null);
   const translationCols = preferences.showTranslation ? Math.max(preferences.translationIds.length, 0) : 0;
   const layers = Number(preferences.showArabic) + Number(preferences.showTransliteration) + translationCols;
@@ -41,7 +40,7 @@ export function ReaderPane() {
   useEffect(() => {
     if (ayahMode || !playingVerseKey || !preferences.autoFollow) return;
     const node = scroller.current?.querySelector(`[data-verse-key="${playingVerseKey}"]`);
-    node?.scrollIntoView({ behavior: "smooth", block: "center" });
+    node?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, [ayahMode, playingVerseKey, preferences.autoFollow]);
 
   useEffect(() => {
@@ -58,7 +57,7 @@ export function ReaderPane() {
       if (cancelled) return false;
       const node = root.querySelector(`[data-verse-key="${pendingScrollVerseKey}"]`);
       if (!node) return false;
-      node.scrollIntoView({ behavior: "smooth", block: "center" });
+      node.scrollIntoView({ behavior: "smooth", block: "start" });
       clearPendingScrollVerse();
       return true;
     };
@@ -147,9 +146,10 @@ export function ReaderPane() {
         className={`reader-scroll-surface @container flex min-h-0 flex-1 flex-col ${
           ayahMode ? "overflow-hidden px-0 py-0" : "overflow-y-auto overscroll-contain px-5 py-5 md:px-8 md:py-6 lg:px-10"
         } ${traditional && preferences.focusMode ? "mushaf-desk" : ""} ${
-          ayahMode ? "pb-0" : isPlaying ? "pb-24 md:pb-36" : "pb-20 md:pb-36"
+          ayahMode ? "pb-0" : isPlaying ? "pb-28 lg:pb-8" : "pb-8"
         }`}
       >
+        {!loading && !preferences.focusMode ? <ReaderHint /> : null}
         {error ? (
           <p className="rounded-3xl border border-danger/40 bg-surface p-6 text-danger">{error}</p>
         ) : null}
@@ -163,7 +163,7 @@ export function ReaderPane() {
           <AyahReaderMobile verses={verses} mode={mode} />
         ) : (
           <div
-            className="reader-stream flex flex-col gap-5 pb-36"
+            className="reader-stream flex flex-col gap-5 pb-8"
             data-layers={layers}
             data-size={preferences.fontSize >= 34 ? "xl" : undefined}
             data-script={arabicOnly ? "ar" : undefined}
@@ -215,6 +215,7 @@ export function ReaderPane() {
                 </button>
               </div>
             ) : null}
+            <QuranCredit className="px-1 pt-2" />
           </div>
         )}
       </div>
@@ -233,10 +234,11 @@ function SurahIntroduction({
   mobile: boolean;
 }) {
   const [open, setOpen] = useState(false);
-
-  useEffect(() => {
+  const [seenChapter, setSeenChapter] = useState(chapterId);
+  if (chapterId !== seenChapter) {
+    setSeenChapter(chapterId);
     setOpen(false);
-  }, [chapterId]);
+  }
 
   if (mobile) {
     return (

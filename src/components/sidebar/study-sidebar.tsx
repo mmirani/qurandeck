@@ -30,13 +30,15 @@ export function StudySidebar() {
     const keys = visibleVerseKeys.length ? visibleVerseKeys : selectedVerseKey ? [selectedVerseKey] : [];
     return keys.flatMap((key) => highlights.filter((item) => item.verseKey === key));
   }, [highlights, selectedVerseKey, visibleVerseKeys]);
+  const noteKey = `${verse?.verseKey ?? ""}\0${note?.body ?? ""}`;
+  const [draftKey, setDraftKey] = useState(noteKey);
   const [draft, setDraft] = useState(note?.body ?? "");
-  const [savedAgo, setSavedAgo] = useState("Unsaved");
-
-  useEffect(() => {
+  const [savedAgo, setSavedAgo] = useState(note ? "Saved" : "Unsaved");
+  if (noteKey !== draftKey) {
+    setDraftKey(noteKey);
     setDraft(note?.body ?? "");
     setSavedAgo(note ? "Saved" : "Unsaved");
-  }, [note, verse?.verseKey]);
+  }
 
   const words = verse?.words.filter((item) => item.charType === "word") ?? [];
 
@@ -153,12 +155,15 @@ function HighlightFeed({ marks }: { marks: Highlight[] }) {
     const same =
       shown.length === marks.length && shown.every((item, index) => item.id === marks[index]?.id);
     if (same) return;
-    setUpdating(true);
+    const frame = requestAnimationFrame(() => setUpdating(true));
     const timer = window.setTimeout(() => {
       setShown(marks);
       setUpdating(false);
     }, 160);
-    return () => window.clearTimeout(timer);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.clearTimeout(timer);
+    };
   }, [marks, shown]);
 
   if (shown.length === 0) {

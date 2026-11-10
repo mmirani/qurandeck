@@ -14,7 +14,7 @@
   --panel-2: #111827;
   --ink: #0b1220;
   --ink-soft: #334155;
-  --muted: #64748b;
+  --muted: #5c6b80;
   --accent: #0d9488;
   --accent-soft: #ccfbf1;
   --gold: #0f766e;
@@ -82,7 +82,7 @@
   --panel-2: #022c22;
   --ink: #022c22;
   --ink-soft: #115e59;
-  --muted: #4b7c6e;
+  --muted: #467366;
   --accent: #10b981;
   --accent-soft: #a7f3d0;
   --gold: #047857;
@@ -105,7 +105,7 @@
   --panel-2: #292524;
   --ink: #1c1917;
   --ink-soft: #57534e;
-  --muted: #78716c;
+  --muted: #6a635f;
   --accent: #ea580c;
   --accent-soft: #ffedd5;
   --gold: #c2410c;
@@ -128,7 +128,7 @@
   --panel-2: #0f172a;
   --ink: #0f172a;
   --ink-soft: #334155;
-  --muted: #64748b;
+  --muted: #59677c;
   --accent: #2563eb;
   --accent-soft: #bfdbfe;
   --gold: #1d4ed8;
@@ -155,7 +155,7 @@ html {
   --panel-2: #3b0764;
   --ink: #1e1b4b;
   --ink-soft: #4c1d95;
-  --muted: #6d6a8a;
+  --muted: #63607e;
   --accent: #06b6d4;
   --accent-soft: #a5f3fc;
   --gold: #7c3aed;
@@ -178,7 +178,7 @@ html {
   --panel-2: #6d4e64;
   --ink: #4d3a4f;
   --ink-soft: #7d657e;
-  --muted: #b59bb0;
+  --muted: #7f6d7b;
   --accent: #c5e8d5;
   --accent-soft: #fde8f0;
   --gold: #d48aa6;
@@ -204,7 +204,7 @@ html {
   --panel-2: #3b1026;
   --ink: #3b1024;
   --ink-soft: #7a3858;
-  --muted: #a56b84;
+  --muted: #825568;
   --accent: #f472b6;
   --accent-soft: #fbcfe8;
   --gold: #c2185b;
@@ -229,7 +229,7 @@ html {
   --panel-2: #1c1917;
   --ink: #1c1917;
   --ink-soft: #44403c;
-  --muted: #78716c;
+  --muted: #66605c;
   --accent: #b45309;
   --accent-soft: #fde68a;
   --gold: #b45309;
@@ -1027,10 +1027,42 @@ body::before {
 
 .verse-tafsir-body {
   font-family: var(--font-reading), Georgia, serif;
-  font-size: calc(var(--reading-size, 18px) * 0.84);
-  font-style: italic;
+  font-size: var(--reading-size, 18px);
+  font-style: normal;
   line-height: 1.75;
-  color: var(--ink-soft);
+  color: var(--ink);
+}
+
+.script-nastaliq {
+  font-family: var(--font-nastaliq), var(--font-arabic), serif;
+  font-size: 1.28em;
+  line-height: 2.45;
+}
+
+.script-naskh {
+  font-family: var(--font-arabic), serif;
+  font-size: 1.12em;
+  line-height: 2;
+  font-style: normal;
+}
+
+.script-hebrew {
+  font-family: var(--font-hebrew), var(--font-reading), serif;
+  font-size: 1.12em;
+  line-height: 1.9;
+}
+
+.script-thaana {
+  font-family: var(--font-thaana), sans-serif;
+  font-size: 1.2em;
+  line-height: 2.15;
+}
+
+.reading-text.script-nastaliq,
+.reading-text.script-naskh,
+.reading-text.script-hebrew,
+.reading-text.script-thaana {
+  font-size: calc(var(--reading-size, 18px) * 1.15);
 }
 
 .ayah-mark {
@@ -1135,7 +1167,7 @@ body::before {
 }
 
 .nur-orb.is-alive {
-  animation: nur-bob 3.8s ease-in-out infinite;
+  animation: none;
 }
 
 .nur.is-dragging .nur-orb,
@@ -1192,7 +1224,6 @@ body::before {
   border-radius: 50%;
   background: radial-gradient(ellipse, color-mix(in srgb, var(--gold) 58%, #0b1220 18%), transparent 72%);
   pointer-events: none;
-  animation: nur-floor 3.8s ease-in-out infinite;
 }
 
 .nur.is-dragging .nur-floor,
@@ -1317,6 +1348,21 @@ body::before {
   font-family: var(--font-arabic), serif;
 }
 
+.nur-reply,
+.nur-hint {
+  margin: 0.75rem 0 0;
+  font-size: 0.875rem;
+  line-height: 1.55;
+}
+
+.nur-reply {
+  color: var(--ink);
+}
+
+.nur-hint {
+  color: var(--ink-soft);
+}
+
 .nur-call {
   position: fixed;
   right: 1rem;
@@ -1385,6 +1431,7 @@ body::before {
 
 .nur-stage .nur-floor {
   height: 22px;
+  animation: nur-floor 8s ease-in-out infinite;
 }
 
 .nur-stage.is-sm {
@@ -1413,7 +1460,7 @@ body::before {
 }
 
 .nur-stage.is-demo-interactive .nur-orb.is-demo-idle {
-  animation: nur-bob 3.8s ease-in-out infinite;
+  animation: nur-bob 8s ease-in-out infinite;
 }
 
 @media (max-width: 767px) {

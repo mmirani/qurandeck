@@ -67,16 +67,15 @@ async function migrateLegacy() {
     `;
     migrated += 1;
   }
-  await sql`DROP TABLE libraries_legacy`;
+  const archived = await columnNames("libraries_legacy_archive");
+  if (archived.length === 0) {
+    await sql`ALTER TABLE libraries_legacy RENAME TO libraries_legacy_archive`;
+  }
   return migrated;
 }
 
-export async function prepareLibraryStore() {
+async function createSealedLibraries() {
   const sql = getSql();
-  const existing = await columnNames("libraries");
-  if (existing.includes("email")) {
-    await sql`ALTER TABLE libraries RENAME TO libraries_legacy`;
-  }
   await sql`
     CREATE TABLE IF NOT EXISTS libraries (
       account_id text PRIMARY KEY,
@@ -84,7 +83,73 @@ export async function prepareLibraryStore() {
       updated_at timestamptz NOT NULL DEFAULT now()
     )
   `;
-  const legacy = await columnNames("libraries_legacy");
-  const migrated = legacy.includes("email") ? await migrateLegacy() : 0;
-  return { migrated };
+}
+
+const MIGRATION_ID = "libraries-sealed-v1";
+let ready: Promise<{ migrated: number }> | null = null;
+
+export function prepareLibraryStore() {
+  ready ??= runLibraryMigration().catch((error) => {
+    ready = null;
+    throw error;
+  });
+  return ready;
+}
+
+async function runLibraryMigration() {
+  const sql = getSql();
+  await sql`
+    CREATE TABLE IF NOT EXISTS schema_migrations (
+      id text PRIMARY KEY,
+      status text NOT NULL,
+      applied_at timestamptz NOT NULL DEFAULT now()
+    )
+  `;
+  const rows = (await sql`
+    SELECT status FROM schema_migrations WHERE id = ${MIGRATION_ID}
+  `) as { status?: string }[];
+  if (rows[0]?.status === "done") return { migrated: 0 };
+
+  const claimed = (await sql`
+    INSERT INTO schema_migrations (id, status)
+    VALUES (${MIGRATION_ID}, 'running')
+    ON CONFLICT (id) DO NOTHING
+    RETURNING id
+  `) as { id?: string }[];
+
+  if (claimed.length === 0) {
+    await sql`
+      DELETE FROM schema_migrations
+      WHERE id = ${MIGRATION_ID}
+        AND status = 'running'
+        AND applied_at < now() - interval '2 minutes'
+    `;
+    for (let attempt = 0; attempt < 8; attempt += 1) {
+      const current = (await sql`
+        SELECT status FROM schema_migrations WHERE id = ${MIGRATION_ID}
+      `) as { status?: string }[];
+      if (current[0]?.status === "done") return { migrated: 0 };
+      await new Promise((resolve) => setTimeout(resolve, 150));
+    }
+    throw new Error("Library migration is still running");
+  }
+
+  try {
+    const existing = await columnNames("libraries");
+    if (existing.includes("email") && !existing.includes("sealed")) {
+      await sql`ALTER TABLE libraries RENAME TO libraries_legacy`;
+    }
+    await createSealedLibraries();
+    const legacy = await columnNames("libraries_legacy");
+    const migrated = legacy.includes("email") ? await migrateLegacy() : 0;
+    await sql`
+      UPDATE schema_migrations
+      SET status = 'done', applied_at = now()
+      WHERE id = ${MIGRATION_ID}
+    `;
+    return { migrated };
+  } catch (error) {
+    await sql`DELETE FROM schema_migrations WHERE id = ${MIGRATION_ID} AND status = 'running'`;
+    throw error;
+  }
 }

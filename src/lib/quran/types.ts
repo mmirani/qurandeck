@@ -92,6 +92,8 @@ export type SearchHit = {
   textArabic: string;
   textTranslation: string;
   source: "quran.com" | "alquran.cloud" | "theme" | "jump";
+  chapterName?: string;
+  translatedName?: string;
 };
 
 export type HighlightLayer = "arabic" | "translation" | "transliteration" | "ayah";

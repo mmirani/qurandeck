@@ -4,19 +4,21 @@ import Link from "next/link";
 import { ChevronLeft, Menu, Settings2 } from "lucide-react";
 import { APPEARANCE_THEMES, FONT_SIZE_MAX, FONT_SIZE_MIN } from "@/lib/appearance";
 import { useMushaf } from "@/components/providers/mushaf-provider";
+import { useDisplayedReading } from "@/components/reader/reading-seed";
 import { useReaderChrome } from "@/components/shell/reader-chrome";
 
 export function MobileReaderBar() {
   const { openNav } = useReaderChrome();
-  const { preferences, updatePreferences, openModal, chapter, mode, currentJuz } = useMushaf();
+  const { preferences, updatePreferences, openModal, mode, currentJuz } = useMushaf();
+  const { chapter } = useDisplayedReading();
   const tafsirOn = preferences.showTafsir;
   const ayahMode = preferences.mobileReadingMode === "ayah";
   const title =
-    mode === "juz" ? `Juz ${currentJuz ?? "—"}` : (chapter?.nameSimple ?? "Al-Fatihah");
+    mode === "juz" ? `Juz ${currentJuz ?? "—"}` : (chapter?.nameSimple ?? "Surah");
   const themeName = APPEARANCE_THEMES.find((item) => item.id === preferences.theme)?.name ?? preferences.theme;
 
   return (
-    <div className="sticky top-0 z-30 shrink-0 border-b border-line/60 bg-canvas/95 backdrop-blur-md md:hidden">
+    <div className="sticky top-0 z-30 shrink-0 border-b border-line/60 bg-canvas/95 backdrop-blur-md lg:hidden">
       <div className="flex h-[3.25rem] min-h-[3.25rem] items-center gap-2 px-3">
         <Link
           href="/"
