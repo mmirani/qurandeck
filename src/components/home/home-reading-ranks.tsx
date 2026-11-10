@@ -14,21 +14,18 @@ export function HomeReadingRanks() {
 
   return (
     <>
-      <RankCard title="Most read surahs" detail="Surahs you finished in full">
+      <RankCard title="Surahs you finished" detail="Your own full readings. Not a score.">
         {surahs.length === 0 ? (
           <p className="mt-3 text-sm text-ink-soft">Finish a surah and it will show here.</p>
         ) : (
           <ol className="mt-3 flex-1 divide-y divide-line/60">
-            {surahs.map((item, index) => (
+            {surahs.map((item) => (
               <li key={item.chapterId}>
                 <Link
                   href={`/surah/${item.chapterId}`}
                   className="flex min-h-11 items-center justify-between gap-2 py-1.5 hover:text-gold-deep"
                 >
-                  <span className="min-w-0 truncate">
-                    <span className="mr-1.5 text-xs tabular-nums text-gold-deep">{index + 1}</span>
-                    <span className="text-sm font-medium text-ink">{surahName(item.chapterId)}</span>
-                  </span>
+                  <span className="min-w-0 truncate text-sm font-medium text-ink">{surahName(item.chapterId)}</span>
                   <span className="shrink-0 text-xs tabular-nums text-ink-soft">
                     {formatCompletions(item.completions)}
                   </span>
@@ -39,12 +36,12 @@ export function HomeReadingRanks() {
         )}
       </RankCard>
 
-      <RankCard title="Most read ayahs" detail="Ayahs you return to most">
+      <RankCard title="Ayahs you return to" detail="Places you have spent time. Not a spiritual rank.">
         {ayahs.length === 0 ? (
           <p className="mt-3 text-sm text-ink-soft">Stay with an ayah and it will start to rise here.</p>
         ) : (
           <ol className="mt-3 flex-1 divide-y divide-line/60">
-            {ayahs.map((item, index) => (
+            {ayahs.map((item) => (
               <li key={item.verseKey}>
                 <Link
                   href={readerHref(item.verseKey)}
@@ -54,13 +51,10 @@ export function HomeReadingRanks() {
                   }}
                   className="flex min-h-11 items-center justify-between gap-2 py-1.5 hover:text-gold-deep"
                 >
-                  <span className="min-w-0 truncate">
-                    <span className="mr-1.5 text-xs tabular-nums text-gold-deep">{index + 1}</span>
-                    <span className="text-sm font-medium text-ink">
-                      {surahName(item.chapterId)} · {item.verseKey}
-                    </span>
+                  <span className="min-w-0 truncate text-sm font-medium text-ink">
+                    {surahName(item.chapterId)} · {item.verseKey}
                   </span>
-                  <span className="shrink-0 text-xs tabular-nums text-ink-soft">{formatVisits(item.visits)}</span>
+                  <span className="shrink-0 text-xs text-ink-soft">{formatVisits(item.visits)}</span>
                 </Link>
               </li>
             ))}
@@ -94,5 +88,5 @@ function formatCompletions(count: number) {
 }
 
 function formatVisits(count: number) {
-  return `${count.toLocaleString("en-US")}×`;
+  return count === 1 ? "1 time" : `${count.toLocaleString("en-US")} times`;
 }

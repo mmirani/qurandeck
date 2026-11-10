@@ -191,7 +191,7 @@ export function VerseTafsir({ verseKey }: { verseKey: string }) {
               This note also introduces the surrounding ayahs ({passage?.verseKeys[0]} – {passage?.verseKeys[passage.verseKeys.length - 1]}).
             </p>
           ) : null}
-          <div dir="auto" className="verse-tafsir-body mt-2 whitespace-pre-wrap">
+          <div dir="auto" translate="no" className="verse-tafsir-body mt-2 whitespace-pre-wrap">
             <ScriptText text={expanded || !excerpt.truncated ? body : `${excerpt.excerpt}…`} />
           </div>
           {excerpt.truncated ? (

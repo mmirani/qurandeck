@@ -20,7 +20,7 @@ Open [http://localhost:3310](http://localhost:3310). Port 3310 is used locally s
 - Search by word, theme, surah name, or a verse key such as `2:255`.
 - Recitation from the surah, the current ayah, or a word. On phones the player is a small bar only while audio is playing.
 - Sana (سَنَا) is the reading companion. On phones it is a small corner control that opens on tap, and it stays hidden in ayah-by-ayah mode.
-- Notes, favorites, highlights, a completion map, personal most-read lists, and reading time.
+- Notes, favorites, highlights, a completion map of ayahs you have opened, personal lists of finished surahs and ayahs you return to, and reading time. Those lists are reading notes, not scores.
 - Themes, text size, translations, tafsir, and reciter live in the account panel.
 
 ## Accounts
@@ -41,7 +41,7 @@ After sign-in, `LibrarySync` merges that device library with `GET/PUT /api/libra
 - `sealed`: AES-256-GCM ciphertext of the library JSON (preferences, bookmarks, notes, highlights, swatches, progress including ayah visit counts, display name, profile photo or icon).
 - `updated_at`
 
-On each successful library put, QuranDeck compares the previous sealed visit map with the new one and adds positive deltas to `reading_ranks` (`verse_key`, `visits`). That table has no account id. Public read: `GET /api/ranks`.
+On each successful library put, QuranDeck compares the previous sealed visit map with the new one and may add one anonymous opening per ayah per account per day to `reading_ranks` (`verse_key`, `visits`), capped at 40 new ayahs a day. That table has no account id. It is a usage counter, not a spiritual score. Public read: `GET /api/ranks`. Before launch, set `RANK_RESET_TOKEN` and `POST /api/ranks/reset` with `Authorization: Bearer <token>` to clear test totals.
 
 QuranDeck can decrypt a library while the reader is signed in, so sync works. The libraries table itself is not readable text. Deleting a cloud library is a request for now; there is no delete button yet. Platform rank totals are anonymous and are not unwound when a library is deleted.
 
@@ -56,11 +56,28 @@ Footer links on the home page. Both are dated from the beta behavior above: no a
 
 ## Sources
 
-- [Quran.com API v4](https://api.quran.com/api/v4) — chapters, verses, word-by-word, recitations, translations, tafsir, juz
-- [AlQuran Cloud](https://alquran.cloud/api) — extra translation editions and text search
+Quran data provided by Quran.Foundation. The translation, tafsir, and reciter named in the reader are the credits for that edition.
+
+- [Quran Foundation Content API](https://api-docs.quran.foundation/) — chapters, verses, word-by-word, recitations, translations, tafsir, and juz, once a Backend app is approved
+- [Quran.com API v4](https://api.quran.com/api/v4) — the same routes, used until `QF_CLIENT_ID`, `QF_CLIENT_SECRET`, and `QF_ENV` are set
+- [AlQuran Cloud](https://alquran.cloud/api) — extra translation editions and text search, with backoff when the shared host is busy
 - [audio.qurancdn.com](https://audio.qurancdn.com) and the Islamic Network CDN — recitation audio
 
-Those requests ask for the surah, ayah, translation, or reciter. They do not include the reader’s library.
+Those requests ask for the surah, ayah, translation, or reciter. They do not include the reader’s library. Quran text is marked `translate="no"`. Cached copies stay under a week (one day fresh, two days stale).
+
+### Quran Foundation credentials
+
+Register a Backend/server app in the [Quran Foundation developer console](https://dev-console.quran.foundation/login). New apps start on prelive, which only serves Al-Fatihah and Al-Baqarah. Request production content scopes before pointing the live site at production. Store these on the server only (Vercel Production and Preview). Do not prefix them with `NEXT_PUBLIC_`.
+
+| Name | Value |
+| --- | --- |
+| `QF_CLIENT_ID` | Backend app client id |
+| `QF_CLIENT_SECRET` | Backend app client secret |
+| `QF_ENV` | `prelive` or `production` |
+
+Leave all three unset and QuranDeck keeps calling `api.quran.com`. When they are set, the server fetches a client-credentials token from `oauth2.quran.foundation` (or the prelive host), caches it until five minutes before expiry, and sends `x-auth-token`, `x-client-id`, and a QuranDeck user agent to `apis.quran.foundation/content/api/v4`. A 401 refreshes the token once and retries. Prelive 404s fall back to the public API so the rest of the mushaf still opens while production access is pending. Do not set `QF_ENV=prelive` on the public deployment if you need every surah from Quran Foundation itself.
+
+Scopes requested for a new Backend app: `content.quran.read`, `content.translations.read`, `content.tafsirs.read`, `content.audio.read`, `content.metadata.read`. No user scopes.
 
 ## Stack
 

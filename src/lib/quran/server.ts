@@ -1,5 +1,6 @@
 import { canonicalLanguage, translationQuery } from "./languages";
 import { hasArabicScript } from "@/lib/text";
+import { fetchQuranJson } from "./qf";
 import {
   ALQURAN_API,
   DEFAULT_TRANSLATION_ID,
@@ -23,17 +24,8 @@ import type {
   Word,
 } from "./types";
 
-const revalidate = { next: { revalidate: 86400 } } as const;
-
 async function getJson<T>(url: string): Promise<T> {
-  const res = await fetch(url, {
-    ...revalidate,
-    headers: { Accept: "application/json" },
-  });
-  if (!res.ok) {
-    throw new Error(`Request failed ${res.status} for ${url}`);
-  }
-  return res.json() as Promise<T>;
+  return fetchQuranJson<T>(url);
 }
 
 function mapChapter(raw: Record<string, unknown>): Chapter {

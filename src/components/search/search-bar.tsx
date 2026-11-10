@@ -147,6 +147,7 @@ export function SearchBar() {
                       key={`${hit.source}-${hit.verseKey}`}
                       type="button"
                       onClick={() => jumpToHit(hit)}
+                      translate="no"
                       className="block w-full cursor-pointer rounded-2xl px-3 py-2 text-left hover:bg-highlight"
                     >
                       <p className="text-xs font-medium text-gold-deep">

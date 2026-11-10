@@ -104,6 +104,7 @@ export function VerseCard({
     <article
       id={`ayah-${verse.verseNumber}`}
       data-verse-key={verse.verseKey}
+      translate="no"
       className={`scroll-mt-4 scroll-mb-28 ${ayahFocus ? "reader-ayah-card" : "cursor-pointer"} ${active || reciting ? "is-live rounded-3xl" : ""}`}
       onClick={ayahFocus ? undefined : onAyahClick}
     >
@@ -507,7 +508,12 @@ function ArabicBlock({
   paint: React.MutableRefObject<{ start: number; last: number } | null>;
 }) {
   return (
-    <div dir="rtl" lang="ar" className={`arabic-text mushaf-arabic-mobile text-right ${highlighting ? "select-none" : ""}`}>
+    <div
+      dir="rtl"
+      lang="ar"
+      translate="no"
+      className={`arabic-text mushaf-arabic-mobile text-right ${highlighting ? "select-none" : ""}`}
+    >
       {verse.words.length > 0
         ? verse.words.map((word) => {
             if (word.charType === "end") {

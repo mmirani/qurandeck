@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { LegalPage, LegalSection } from "@/components/legal/legal-page";
 import { COMPANION_NAME, PRODUCT_NAME, PROMISE_LINE, WORK_TITLE } from "@/lib/brand";
+import { QF_ATTRIBUTION } from "@/components/site/quran-credit";
 
 export const metadata: Metadata = {
   title: "About",
@@ -20,6 +21,15 @@ export default function AboutPage() {
         <p>
           Arabic stays on the page. Translations sit beside it in the language you choose. Tafsir opens when you ask
           for it, in a size you can actually read.
+        </p>
+      </LegalSection>
+      <LegalSection title="Quran text">
+        <p translate="no">{QF_ATTRIBUTION}</p>
+        <p>
+          Arabic, translations, tafsir, and recitation come from Quran Foundation when server credentials are set, and
+          from the public Quran.com API until then. Extra search lines may come from AlQuran Cloud. The edition name
+          on a translation, the tafsir you open, and the reciter in the player are the credits for that text and audio.
+          QuranDeck is an independent reading room, not an official Quran Foundation product.
         </p>
       </LegalSection>
       <LegalSection title={COMPANION_NAME}>

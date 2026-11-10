@@ -9,7 +9,7 @@ const contentSecurityPolicy = [
   "img-src 'self' data: blob: https:",
   "font-src 'self' data:",
   "media-src 'self' https://audio.qurancdn.com https://verses.quran.com https://cdn.islamic.network https://download.quranicaudio.com https://everyayah.com",
-  "connect-src 'self' https://api.quran.com https://api.alquran.cloud https://api.quran.foundation https://audio.qurancdn.com https://verses.quran.com https://cdn.islamic.network https://download.quranicaudio.com",
+  "connect-src 'self' https://api.quran.com https://api.alquran.cloud https://api.quran.foundation https://apis.quran.foundation https://apis-prelive.quran.foundation https://oauth2.quran.foundation https://prelive-oauth2.quran.foundation https://audio.qurancdn.com https://verses.quran.com https://cdn.islamic.network https://download.quranicaudio.com",
   "frame-ancestors 'none'",
   "base-uri 'self'",
   "form-action 'self'",

@@ -28,6 +28,7 @@ import { useMushaf } from "@/components/providers/mushaf-provider";
 import { UserMenu } from "@/components/user/user-menu";
 import { MihrabMark } from "@/components/art/ornaments";
 import { PRODUCT_NAME, PROMISE_LINE, PROMISE_STORY, WORK_TITLE } from "@/lib/brand";
+import { QuranCredit } from "@/components/site/quran-credit";
 import { HOME_FEATURES, HOME_MORE, HOME_PROMISES, HOME_STARTS } from "@/lib/home";
 import { formatReadingMinutes, versePlaceLabel } from "@/lib/reading";
 
@@ -459,6 +460,7 @@ function HomeFooter() {
           </Link>
         </nav>
         <p>{PROMISE_LINE}</p>
+        <QuranCredit className="basis-full" />
         <div className="flex items-center gap-2">
           <Languages className="h-4 w-4 text-gold" aria-hidden="true" />
           <span>Arabic first. Translations you choose.</span>

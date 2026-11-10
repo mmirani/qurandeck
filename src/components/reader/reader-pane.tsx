@@ -6,6 +6,7 @@ import { MushafPage } from "@/components/art/ornaments";
 import { useMushaf } from "@/components/providers/mushaf-provider";
 import { useDisplayedReading } from "@/components/reader/reading-seed";
 import { ReaderHint } from "@/components/reader/reader-hint";
+import { QuranCredit } from "@/components/site/quran-credit";
 import { MushafStream } from "@/components/reader/mushaf-stream";
 import { ReaderToolbar } from "@/components/reader/reader-toolbar";
 import { AyahReaderMobile } from "@/components/reader/ayah-reader-mobile";
@@ -214,6 +215,7 @@ export function ReaderPane() {
                 </button>
               </div>
             ) : null}
+            <QuranCredit className="px-1 pt-2" />
           </div>
         )}
       </div>

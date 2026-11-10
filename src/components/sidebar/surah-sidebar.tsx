@@ -11,6 +11,7 @@ import type { Chapter, Juz } from "@/lib/quran/types";
 import { useReaderChrome } from "@/components/shell/reader-chrome";
 import { RailToggle } from "@/components/shell/rail-toggle";
 import { ContinueCard } from "@/components/account/account-dashboard";
+import { QuranCredit } from "@/components/site/quran-credit";
 
 export function SurahSidebar() {
   const { chapters, chapter, openSurah, openJuz, currentJuz, juzs, mode } = useMushaf();
@@ -162,7 +163,8 @@ export function SurahSidebar() {
       )}
       <div className="shrink-0 border-t-2 border-gold/40 bg-highlight/40 px-3 py-3">
         <ContinueCard compact />
-        <nav aria-label="Site" className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-xs text-ink-soft">
+        <QuranCredit compact className="mt-3" />
+        <nav aria-label="Site" className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-ink-soft">
           <Link href="/about" className="underline-offset-4 hover:text-ink hover:underline">
             About
           </Link>

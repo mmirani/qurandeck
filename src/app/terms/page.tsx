@@ -58,9 +58,9 @@ export default function TermsPage() {
           policy. QuranDeck does not claim ownership of your reflections and does not sell them.
         </p>
         <p>
-          When a signed-in library syncs, QuranDeck may also add anonymous visit counts to shared platform ranks (ayah
-          keys and totals only). Those ranks can power product features such as most-read surahs and ayahs across
-          QuranDeck. They are not linked to your email in that table.
+          When a signed-in library syncs, QuranDeck may also add anonymous visit counts to shared opening totals (ayah
+          keys and numbers only). Those totals describe what was opened on QuranDeck. They are not a spiritual rank,
+          a score, or a hasanat count, and they are not linked to your email in that table.
         </p>
       </LegalSection>
 

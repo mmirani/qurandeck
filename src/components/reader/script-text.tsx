@@ -6,7 +6,7 @@ export function ScriptText({ text }: { text: string }) {
     <>
       {pieces.map((piece, index) =>
         piece.arabic ? (
-          <span key={index} lang="ar" dir="rtl" className="script-naskh">
+          <span key={index} lang="ar" dir="rtl" translate="no" className="script-naskh">
             {piece.text}
           </span>
         ) : (

@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { MihrabMark } from "@/components/art/ornaments";
 import { BrandWordmark } from "@/components/brand/brand-wordmark";
+import { QuranCredit } from "@/components/site/quran-credit";
 
 export function LegalPage({
   title,
@@ -27,7 +28,8 @@ export function LegalPage({
         <h1 className="mt-2 font-display text-4xl font-semibold tracking-tight text-ink">{title}</h1>
         <p className="mt-2 text-sm text-ink-soft">Last updated {updated}</p>
         <div className="mt-8 space-y-8">{children}</div>
-        <nav aria-label="Site" className="mt-12 flex flex-wrap gap-4 border-t border-line/70 pt-6 text-sm text-ink-soft">
+        <QuranCredit className="mt-12" />
+        <nav aria-label="Site" className="mt-6 flex flex-wrap gap-4 border-t border-line/70 pt-6 text-sm text-ink-soft">
           <Link href="/about" className="underline-offset-4 hover:text-ink hover:underline">
             About
           </Link>
