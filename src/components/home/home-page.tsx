@@ -23,7 +23,6 @@ import { HomeStats } from "@/components/home/home-stats";
 import { BrandWordmark } from "@/components/brand/brand-wordmark";
 import { HomeSana } from "@/components/home/home-sana";
 import { AppModals } from "@/components/shell/app-modals";
-import { requestAuthTab } from "@/components/modals/auth-modal";
 import { useMushaf } from "@/components/providers/mushaf-provider";
 import { UserMenu } from "@/components/user/user-menu";
 import { MihrabMark } from "@/components/art/ornaments";
@@ -140,13 +139,10 @@ function HomeGuestHero() {
           </Link>
           <button
             type="button"
-            onClick={() => {
-              requestAuthTab("social");
-              openModal("auth");
-            }}
+            onClick={() => openModal("auth")}
             className="hidden min-h-11 cursor-pointer items-center justify-center text-sm font-medium text-ink-soft underline-offset-4 transition hover:text-ink hover:underline md:inline-flex"
           >
-            Sign In
+            Sync your notes across devices
           </button>
         </div>
         <p className="mt-3 text-center text-sm text-muted md:text-left">Free • Private • No ads or tracking</p>
@@ -362,47 +358,34 @@ function HomeCta() {
 function GuestAuthButtons({ size }: { size: "nav" | "hero" | "cta" }) {
   const { openModal } = useMushaf();
   const compact = size === "nav";
-  const chip = compact
-    ? "inline-flex h-11 cursor-pointer items-center rounded-full px-4 text-sm"
-    : "inline-flex h-12 cursor-pointer items-center rounded-full px-6 text-base";
-  const guestFilled = size === "hero";
-  const createFilled = size !== "hero";
+  const openSync = () => openModal("auth");
+
+  if (compact) {
+    return (
+      <button
+        type="button"
+        onClick={openSync}
+        className="inline-flex h-11 cursor-pointer items-center rounded-full border border-line px-4 text-sm font-medium text-ink hover:bg-highlight"
+      >
+        Sync notes
+      </button>
+    );
+  }
 
   return (
     <>
       <Link
         href="/read"
-        className={`${chip} ${
-          guestFilled
-            ? "bg-gold font-semibold text-on-gold"
-            : "border border-gold/40 font-medium text-gold-deep hover:bg-highlight"
-        }`}
+        className="inline-flex h-12 cursor-pointer items-center rounded-full bg-gold px-6 text-base font-semibold text-on-gold"
       >
-        Read as guest
+        Start reading
       </Link>
       <button
         type="button"
-        onClick={() => {
-          requestAuthTab("social");
-          openModal("auth");
-        }}
-        className={`${chip} border border-line font-medium text-ink hover:bg-highlight`}
+        onClick={openSync}
+        className="inline-flex h-12 cursor-pointer items-center rounded-full border border-line px-6 text-base font-medium text-ink hover:bg-highlight"
       >
-        Sign in
-      </button>
-      <button
-        type="button"
-        onClick={() => {
-          requestAuthTab("social");
-          openModal("auth");
-        }}
-        className={`${chip} ${
-          createFilled
-            ? "bg-gold font-semibold text-on-gold"
-            : "border border-gold/45 font-medium text-gold-deep hover:bg-highlight"
-        }`}
-      >
-        {compact ? "Create account" : "Create a free account"}
+        Sync your notes across devices
       </button>
     </>
   );
@@ -418,26 +401,10 @@ function HomeFooter() {
         <div className="border-b border-line/60 bg-canvas/80 px-4 py-4 text-center md:hidden">
           <button
             type="button"
-            onClick={() => {
-              requestAuthTab("social");
-              openModal("auth");
-            }}
-            className="min-h-11 cursor-pointer text-sm font-medium text-ink-soft underline-offset-4 hover:text-ink hover:underline"
-          >
-            Sign In
-          </button>
-          <span className="mx-2 text-muted" aria-hidden="true">
-            ·
-          </span>
-          <button
-            type="button"
-            onClick={() => {
-              requestAuthTab("social");
-              openModal("auth");
-            }}
+            onClick={() => openModal("auth")}
             className="min-h-11 cursor-pointer text-sm font-medium text-gold-deep underline-offset-4 hover:underline"
           >
-            Create account
+            Sync your notes across devices
           </button>
         </div>
       ) : null}

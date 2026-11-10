@@ -1,12 +1,42 @@
 import NextAuth from "next-auth";
 import type { NextAuthConfig } from "next-auth";
+import Apple from "next-auth/providers/apple";
 import Credentials from "next-auth/providers/credentials";
-import GitHub from "next-auth/providers/github";
 import Google from "next-auth/providers/google";
 import { cookies } from "next/headers";
+import { appleClientSecretFromEnv } from "@/lib/apple-client-secret";
 import { verifyMagicToken } from "@/lib/magic-link";
+import { getMagicLinkStore } from "@/lib/magic-link-store";
 
 const BETA_COOKIE = "qurandeck-beta";
+
+async function userFromToken(token: unknown) {
+  const secret = process.env.AUTH_SECRET;
+  if (!secret || typeof token !== "string") return null;
+  try {
+    const email = await verifyMagicToken(token, secret, getMagicLinkStore());
+    if (!email) return null;
+    const local = email.split("@")[0] ?? email;
+    const name = local.replace(/[._-]+/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+    return { id: email, email, name };
+  } catch {
+    console.error("Sign-in token verification failed");
+    return null;
+  }
+}
+
+function appleProvider() {
+  const clientId = process.env.AUTH_APPLE_ID?.trim();
+  if (!clientId) return null;
+  try {
+    const clientSecret = appleClientSecretFromEnv(process.env);
+    if (!clientSecret) return null;
+    return Apple({ clientId, clientSecret });
+  } catch {
+    console.error("Apple sign-in is misconfigured");
+    return null;
+  }
+}
 
 function buildProviders() {
   const providers: NonNullable<NextAuthConfig["providers"]> = [];
@@ -15,28 +45,22 @@ function buildProviders() {
     providers.push(Google);
   }
 
-  if (process.env.AUTH_GITHUB_ID && process.env.AUTH_GITHUB_SECRET) {
-    providers.push(GitHub);
-  }
+  const apple = appleProvider();
+  if (apple) providers.push(apple);
 
   if (process.env.AUTH_SECRET) {
     providers.push(
       Credentials({
         id: "magic-link",
-        name: "Email link",
-        credentials: {
-          token: { type: "text" },
-        },
-        async authorize(credentials) {
-          const secret = process.env.AUTH_SECRET;
-          const token = credentials?.token;
-          if (!secret || typeof token !== "string") return null;
-          const email = verifyMagicToken(token, secret);
-          if (!email) return null;
-          const local = email.split("@")[0] ?? email;
-          const name = local.replace(/[._-]+/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
-          return { id: email, email, name };
-        },
+        name: "Email code",
+        credentials: { token: { type: "text" } },
+        authorize: (credentials) => userFromToken(credentials?.token),
+      }),
+      Credentials({
+        id: "passkey",
+        name: "Passkey",
+        credentials: { token: { type: "text" } },
+        authorize: (credentials) => userFromToken(credentials?.token),
       }),
     );
   }

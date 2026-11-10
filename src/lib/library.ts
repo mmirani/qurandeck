@@ -31,6 +31,28 @@ function byId<T extends { id: string }>(items: T[]) {
   return [...map.values()];
 }
 
+function highlightIdentity(item: Highlight) {
+  return [
+    item.verseKey,
+    item.layer,
+    item.startWord ?? "",
+    item.endWord ?? "",
+    item.startOffset ?? "",
+    item.endOffset ?? "",
+    item.text,
+  ].join("|");
+}
+
+function dedupeHighlights(items: Highlight[]) {
+  const map = new Map<string, Highlight>();
+  for (const item of byId(items)) {
+    const key = highlightIdentity(item);
+    const current = map.get(key);
+    if (!current || item.createdAt >= current.createdAt) map.set(key, item);
+  }
+  return [...map.values()];
+}
+
 function laterIso(a?: string, b?: string) {
   return (a ?? "") >= (b ?? "") ? a : b;
 }
@@ -50,9 +72,17 @@ export function mergeLibraries(local: LibrarySnapshot, remote: LibrarySnapshot):
       const current = verseBookmarks.get(item.verseKey);
       if (!current || item.createdAt >= current.createdAt) verseBookmarks.set(item.verseKey, item);
     } else if (item.type === "word" && item.wordLocation) {
-      wordBookmarks.set(item.wordLocation, item);
+      const current = wordBookmarks.get(item.wordLocation);
+      if (!current || item.createdAt >= current.createdAt) wordBookmarks.set(item.wordLocation, item);
     } else {
-      otherBookmarks.push(item);
+      const key = `${item.verseKey}|${item.endVerseKey ?? ""}|${item.label}`;
+      const index = otherBookmarks.findIndex(
+        (current) => `${current.verseKey}|${current.endVerseKey ?? ""}|${current.label}` === key,
+      );
+      if (index === -1 || item.createdAt >= (otherBookmarks[index]?.createdAt ?? "")) {
+        if (index >= 0) otherBookmarks.splice(index, 1);
+        otherBookmarks.push(item);
+      }
     }
   }
 
@@ -77,7 +107,7 @@ export function mergeLibraries(local: LibrarySnapshot, remote: LibrarySnapshot):
     avatarUpdatedAt: avatarUpdatedAt || undefined,
     bookmarks: [...verseBookmarks.values(), ...wordBookmarks.values(), ...byId(otherBookmarks)],
     notes: [...notes.values()],
-    highlights: byId([...remote.highlights, ...local.highlights]),
+    highlights: dedupeHighlights([...remote.highlights, ...local.highlights]),
     swatches: byId([...remote.swatches, ...local.swatches]),
     progress: syncSurahsRead({
       surahsRead: [...new Set([...remote.progress.surahsRead, ...local.progress.surahsRead])].sort((a, b) => a - b),

@@ -13,6 +13,7 @@ import { AppModals } from "@/components/shell/app-modals";
 import { GuideProvider } from "@/components/guide/guide-provider";
 import { TourOverlay } from "@/components/guide/tour-overlay";
 import { BottomSheet } from "@/components/shell/bottom-sheet";
+import { SyncPrompt } from "@/components/account/sync-prompt";
 import { ReaderChromeProvider } from "@/components/shell/reader-chrome";
 import { useMediaQuery, useMobileReader } from "@/lib/use-media-query";
 import { SurahSeedProvider } from "@/components/reader/reading-seed";
@@ -33,6 +34,11 @@ function AppShellFrame() {
   const [studyOpen, setStudyOpen] = useState(false);
   const { preferences, isPlaying, togglePlay } = useMushaf();
   const [audioDismissed, setAudioDismissed] = useState(false);
+  const [trackedPlaying, setTrackedPlaying] = useState(isPlaying);
+  if (isPlaying !== trackedPlaying) {
+    setTrackedPlaying(isPlaying);
+    if (isPlaying) setAudioDismissed(false);
+  }
   const focus = preferences.focusMode;
   const showNavBp = useMediaQuery("(min-width: 1280px)");
   const showStudyBp = useMediaQuery("(min-width: 1536px)");
@@ -55,8 +61,6 @@ function AppShellFrame() {
   useEffect(() => {
     if (book && isPlaying) togglePlay();
   }, [book, isPlaying, togglePlay]);
-
-  if (isPlaying && audioDismissed) setAudioDismissed(false);
 
   const showMobileAudio = !focus && isPlaying && !audioDismissed;
   const mobileAyahMode = mobile && !focus && preferences.mobileReadingMode === "ayah";
@@ -92,6 +96,7 @@ function AppShellFrame() {
               }`}
               style={{ ["--measure-boost" as string]: String(boost) }}
             >
+              <SyncPrompt />
               <ReaderPane />
             </div>
             <RailColumn

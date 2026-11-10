@@ -8,26 +8,30 @@ import { signIn } from "next-auth/react";
 export default function MagicSignInPage() {
   const searchParams = useSearchParams();
   const token = searchParams.get("token") ?? "";
-  const [failed, setFailed] = useState<string | null>(null);
-  const error = token ? failed : "This sign-in link is missing or invalid.";
+  const [failed, setFailed] = useState(false);
 
   useEffect(() => {
     if (!token) return;
 
     let cancelled = false;
     void signIn("magic-link", { token, callbackUrl: "/read", redirect: false }).then((result) => {
-      if (cancelled) return;
-      if (result?.ok) {
-        window.location.href = "/read";
+      if (result?.ok && !result.error) {
+        window.location.assign(`${window.location.origin}/read`);
         return;
       }
-      setFailed("This link expired or was already used. Request a new one.");
+      if (!cancelled) setFailed(true);
     });
 
     return () => {
       cancelled = true;
     };
   }, [token]);
+
+  const error = !token
+    ? "This sign-in link is missing or invalid."
+    : failed
+      ? "This link expired or was already used. Request a new one."
+      : null;
 
   return (
     <main className="mx-auto flex min-h-dvh max-w-md flex-col justify-center gap-4 px-6 py-12">

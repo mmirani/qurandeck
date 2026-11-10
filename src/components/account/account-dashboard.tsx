@@ -94,7 +94,7 @@ export function AccountModal() {
               </button>
             </form>
             <DataExportPanel />
-            <div className="border-t border-line/70 pt-8">
+            <div className="space-y-3 border-t border-line/70 pt-8">
               <button
                 type="button"
                 onClick={signOut}
@@ -102,6 +102,7 @@ export function AccountModal() {
               >
                 Sign out
               </button>
+              <DeleteAccountPanel />
             </div>
           </div>
         ) : null}
@@ -153,10 +154,70 @@ function AccountDashboard() {
           onClick={() => openModal("auth")}
           className="h-12 w-full cursor-pointer rounded-full bg-gold text-sm font-semibold text-on-gold"
         >
-          Sign in to keep this library
+          Sync your notes across devices
         </button>
       )}
     </div>
+  );
+}
+
+function DeleteAccountPanel() {
+  const { signOut } = useMushaf();
+  const [confirm, setConfirm] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const ready = confirm.trim().toLowerCase() === "delete";
+
+  return (
+    <form
+      className="space-y-2 rounded-2xl border border-danger/30 p-4"
+      onSubmit={async (event) => {
+        event.preventDefault();
+        if (!ready) return;
+        setBusy(true);
+        setError(null);
+        try {
+          const response = await fetch("/api/account", {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ confirm: "delete" }),
+          });
+          const data = (await response.json()) as { ok?: boolean; error?: string };
+          if (!response.ok || !data.ok) {
+            setError(data.error ?? "Could not delete the account.");
+            return;
+          }
+          signOut();
+        } catch {
+          setError("Network error. Try again.");
+        } finally {
+          setBusy(false);
+        }
+      }}
+    >
+      <h3 className="text-sm font-semibold text-ink">Delete my account</h3>
+      <p className="text-sm text-ink-soft">
+        This deletes the sealed library, passkeys, and unused sign-in codes stored for this email. Reading on this
+        device stays until you clear the browser. Anonymous rank totals are not removed.
+      </p>
+      <label className="block text-sm">
+        Type delete to confirm
+        <input
+          className="mt-1 h-11 w-full rounded-2xl border border-line bg-surface px-3"
+          value={confirm}
+          onChange={(event) => setConfirm(event.target.value)}
+          autoComplete="off"
+        />
+      </label>
+      {error ? <p className="text-sm text-danger">{error}</p> : null}
+      <button
+        type="submit"
+        disabled={!ready || busy}
+        className="h-11 cursor-pointer rounded-full border border-danger/40 px-5 text-sm font-medium text-danger disabled:opacity-50"
+      >
+        {busy ? "Deleting…" : "Delete my account"}
+      </button>
+    </form>
   );
 }
 
