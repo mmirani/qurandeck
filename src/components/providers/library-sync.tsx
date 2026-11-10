@@ -57,7 +57,10 @@ export function LibrarySync({
 }) {
   const readyEmail = useRef<string | null>(null);
   const onApplyRef = useRef(onApply);
-  onApplyRef.current = onApply;
+
+  useEffect(() => {
+    onApplyRef.current = onApply;
+  }, [onApply]);
 
   useEffect(() => {
     const normalized = email?.trim().toLowerCase();
@@ -72,9 +75,12 @@ export function LibrarySync({
     void (async () => {
       const remote = await pullLibrary();
       if (cancelled || remote === undefined) return;
-      if (remote) onApplyRef.current(mergeLibraries(localLibrary(normalized), remote));
-      readyEmail.current = normalized;
-      if (!remote) void pushLibrary(localLibrary(normalized));
+      const local = localLibrary(normalized);
+      const merged = remote ? mergeLibraries(local, remote) : local;
+      if (!cancelled) onApplyRef.current(merged);
+      if (remote) await pushLibrary(merged);
+      else await pushLibrary(local);
+      if (!cancelled) readyEmail.current = normalized;
     })();
 
     return () => {

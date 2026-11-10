@@ -20,10 +20,10 @@ export function magicLinkUrl(token: string, base = baseUrl()) {
   return `${root}/auth/magic?token=${encodeURIComponent(token)}`;
 }
 
-export function createMagicToken(email: string, secret: string, now = Date.now()) {
+export function createMagicToken(email: string, secret: string, now = Date.now(), ttlMs = MAGIC_LINK_TTL_MS) {
   const payload: TokenPayload = {
     email: email.trim().toLowerCase(),
-    exp: now + MAGIC_LINK_TTL_MS,
+    exp: now + ttlMs,
     jti: randomBytes(16).toString("base64url"),
   };
   const payloadB64 = Buffer.from(JSON.stringify(payload), "utf8").toString("base64url");
