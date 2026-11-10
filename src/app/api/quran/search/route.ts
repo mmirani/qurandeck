@@ -5,13 +5,14 @@ import { searchQuran } from "@/lib/quran/server";
 export async function GET(request: NextRequest) {
   const query = request.nextUrl.searchParams.get("q") ?? "";
   const translation = Number(request.nextUrl.searchParams.get("translation") ?? DEFAULT_TRANSLATION_ID);
+  const language = request.nextUrl.searchParams.get("language") ?? undefined;
 
   if (!query.trim()) {
     return NextResponse.json({ results: [] });
   }
 
   try {
-    const results = await searchQuran(query, translation);
+    const results = await searchQuran(query, translation, language);
     return NextResponse.json({ results });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Search failed";

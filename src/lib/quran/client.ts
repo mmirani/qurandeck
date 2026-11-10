@@ -59,10 +59,13 @@ export function getJuz(id: number, translationIds: number[] | number) {
   );
 }
 
-export function searchQuran(query: string, translationId: number) {
-  return getJson<{ results: SearchHit[] }>(
-    `/api/quran/search?q=${encodeURIComponent(query)}&translation=${translationId}`,
-  );
+export function searchQuran(query: string, translationId: number, language?: string) {
+  const params = new URLSearchParams({
+    q: query,
+    translation: String(translationId),
+  });
+  if (language) params.set("language", language);
+  return getJson<{ results: SearchHit[] }>(`/api/quran/search?${params.toString()}`);
 }
 
 export function getAudioMap(recitationId: number, chapterId: number) {

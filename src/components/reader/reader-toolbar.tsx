@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Maximize2, Minimize2, Palette, Pause, Play, Share2 } from "lucide-react";
+import { Maximize2, Menu, Minimize2, Palette, Pause, Play, Share2 } from "lucide-react";
 import { APPEARANCE_THEMES, FONT_SIZE_MAX, FONT_SIZE_MIN } from "@/lib/appearance";
 import { useMushaf } from "@/components/providers/mushaf-provider";
 import { SearchBar } from "@/components/search/search-bar";
@@ -13,6 +13,8 @@ import { MobileReaderBar } from "@/components/reader/mobile-reader-bar";
 import { ArabesqueDivider, MihrabMark } from "@/components/art/ornaments";
 import { PRODUCT_DISPLAY, PRODUCT_NAME } from "@/lib/brand";
 import { shareOrCopy } from "@/lib/reading";
+import { useReaderChrome } from "@/components/shell/reader-chrome";
+import { useDisplayedReading } from "@/components/reader/reading-seed";
 import { surahArtSrc } from "@/lib/surah-art";
 
 export function ReaderToolbar() {
@@ -20,7 +22,6 @@ export function ReaderToolbar() {
     preferences,
     updatePreferences,
     openModal,
-    chapter,
     verses,
     currentJuz,
     mode,
@@ -30,6 +31,9 @@ export function ReaderToolbar() {
     togglePlay,
     modal,
   } = useMushaf();
+  const { openNav } = useReaderChrome();
+  const displayed = useDisplayedReading();
+  const chapter = displayed.chapter ?? null;
   const first = verses[0];
   const juzNumber = currentJuz ?? first?.juzNumber;
   const themeName = APPEARANCE_THEMES.find((item) => item.id === preferences.theme)?.name ?? preferences.theme;
@@ -47,7 +51,7 @@ export function ReaderToolbar() {
       (preferences.showTranslation ? preferences.translationIds.length : 0) ===
       1 && preferences.showArabic;
   const title =
-    mode === "juz" ? `Juz ${currentJuz}` : (chapter?.nameSimple ?? "Al-Fatihah");
+    mode === "juz" ? `Juz ${currentJuz}` : (chapter?.nameSimple ?? "Surah");
 
   useEffect(() => {
     if (!preferences.focusMode) return;
@@ -126,18 +130,24 @@ export function ReaderToolbar() {
     <>
       <MobileReaderBar />
       <div
-        className={`relative hidden shrink-0 overflow-hidden border-b border-line/40 px-4 py-4 md:block md:px-8 ${
-          art ? "" : "bg-canvas/95"
-        }`}
+        className={`relative hidden shrink-0 border-b border-line/40 bg-canvas/95 px-4 py-3 lg:block lg:px-6 xl:px-8 xl:py-4`}
       >
       {art ? (
-        <div className="surah-art" aria-hidden="true">
+        <div className="surah-art hidden overflow-hidden xl:block" aria-hidden="true">
           <Image src={art} alt="" fill sizes="80vw" className="surah-art-photo" />
           <span className="surah-art-wash" />
         </div>
       ) : null}
-      <div className="relative space-y-4">
+      <div className="relative space-y-3">
         <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={openNav}
+            className="inline-flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full border border-line bg-surface xl:hidden"
+            aria-label="Open surah and juz menu"
+          >
+            <Menu className="h-5 w-5" />
+          </button>
           <Link
             href="/"
             className="hidden h-12 shrink-0 cursor-pointer items-center gap-2 rounded-full px-1 hover:bg-highlight sm:flex"
@@ -159,10 +169,12 @@ export function ReaderToolbar() {
               {chapter ? ` · ${chapter.versesCount} ayahs` : ""}
             </p>
             <div className="mt-1 flex flex-wrap items-center gap-3">
-              <h2 className="font-display text-3xl font-semibold tracking-tight text-ink">
+              <h2 className="font-display text-2xl font-semibold tracking-tight text-ink xl:text-3xl">
                 {mode === "juz"
                   ? `Juz ${currentJuz}`
-                  : `${chapter?.nameSimple ?? "Al-Fatihah"} · ${chapter?.translatedName ?? "The Opening"}`}
+                  : chapter
+                    ? `${chapter.nameSimple} · ${chapter.translatedName}`
+                    : "Surah"}
               </h2>
               <button
                 type="button"

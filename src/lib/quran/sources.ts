@@ -73,11 +73,16 @@ export function wordByWordAudioUrl(location?: string | null) {
 
 export function stripHtml(value: string) {
   return value
+    .replace(/<sup\b[^>]*>[\s\S]*?<\/sup>/gi, "")
+    .replace(/<a\b[^>]*class=["'][^"']*footnote[^"']*["'][^>]*>[\s\S]*?<\/a>/gi, "")
+    .replace(/<span\b[^>]*class=["'][^"']*footnote[^"']*["'][^>]*>[\s\S]*?<\/span>/gi, "")
     .replace(/<[^>]+>/g, "")
     .replace(/&nbsp;/g, " ")
     .replace(/&amp;/g, "&")
-    .replace(/&#39;/g, "'")
+    .replace(/&#39;|&apos;/g, "'")
     .replace(/&quot;/g, '"')
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/[ \t]{2,}/g, " ")
     .trim();
 }
 

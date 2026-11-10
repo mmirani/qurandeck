@@ -23,7 +23,7 @@ import {
   getTranslations,
   searchQuran,
 } from "@/lib/quran/client";
-import { withTranslationIds } from "@/lib/quran/languages";
+import { groupForId, withTranslationIds } from "@/lib/quran/languages";
 import { mergeStudyCards } from "@/lib/study-cards";
 import { TOPICS } from "@/lib/quran/theme-topics";
 import type {
@@ -93,7 +93,6 @@ import {
   toggleArabicWord,
 } from "@/lib/highlights";
 import { wordByWordAudioUrl } from "@/lib/quran/sources";
-import { requestWelcomeTour } from "@/lib/guide/progress";
 import { validateAvatar } from "@/lib/avatar";
 import { LibrarySync } from "@/components/providers/library-sync";
 import type { LibrarySnapshot } from "@/lib/library";
@@ -251,50 +250,67 @@ export function MushafProvider({ children }: { children: ReactNode }) {
   const [resumeCue, setResumeCue] = useState(false);
   const [stillReadingAsk, setStillReadingAsk] = useState(false);
   const visibleRef = useRef(visibleVerseKeys);
-  visibleRef.current = visibleVerseKeys;
   const placeRef = useRef<string | null>(null);
   const readingKey = playingVerseKey ?? visibleVerseKeys[0] ?? null;
-  placeRef.current = readingKey;
   const hiddenAtRef = useRef(0);
   const pathnameRef = useRef(pathname);
-  pathnameRef.current = pathname;
-  const lastActivityRef = useRef(Date.now());
+  const lastActivityRef = useRef(0);
   const accruedSinceActivityRef = useRef(0);
   const pausedForIdleRef = useRef(false);
   const stillReadingAskRef = useRef(false);
-  stillReadingAskRef.current = stillReadingAsk;
 
   useEffect(() => {
-    setPreferences(loadPreferences());
-    setBookmarks(loadBookmarks());
-    setNotes(loadNotes());
-    setHighlights(loadHighlights());
-    setSwatches(loadSwatches());
-    setProgress(loadProgress());
+    visibleRef.current = visibleVerseKeys;
+    placeRef.current = readingKey;
+    pathnameRef.current = pathname;
+    stillReadingAskRef.current = stillReadingAsk;
+    if (lastActivityRef.current === 0) lastActivityRef.current = Date.now();
+  }, [pathname, readingKey, stillReadingAsk, visibleVerseKeys]);
+
+  useEffect(() => {
+    let cancelled = false;
+    queueMicrotask(() => {
+      if (cancelled) return;
+      setPreferences(loadPreferences());
+      setBookmarks(loadBookmarks());
+      setNotes(loadNotes());
+      setHighlights(loadHighlights());
+      setSwatches(loadSwatches());
+      setProgress(loadProgress());
+    });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
     if (authStatus === "loading") return;
+    let cancelled = false;
+    queueMicrotask(() => {
+      if (cancelled) return;
+      if (authSession?.user?.id) {
+        const mapped = sessionUserFromAuth(authSession);
+        const profile = mapped.email ? loadDisplayProfile(mapped.email) : null;
+        if (profile?.name) mapped.displayName = profile.name;
+        if (profile?.avatar) mapped.avatar = profile.avatar;
+        saveSession(mapped);
+        setUser(mapped);
+        setHydrated(true);
+        return;
+      }
 
-    if (authSession?.user?.id) {
-      const mapped = sessionUserFromAuth(authSession);
-      const profile = mapped.email ? loadDisplayProfile(mapped.email) : null;
-      if (profile?.name) mapped.displayName = profile.name;
-      if (profile?.avatar) mapped.avatar = profile.avatar;
-      saveSession(mapped);
-      setUser(mapped);
+      const legacy = loadSession();
+      if (legacy?.provider === "local") {
+        setUser(legacy);
+      } else {
+        saveSession(null);
+        setUser(null);
+      }
       setHydrated(true);
-      return;
-    }
-
-    const legacy = loadSession();
-    if (legacy?.provider === "local") {
-      setUser(legacy);
-    } else {
-      saveSession(null);
-      setUser(null);
-    }
-    setHydrated(true);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [authSession, authStatus]);
 
   useEffect(() => {
@@ -325,14 +341,14 @@ export function MushafProvider({ children }: { children: ReactNode }) {
       lastActivityRef.current = Date.now();
       return;
     }
-    setVisibleVerseKeysState([]);
-    if (pausedForIdleRef.current && accruedSinceActivityRef.current > 0) {
-      const claw = accruedSinceActivityRef.current;
-      setProgress((current) => subtractReadingSeconds(current, claw));
-    }
+    const claw = pausedForIdleRef.current ? accruedSinceActivityRef.current : 0;
     accruedSinceActivityRef.current = 0;
     pausedForIdleRef.current = false;
-    setStillReadingAsk(false);
+    queueMicrotask(() => {
+      setVisibleVerseKeysState([]);
+      setStillReadingAsk(false);
+      if (claw > 0) setProgress((current) => subtractReadingSeconds(current, claw));
+    });
   }, [pathname]);
 
   useEffect(() => {
@@ -406,7 +422,8 @@ export function MushafProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!hydrated) return;
-    if (isResumeDue(loadProgress())) setResumeCue(true);
+    if (!isResumeDue(loadProgress())) return;
+    queueMicrotask(() => setResumeCue(true));
   }, [hydrated]);
 
   useEffect(() => {
@@ -530,19 +547,26 @@ export function MushafProvider({ children }: { children: ReactNode }) {
   }, [pathname]);
 
   useEffect(() => {
-    const surahMatch = pathname.match(/^\/surah\/(\d+)/);
-    const juzMatch = pathname.match(/^\/juz\/(\d+)/);
-    if (surahMatch) {
-      const hash = typeof window !== "undefined" ? window.location.hash : "";
-      const verse = hash.startsWith("#ayah-") ? Number(hash.replace("#ayah-", "")) : undefined;
-      void loadSurah(Number(surahMatch[1]), Number.isFinite(verse) ? verse : undefined);
-      return;
-    }
-    if (juzMatch) {
-      void loadJuzData(Number(juzMatch[1]));
-      return;
-    }
-    if (pathname === "/read") void loadSurah(1);
+    let cancelled = false;
+    queueMicrotask(() => {
+      if (cancelled) return;
+      const surahMatch = pathname.match(/^\/surah\/(\d+)/);
+      const juzMatch = pathname.match(/^\/juz\/(\d+)/);
+      if (surahMatch) {
+        const hash = typeof window !== "undefined" ? window.location.hash : "";
+        const verse = hash.startsWith("#ayah-") ? Number(hash.replace("#ayah-", "")) : undefined;
+        void loadSurah(Number(surahMatch[1]), Number.isFinite(verse) ? verse : undefined);
+        return;
+      }
+      if (juzMatch) {
+        void loadJuzData(Number(juzMatch[1]));
+        return;
+      }
+      if (pathname === "/read") void loadSurah(1);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [loadJuzData, loadSurah, pathname]);
 
   const updatePreferences = useCallback((partial: Partial<Preferences>) => {
@@ -758,7 +782,8 @@ export function MushafProvider({ children }: { children: ReactNode }) {
             };
           });
         });
-        const remote = query ? (await searchQuran(query, preferences.translationId)).results : [];
+        const language = groupForId(translations, preferences.translationId)?.label;
+        const remote = query ? (await searchQuran(query, preferences.translationId, language)).results : [];
         const merged = new Map<string, SearchHit>();
         for (const hit of [...topicHits, ...remote]) merged.set(hit.verseKey, hit);
         let results = Array.from(merged.values());
@@ -775,7 +800,7 @@ export function MushafProvider({ children }: { children: ReactNode }) {
         setSearching(false);
       }
     },
-    [chapters, filters, juzs, preferences.translationId, searchQuery],
+    [chapters, filters, juzs, preferences.translationId, searchQuery, translations],
   );
 
   const applyFilters = useCallback(() => {
@@ -875,12 +900,15 @@ export function MushafProvider({ children }: { children: ReactNode }) {
     previouslyVisibleRef.current = current;
 
     if (left.length > 0) {
-      setProgress((progress) => {
-        let next = progress;
-        for (const key of left) {
-          if (!next.versesRead.includes(key)) next = markVerseRead(next, key);
-        }
-        return next;
+      const departed = left;
+      queueMicrotask(() => {
+        setProgress((progress) => {
+          let next = progress;
+          for (const key of departed) {
+            if (!next.versesRead.includes(key)) next = markVerseRead(next, key);
+          }
+          return next;
+        });
       });
     }
 
@@ -896,9 +924,11 @@ export function MushafProvider({ children }: { children: ReactNode }) {
   }, [visibleVerseKeys]);
 
   useEffect(() => {
-    setProgress((current) => {
-      const next = syncSurahsRead(current);
-      return next === current ? current : next;
+    queueMicrotask(() => {
+      setProgress((current) => {
+        const next = syncSurahsRead(current);
+        return next === current ? current : next;
+      });
     });
   }, [progress.versesRead]);
 

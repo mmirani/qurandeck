@@ -96,7 +96,7 @@ export async function PUT(request: Request) {
     `) as { updated_at?: string }[];
 
     try {
-      await applyReadingRankDeltas(visitDeltas(previous, library));
+      await applyReadingRankDeltas(id, visitDeltas(previous, library));
     } catch {
       // Library sync already succeeded; ranks can catch up on a later put.
     }

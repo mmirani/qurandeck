@@ -8,13 +8,11 @@ import { signIn } from "next-auth/react";
 export default function MagicSignInPage() {
   const searchParams = useSearchParams();
   const token = searchParams.get("token") ?? "";
-  const [error, setError] = useState<string | null>(null);
+  const [failed, setFailed] = useState<string | null>(null);
+  const error = token ? failed : "This sign-in link is missing or invalid.";
 
   useEffect(() => {
-    if (!token) {
-      setError("This sign-in link is missing or invalid.");
-      return;
-    }
+    if (!token) return;
 
     let cancelled = false;
     void signIn("magic-link", { token, callbackUrl: "/read", redirect: false }).then((result) => {
@@ -23,7 +21,7 @@ export default function MagicSignInPage() {
         window.location.href = "/read";
         return;
       }
-      setError("This link expired or was already used. Request a new one.");
+      setFailed("This link expired or was already used. Request a new one.");
     });
 
     return () => {

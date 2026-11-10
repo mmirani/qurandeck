@@ -57,7 +57,10 @@ export function LibrarySync({
 }) {
   const readyEmail = useRef<string | null>(null);
   const onApplyRef = useRef(onApply);
-  onApplyRef.current = onApply;
+
+  useEffect(() => {
+    onApplyRef.current = onApply;
+  }, [onApply]);
 
   useEffect(() => {
     const normalized = email?.trim().toLowerCase();

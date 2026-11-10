@@ -1,7 +1,7 @@
-import type { Metadata } from "next";
-import { Noto_Naskh_Arabic, Plus_Jakarta_Sans, Source_Serif_4 } from "next/font/google";
+import type { Metadata, Viewport } from "next";
+import { Noto_Naskh_Arabic, Noto_Nastaliq_Urdu, Noto_Sans_Hebrew, Noto_Sans_Thaana, Plus_Jakarta_Sans, Source_Serif_4 } from "next/font/google";
 import { AppProviders } from "@/components/providers/app-providers";
-import { SITE_DESCRIPTION, SITE_TITLE } from "@/lib/brand";
+import { PRODUCT_NAME, SITE_DESCRIPTION, SITE_TITLE, siteUrl } from "@/lib/brand";
 import "./globals.css";
 
 const jakarta = Plus_Jakarta_Sans({
@@ -19,11 +19,57 @@ const naskh = Noto_Naskh_Arabic({
   variable: "--font-naskh",
   subsets: ["arabic", "latin"],
   weight: ["400", "500", "700"],
+  preload: false,
+  display: "swap",
+});
+
+const nastaliq = Noto_Nastaliq_Urdu({
+  variable: "--font-nastaliq",
+  subsets: ["arabic"],
+  weight: "400",
+  preload: false,
+  display: "swap",
+});
+
+const hebrew = Noto_Sans_Hebrew({
+  variable: "--font-hebrew",
+  subsets: ["hebrew"],
+  weight: "400",
+  preload: false,
+  display: "swap",
+});
+
+const thaana = Noto_Sans_Thaana({
+  variable: "--font-thaana",
+  subsets: ["thaana"],
+  weight: "400",
+  preload: false,
+  display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: SITE_TITLE,
+  metadataBase: new URL(siteUrl()),
+  title: { default: SITE_TITLE, template: `%s — ${PRODUCT_NAME}` },
   description: SITE_DESCRIPTION,
+  applicationName: PRODUCT_NAME,
+  alternates: { canonical: "/" },
+  openGraph: {
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+    siteName: PRODUCT_NAME,
+    type: "website",
+    url: "/",
+  },
+  twitter: {
+    card: "summary",
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#5b21b6",
+  colorScheme: "light",
 };
 
 const themeScript = `try{var p=JSON.parse(localStorage.getItem('al-mushaf-preferences')||'{}');var home=location.pathname==='/';var t=home?'iris':(p.theme||'iris');document.documentElement.dataset.theme=t;}catch(e){document.documentElement.dataset.theme='iris'}document.documentElement.dataset.scroll=/^\\/(read$|surah\\/|juz\\/)/.test(location.pathname)?'lock':'page';`;
@@ -37,7 +83,7 @@ export default function RootLayout({
     <html
       lang="en"
       data-theme="iris"
-      className={`${jakarta.variable} ${sourceSerif.variable} ${naskh.variable} min-h-full antialiased`}
+      className={`${jakarta.variable} ${sourceSerif.variable} ${naskh.variable} ${nastaliq.variable} ${hebrew.variable} ${thaana.variable} min-h-full antialiased`}
       suppressHydrationWarning
     >
       <head>

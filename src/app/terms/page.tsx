@@ -15,7 +15,7 @@ export default function TermsPage() {
       <LegalSection title="Using QuranDeck">
         <p>
           QuranDeck is a free reading room for The Noble Quran. You may read, search, listen, take notes, and keep a
-          place in the mushaf for your own personal use. These terms cover the beta at qurandeck.vercel.app.
+          place in the mushaf for your own personal use. These terms cover your use of QuranDeck.
         </p>
         <p>
           By using the site you agree to these terms and to the{" "}

@@ -23,8 +23,8 @@ export function HomeSana() {
             </span>
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-base leading-7 text-ink-soft sm:text-lg md:mx-0">
-            {COMPANION_NAME} is a quiet gleam that sits with you in the mushaf. It breathes — a slow bob and a soft floor
-            glow — taking the colour of your theme, whether reading on Noor, Pastels, Lumen, or night.
+            {COMPANION_NAME} is a quiet gleam that sits with you in the mushaf. In the reader it stays still until you
+            call it, and it keeps still when your system asks for reduced motion. It takes the colour of your theme.
           </p>
           <p className="mx-auto mt-3 max-w-xl text-base leading-7 text-ink-soft md:mx-0">
             Drag it anywhere on the page. Click it to take a walkthrough, ask how something works, or have it assist you

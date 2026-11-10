@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import { Eraser, Highlighter, X } from "lucide-react";
 import { swatchById } from "@/lib/highlights";
@@ -82,8 +82,11 @@ export function HighlightPopover({
   onErase?: () => void;
   onClose: () => void;
 }) {
-  const [ready, setReady] = useState(false);
-  useEffect(() => setReady(true), []);
+  const ready = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
   if (!ready) return null;
 
   const left = Math.min(Math.max(12, x - 140), window.innerWidth - 292);

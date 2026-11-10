@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useMushaf } from "@/components/providers/mushaf-provider";
 import { ArabesqueDivider, MihrabMark } from "@/components/art/ornaments";
@@ -17,10 +17,7 @@ export function SurahSidebar() {
   const { closeNav } = useReaderChrome();
   const [query, setQuery] = useState("");
   const [browse, setBrowse] = useState<"surah" | "popular" | "juz">(mode === "juz" ? "juz" : "surah");
-
-  useEffect(() => {
-    if (mode === "juz") setBrowse("juz");
-  }, [mode]);
+  if (mode === "juz" && browse !== "juz") setBrowse("juz");
 
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -165,6 +162,17 @@ export function SurahSidebar() {
       )}
       <div className="shrink-0 border-t-2 border-gold/40 bg-highlight/40 px-3 py-3">
         <ContinueCard compact />
+        <nav aria-label="Site" className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-xs text-ink-soft">
+          <Link href="/about" className="underline-offset-4 hover:text-ink hover:underline">
+            About
+          </Link>
+          <Link href="/contact" className="underline-offset-4 hover:text-ink hover:underline">
+            Contact
+          </Link>
+          <Link href="/privacy" className="underline-offset-4 hover:text-ink hover:underline">
+            Privacy
+          </Link>
+        </nav>
       </div>
     </aside>
   );

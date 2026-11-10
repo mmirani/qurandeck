@@ -37,6 +37,11 @@ export function AuthModal() {
   const [config, setConfig] = useState<AuthConfig | null>(null);
 
   useEffect(() => {
+    if (!open) return;
+    pendingTab = "email";
+  }, [open]);
+
+  useEffect(() => {
     let cancelled = false;
     void fetch("/api/auth/config")
       .then((response) => response.json())
@@ -63,7 +68,6 @@ export function AuthModal() {
     setDisplayName(user?.displayName ?? "");
   } else if (modal !== "auth" && open) {
     setOpen(false);
-    pendingTab = "email";
   }
 
   if (modal !== "auth") return null;

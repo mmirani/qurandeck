@@ -13,8 +13,8 @@ export default function PrivacyPage() {
     <LegalPage title="Privacy policy" updated={UPDATED}>
       <LegalSection title="Who this covers">
         <p>
-          QuranDeck is a personal mushaf for The Noble Quran. This policy describes what the beta at
-          qurandeck.vercel.app does with information when you read as a guest or sign in.
+          QuranDeck is a personal mushaf for The Noble Quran. This policy describes what QuranDeck does with
+          information when you read as a guest or sign in.
         </p>
         <p>
           Questions about your library can go to the operator through the{" "}

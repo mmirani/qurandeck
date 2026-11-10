@@ -1,8 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { createPortal } from "react-dom";
 import { Search, SlidersHorizontal } from "lucide-react";
 import { useMushaf } from "@/components/providers/mushaf-provider";
+
+function subscribeMounted() {
+  return () => {};
+}
 
 export function SearchBar() {
   const {
@@ -19,8 +24,14 @@ export function SearchBar() {
     chapters,
   } = useMushaf();
   const [local, setLocal] = useState(searchQuery);
-
-  useEffect(() => setLocal(searchQuery), [searchQuery]);
+  const [seenQuery, setSeenQuery] = useState(searchQuery);
+  const anchor = useRef<HTMLDivElement>(null);
+  const [box, setBox] = useState<{ top: number; left: number; width: number } | null>(null);
+  const mounted = useSyncExternalStore(subscribeMounted, () => true, () => false);
+  if (searchQuery !== seenQuery) {
+    setSeenQuery(searchQuery);
+    setLocal(searchQuery);
+  }
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -33,6 +44,24 @@ export function SearchBar() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [setSearchOpen]);
+
+  useEffect(() => {
+    if (!searchOpen) return;
+    const place = () => {
+      const node = anchor.current;
+      if (!node) return;
+      const rect = node.getBoundingClientRect();
+      setBox({ top: rect.bottom + 8, left: rect.left, width: rect.width });
+    };
+    const frame = requestAnimationFrame(place);
+    window.addEventListener("resize", place);
+    window.addEventListener("scroll", place, true);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("resize", place);
+      window.removeEventListener("scroll", place, true);
+    };
+  }, [searchOpen, local, searchResults.length]);
 
   const nameHits = useMemo(() => {
     const q = local.trim().toLowerCase();
@@ -48,7 +77,7 @@ export function SearchBar() {
   }, [chapters, local]);
 
   return (
-    <div className="relative" data-tour="search">
+    <div className="relative" data-tour="search" ref={anchor}>
       <label className="sr-only" htmlFor="quran-search">
         Search the Quran by word, theme, surah name, or verse such as 2:255
       </label>
@@ -79,46 +108,66 @@ export function SearchBar() {
           Filters
         </button>
       </div>
-      {searchOpen && (local || searchResults.length > 0) ? (
-        <div className="ornament-border absolute z-30 mt-2 w-full overflow-hidden rounded-3xl bg-surface">
-          <div className="max-h-80 overflow-y-auto p-2">
-            {nameHits.length > 0 ? <p className="kufic-label px-3 py-2 text-gold-deep">Surahs</p> : null}
-            {nameHits.map((chapter) => (
-              <button
-                key={chapter.id}
-                type="button"
-                onClick={() => {
-                  setSearchOpen(false);
-                  openSurah(chapter.id);
-                }}
-                className="flex w-full cursor-pointer items-center justify-between rounded-2xl px-3 py-2 text-left hover:bg-highlight"
-              >
-                <span>
-                  {chapter.id}. {chapter.nameSimple}
-                </span>
-                <span className="text-xs text-muted">{chapter.translatedName}</span>
-              </button>
-            ))}
-            {searching ? <p className="px-3 py-4 text-sm text-muted">Searching the Quran…</p> : null}
-            {!searching && searchResults.length === 0 && local.length > 1 ? (
-              <p className="px-3 py-4 text-sm text-muted">
-                Press Enter to search the full Quran text, or open Filters to browse themes such as Mercy or Prayer.
-              </p>
-            ) : null}
-            {searchResults.map((hit) => (
-              <button
-                key={`${hit.source}-${hit.verseKey}`}
-                type="button"
-                onClick={() => jumpToHit(hit)}
-                className="block w-full cursor-pointer rounded-2xl px-3 py-2 text-left hover:bg-highlight"
-              >
-                <p className="text-xs text-gold-deep">{hit.verseKey}</p>
-                <p className="line-clamp-2 text-sm text-ink">{hit.textTranslation || hit.textArabic || "Open verse"}</p>
-              </button>
-            ))}
-          </div>
-        </div>
-      ) : null}
+      {mounted && searchOpen && box && (local || searchResults.length > 0)
+        ? createPortal(
+            <div
+              data-search-panel
+              className="ornament-border fixed z-[70] overflow-hidden rounded-3xl bg-surface shadow-[0_16px_40px_rgba(15,23,42,0.16)]"
+              style={{ top: box.top, left: box.left, width: box.width }}
+            >
+              <div className="max-h-[min(24rem,50vh)] overflow-y-auto p-2">
+                {nameHits.length > 0 ? <p className="kufic-label px-3 py-2 text-gold-deep">Surahs</p> : null}
+                {nameHits.map((chapter) => (
+                  <button
+                    key={chapter.id}
+                    type="button"
+                    onClick={() => {
+                      setSearchOpen(false);
+                      openSurah(chapter.id);
+                    }}
+                    className="flex w-full cursor-pointer items-center justify-between rounded-2xl px-3 py-2 text-left hover:bg-highlight"
+                  >
+                    <span>
+                      {chapter.id}. {chapter.nameSimple}
+                    </span>
+                    <span className="text-xs text-ink-soft">{chapter.translatedName}</span>
+                  </button>
+                ))}
+                {searching ? <p className="px-3 py-4 text-sm text-ink-soft">Searching the Quran…</p> : null}
+                {!searching && searchResults.length === 0 && local.length > 1 ? (
+                  <p className="px-3 py-4 text-sm text-ink-soft">
+                    Press Enter to search the full Quran text, or open Filters to browse themes such as Mercy or Prayer.
+                  </p>
+                ) : null}
+                {searchResults.map((hit) => {
+                  const chapter = chapters.find((item) => item.id === hit.chapterId);
+                  const name = hit.chapterName || chapter?.nameSimple || `Surah ${hit.chapterId}`;
+                  return (
+                    <button
+                      key={`${hit.source}-${hit.verseKey}`}
+                      type="button"
+                      onClick={() => jumpToHit(hit)}
+                      className="block w-full cursor-pointer rounded-2xl px-3 py-2 text-left hover:bg-highlight"
+                    >
+                      <p className="text-xs font-medium text-gold-deep">
+                        {name} · {hit.verseKey}
+                      </p>
+                      {hit.textArabic ? (
+                        <p dir="rtl" lang="ar" className="script-naskh mt-1 line-clamp-2 text-base text-ink">
+                          {hit.textArabic}
+                        </p>
+                      ) : null}
+                      {hit.textTranslation ? (
+                        <p className="mt-1 line-clamp-2 text-sm leading-6 text-ink">{hit.textTranslation}</p>
+                      ) : null}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>,
+            document.body,
+          )
+        : null}
     </div>
   );
 }
