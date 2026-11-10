@@ -3,22 +3,17 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { signIn } from "next-auth/react";
+import { addPasskey, signInWithPasskey } from "@/components/account/passkey-actions";
 import { useMushaf } from "@/components/providers/mushaf-provider";
 import { Modal } from "@/components/ui/modal";
 import { PROMISE_LINE, PROMISE_STORY } from "@/lib/brand";
 
-type AuthTab = "social" | "email";
-
-let pendingTab: AuthTab = "email";
-
-export function requestAuthTab(tab: AuthTab) {
-  pendingTab = tab;
-}
-
 type AuthConfig = {
   google: boolean;
+  apple: boolean;
   github: boolean;
   email: boolean;
+  passkey?: boolean;
   emailDelivery?: "resend" | "dev-link" | "unavailable";
   publicSignup: boolean;
   hasSecret: boolean;
@@ -26,29 +21,23 @@ type AuthConfig = {
 
 export function AuthModal() {
   const { modal, closeModal, signOut, updateDisplayName, user } = useMushaf();
-  const [mode, setMode] = useState<AuthTab>(pendingTab);
   const [open, setOpen] = useState(modal === "auth");
   const [email, setEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
-  const [magicUrl, setMagicUrl] = useState<string | null>(null);
+  const [devCode, setDevCode] = useState<string | null>(null);
+  const [codeSent, setCodeSent] = useState(false);
+  const [oneTimeCode, setOneTimeCode] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [busy, setBusy] = useState(false);
   const [config, setConfig] = useState<AuthConfig | null>(null);
-
-  useEffect(() => {
-    if (modal !== "auth") pendingTab = "email";
-  }, [modal]);
 
   useEffect(() => {
     let cancelled = false;
     void fetch("/api/auth/config")
       .then((response) => response.json())
       .then((data: AuthConfig) => {
-        if (!cancelled) {
-          setConfig(data);
-          if (!data.google && !data.github && data.email) setMode("email");
-        }
+        if (!cancelled) setConfig(data);
       })
       .catch(() => {
         if (!cancelled) setConfig(null);
@@ -60,10 +49,11 @@ export function AuthModal() {
 
   if (modal === "auth" && !open) {
     setOpen(true);
-    setMode(pendingTab);
     setError(null);
     setInfo(null);
-    setMagicUrl(null);
+    setDevCode(null);
+    setCodeSent(false);
+    setOneTimeCode("");
     setDisplayName(user?.displayName ?? "");
   } else if (modal !== "auth" && open) {
     setOpen(false);
@@ -72,12 +62,13 @@ export function AuthModal() {
   if (modal !== "auth") return null;
 
   const title = user ? "Your account" : "Sign in";
-  const hasSocial = Boolean(config?.google || config?.github);
 
   const providerLabel = (() => {
     if (user?.provider === "google") return "Google";
+    if (user?.provider === "apple") return "Apple";
+    if (user?.provider === "passkey") return "Passkey";
     if (user?.provider === "github") return "GitHub";
-    if (user?.provider === "email") return "Email link";
+    if (user?.provider === "email") return "Email code";
     if (user?.provider === "local") return "Legacy local profile";
     return "Account";
   })();
@@ -124,6 +115,24 @@ export function AuthModal() {
               Save name
             </button>
           </form>
+          {config?.passkey ? (
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => {
+                setBusy(true);
+                setError(null);
+                setInfo(null);
+                void addPasskey()
+                  .then(() => setInfo("Passkey saved on this device."))
+                  .catch((reason: unknown) => setError(reason instanceof Error ? reason.message : "Could not add a passkey."))
+                  .finally(() => setBusy(false));
+              }}
+              className="h-11 cursor-pointer rounded-full border border-line px-5 text-sm disabled:opacity-50"
+            >
+              {busy ? "Waiting for the passkey…" : "Add a passkey"}
+            </button>
+          ) : null}
           <button
             type="button"
             onClick={signOut}
@@ -135,7 +144,10 @@ export function AuthModal() {
       ) : (
         <div className="space-y-4">
           <p className="kufic-label text-gold-deep">{PROMISE_LINE}</p>
-          <p className="text-sm text-ink-soft">{PROMISE_STORY}</p>
+          <p className="text-sm text-ink-soft">
+            You can read, bookmark, and take notes without an account. Sign in when you want to sync your notes across
+            devices.
+          </p>
 
           {!config?.hasSecret ? (
             <p className="rounded-2xl border border-danger/30 bg-surface px-3 py-2 text-xs text-danger">
@@ -153,26 +165,54 @@ export function AuthModal() {
             </p>
           ) : null}
 
-          {config?.email && hasSocial ? (
-            <div className="flex gap-2">
+          <div className="space-y-2">
+            {config?.google ? (
               <button
                 type="button"
-                onClick={() => setMode("social")}
-                className={`h-10 cursor-pointer rounded-full px-4 text-sm ${mode === "social" ? "bg-gold text-on-gold" : "border border-line"}`}
+                disabled={busy}
+                onClick={() => {
+                  setBusy(true);
+                  void signIn("google", { callbackUrl: "/read" });
+                }}
+                className="flex h-12 w-full cursor-pointer items-center justify-center rounded-full border border-line bg-surface text-sm font-medium text-ink disabled:opacity-50"
               >
-                Social
+                Continue with Google
               </button>
+            ) : null}
+            {config?.apple ? (
               <button
                 type="button"
-                onClick={() => setMode("email")}
-                className={`h-10 cursor-pointer rounded-full px-4 text-sm ${mode === "email" ? "bg-gold text-on-gold" : "border border-line"}`}
+                disabled={busy}
+                onClick={() => {
+                  setBusy(true);
+                  void signIn("apple", { callbackUrl: "/read" });
+                }}
+                className="flex h-12 w-full cursor-pointer items-center justify-center rounded-full border border-line bg-surface text-sm font-medium text-ink disabled:opacity-50"
               >
-                Email link
+                Sign in with Apple
               </button>
-            </div>
-          ) : null}
+            ) : null}
+            {config?.passkey ? (
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => {
+                  setBusy(true);
+                  setError(null);
+                  void signInWithPasskey()
+                    .catch((reason: unknown) => {
+                      setError(reason instanceof Error ? reason.message : "Could not use a passkey.");
+                      setBusy(false);
+                    });
+                }}
+                className="flex h-12 w-full cursor-pointer items-center justify-center rounded-full border border-line bg-surface text-sm font-medium text-ink disabled:opacity-50"
+              >
+                Sign in with a passkey
+              </button>
+            ) : null}
+          </div>
 
-          {mode === "email" && config?.email ? (
+          {config?.email ? (
             <form
               className="space-y-3"
               onSubmit={async (event) => {
@@ -180,29 +220,43 @@ export function AuthModal() {
                 setBusy(true);
                 setError(null);
                 setInfo(null);
-                setMagicUrl(null);
                 try {
-                  const response = await fetch("/api/auth/magic-link", {
+                  if (!codeSent) {
+                    const response = await fetch("/api/auth/email-code", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ email: email.trim() }),
+                    });
+                    const data = (await response.json()) as { ok?: boolean; error?: string; emailed?: boolean; devCode?: string };
+                    if (!response.ok || !data.ok) {
+                      setError(data.error ?? "Could not send a sign-in code.");
+                      return;
+                    }
+                    setCodeSent(true);
+                    if (config.emailDelivery === "dev-link" && data.devCode) {
+                      setDevCode(data.devCode);
+                      setInfo("Local development only: mail is not configured, so the code is shown here.");
+                      return;
+                    }
+                    setInfo("Check your email for a 6-digit code. It expires in 10 minutes and works once.");
+                    return;
+                  }
+                  const response = await fetch("/api/auth/email-code/verify", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ email: email.trim() }),
+                    body: JSON.stringify({ email: email.trim(), code: oneTimeCode.trim() }),
                   });
-                  const data = (await response.json()) as {
-                    ok?: boolean;
-                    error?: string;
-                    emailed?: boolean;
-                    url?: string;
-                  };
-                  if (!response.ok || !data.ok) {
-                    setError(data.error ?? "Could not send a sign-in link.");
+                  const data = (await response.json()) as { ok?: boolean; error?: string; token?: string };
+                  if (!response.ok || !data.ok || !data.token) {
+                    setError(data.error ?? "That code is incorrect or expired.");
                     return;
                   }
-                  if (config?.emailDelivery === "dev-link" && data.url) {
-                    setMagicUrl(data.url);
-                    setInfo("Local development only: mail is not configured, so this one-time link is shown here.");
+                  const result = await signIn("magic-link", { token: data.token, callbackUrl: "/read", redirect: false });
+                  if (result?.ok && !result.error) {
+                    window.location.assign(`${window.location.origin}/read`);
                     return;
                   }
-                  setInfo("Check your inbox for a secure sign-in link. It expires in 15 minutes and works once.");
+                  setError("Could not start the session.");
                 } catch {
                   setError("Network error. Try again.");
                 } finally {
@@ -211,15 +265,11 @@ export function AuthModal() {
               }}
             >
               {config.emailDelivery === "unavailable" ? (
-                <p className="text-sm text-danger">
-                  Email sign-in is unavailable until outgoing mail is configured.
-                </p>
+                <p className="text-sm text-danger">Email sign-in is unavailable until outgoing mail is configured.</p>
               ) : (
                 <p className="text-xs text-ink-soft">
-                  No password. We email a one-time link to this address. It expires in 15 minutes and works once.
-                  {config.emailDelivery === "dev-link"
-                    ? " This local machine has no mail provider, so the link is shown here instead."
-                    : null}
+                  Or email a 6-digit code. It expires in 10 minutes and works once.
+                  {config.emailDelivery === "dev-link" ? " This local machine shows the code because mail is not configured." : null}
                 </p>
               )}
               <label className="block text-sm">
@@ -228,68 +278,46 @@ export function AuthModal() {
                   type="email"
                   className="mt-1 h-11 w-full rounded-2xl border border-line bg-surface px-3"
                   value={email}
-                  onChange={(event) => setEmail(event.target.value)}
+                  onChange={(event) => {
+                    setEmail(event.target.value);
+                    setCodeSent(false);
+                    setDevCode(null);
+                  }}
                   autoComplete="email"
                   required
                 />
               </label>
+              {codeSent ? (
+                <label className="block text-sm">
+                  Code
+                  <input
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    pattern="[0-9]{6}"
+                    maxLength={6}
+                    className="mt-1 h-11 w-full rounded-2xl border border-line bg-surface px-3 tracking-[0.3em]"
+                    value={oneTimeCode}
+                    onChange={(event) => setOneTimeCode(event.target.value.replace(/\D/g, "").slice(0, 6))}
+                    required
+                  />
+                </label>
+              ) : null}
+              {devCode && config.emailDelivery === "dev-link" ? (
+                <p className="rounded-2xl border border-gold/40 bg-accent-soft px-3 py-2 text-center font-mono text-lg tracking-[0.3em] text-gold-deep">
+                  {devCode}
+                </p>
+              ) : null}
               {error ? <p className="text-sm text-danger">{error}</p> : null}
               {info ? <p className="text-sm text-gold-deep">{info}</p> : null}
-              {config.emailDelivery === "dev-link" && magicUrl ? (
-                <a
-                  href={magicUrl}
-                  className="flex h-12 w-full items-center justify-center rounded-full border border-gold/40 bg-accent-soft text-sm font-semibold text-gold-deep"
-                >
-                  Open sign-in link
-                </a>
-              ) : null}
               <button
                 type="submit"
                 disabled={busy || config.emailDelivery === "unavailable"}
                 className="h-14 w-full cursor-pointer rounded-full bg-gold text-lg text-on-gold disabled:opacity-50"
               >
-                {busy ? "Working…" : config.emailDelivery === "dev-link" ? "Create sign-in link" : "Email me a sign-in link"}
+                {busy ? "Working…" : codeSent ? "Sign in" : "Email me a code"}
               </button>
             </form>
-          ) : (
-            <div className="space-y-2">
-              {config?.google ? (
-                <button
-                  type="button"
-                  disabled={busy}
-                  onClick={() => {
-                    setBusy(true);
-                    void signIn("google", { callbackUrl: "/read" });
-                  }}
-                  className="flex h-12 w-full cursor-pointer items-center justify-center rounded-full border border-line bg-surface text-sm font-medium text-ink disabled:opacity-50"
-                >
-                  Continue with Google
-                </button>
-              ) : null}
-              {config?.github ? (
-                <button
-                  type="button"
-                  disabled={busy}
-                  onClick={() => {
-                    setBusy(true);
-                    void signIn("github", { callbackUrl: "/read" });
-                  }}
-                  className="flex h-12 w-full cursor-pointer items-center justify-center rounded-full border border-line bg-surface text-sm font-medium text-ink disabled:opacity-50"
-                >
-                  Continue with GitHub
-                </button>
-              ) : null}
-              {config?.email ? (
-                <button
-                  type="button"
-                  onClick={() => setMode("email")}
-                  className="flex h-12 w-full cursor-pointer items-center justify-center rounded-full bg-gold text-sm font-semibold text-on-gold"
-                >
-                  Continue with email link
-                </button>
-              ) : null}
-            </div>
-          )}
+          ) : null}
         </div>
       )}
     </Modal>

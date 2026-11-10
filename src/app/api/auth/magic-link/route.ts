@@ -1,5 +1,3 @@
-import { cookies } from "next/headers";
-import { BETA_COOKIE } from "@/auth";
 import {
   clientIp,
   emailFromAddress,
@@ -8,21 +6,9 @@ import {
   issueMagicLink,
 } from "@/lib/email-sign-in";
 import { getRateLimiter } from "@/lib/rate-limit";
+import { emailSignInAllowed } from "@/lib/signup-gate";
 
 export const dynamic = "force-dynamic";
-
-async function canRequest(email: string) {
-  if (process.env.AUTH_PUBLIC_SIGNUP === "true") return true;
-
-  const allowlist =
-    process.env.BETA_ALLOWED_EMAILS?.split(",")
-      .map((item) => item.trim().toLowerCase())
-      .filter(Boolean) ?? [];
-  if (allowlist.includes(email.toLowerCase())) return true;
-
-  const store = await cookies();
-  return store.get(BETA_COOKIE)?.value === "1";
-}
 
 function escapeHtml(value: string) {
   return value
@@ -67,7 +53,7 @@ export async function POST(request: Request) {
   const normalized = email.trim().toLowerCase();
   let allowed = false;
   if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized)) {
-    allowed = await canRequest(normalized);
+    allowed = await emailSignInAllowed(normalized);
   }
 
   try {

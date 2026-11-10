@@ -13,6 +13,7 @@ import { AppModals } from "@/components/shell/app-modals";
 import { GuideProvider } from "@/components/guide/guide-provider";
 import { TourOverlay } from "@/components/guide/tour-overlay";
 import { BottomSheet } from "@/components/shell/bottom-sheet";
+import { SyncPrompt } from "@/components/account/sync-prompt";
 import { ReaderChromeProvider } from "@/components/shell/reader-chrome";
 import { useMobileReader } from "@/lib/use-media-query";
 
@@ -23,6 +24,11 @@ export function AppShell() {
   const [studyOpen, setStudyOpen] = useState(false);
   const { preferences, isPlaying, togglePlay } = useMushaf();
   const [audioDismissed, setAudioDismissed] = useState(false);
+  const [trackedPlaying, setTrackedPlaying] = useState(isPlaying);
+  if (isPlaying !== trackedPlaying) {
+    setTrackedPlaying(isPlaying);
+    if (isPlaying) setAudioDismissed(false);
+  }
   const focus = preferences.focusMode;
   const { md: isMd, xl: isXl, xxl: is2xl } = useBreakpoints();
   const mobile = useMobileReader();
@@ -43,10 +49,6 @@ export function AppShell() {
   useEffect(() => {
     if (book && isPlaying) togglePlay();
   }, [book, isPlaying, togglePlay]);
-
-  useEffect(() => {
-    if (isPlaying) setAudioDismissed(false);
-  }, [isPlaying]);
 
   const showMobileAudio = mobile && !focus && isPlaying && !audioDismissed;
   const showDesktopDock = !mobile && !focus;
@@ -83,6 +85,7 @@ export function AppShell() {
               }`}
               style={{ ["--measure-boost" as string]: String(boost) }}
             >
+              <SyncPrompt />
               <ReaderPane />
             </div>
             <RailColumn

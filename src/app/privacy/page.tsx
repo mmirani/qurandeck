@@ -35,9 +35,12 @@ export default function PrivacyPage() {
 
       <LegalSection title="Signing in">
         <p>
-          An account uses your email. QuranDeck sends a one-time sign-in link to that address. The link is valid for
-          about 15 minutes, works once, and is not shown in the sign-in window. If a message cannot be sent, sign-in
-          stops and does not display the link.
+          You can read, bookmark, and keep notes without an account. Those stay in this browser until you sign in.
+          An account can use Google, Sign in with Apple, a passkey you add after the first sign-in, or your email.
+          Email sign-in sends a 6-digit code to that address. The code expires in about 10 minutes, works once, and is
+          not shown in the sign-in window. If a message cannot be sent, sign-in stops and does not display the code.
+          A passkey stays on your devices. QuranDeck stores the public key and an encrypted copy of the email so the
+          passkey can open the same library. GitHub is not offered for sign-in.
         </p>
         <p>
           If Google or GitHub sign-in is offered and you choose it, that service handles the login under its own
@@ -106,11 +109,11 @@ export default function PrivacyPage() {
 
       <LegalSection title="How long it stays">
         <p>
-          Guest data stays in the browser until you clear it. A signed-in library stays until you ask for it to be
-          deleted or the account is removed. Sign-in links expire after about 15 minutes and work only once. There is not yet a delete
-          button in the account panel. Ask through the repository and the sealed library for that email will be
-          deleted. Anonymous platform rank totals are not tied to your row, so deleting a library does not unwind
-          counts already added to those totals.
+          Guest data stays in the browser until you clear it. A signed-in library stays until you delete the account
+          from the account panel or ask for it to be removed. Delete my account removes that email’s sealed library,
+          passkeys, and unused sign-in codes. Sign-in codes expire after about 10 minutes and work only once. Anonymous
+          platform rank totals are not tied to your row, so deleting an account does not unwind counts already added
+          to those totals. Notes that never left this browser stay here until you clear site data.
         </p>
       </LegalSection>
 

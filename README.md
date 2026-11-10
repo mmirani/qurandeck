@@ -25,9 +25,13 @@ Open [http://localhost:3310](http://localhost:3310). Port 3310 is used locally s
 
 ## Accounts
 
-Email is the account key. Sign-in is a one-time link that expires in about 15 minutes and works once. In production, and on any Vercel deployment, that link is emailed with Resend and is never returned by the API or shown in the sign-in window. If `AUTH_RESEND_KEY` or `AUTH_EMAIL_FROM` is missing there, email sign-in fails instead of displaying a link. Local `next dev` can show the link only when those mail variables are unset.
+Reading, bookmarks, notes, and highlights work without an account. Sign-in is offered when you want the library on another device.
 
-Google and GitHub appear only when their `AUTH_*` keys are set.
+Email is the account key. The sign-in email carries a 6-digit code that expires in about 10 minutes and works once. In production, and on any Vercel deployment, that code is emailed with Resend and is never returned by the API or shown in the sign-in window. If `AUTH_RESEND_KEY` or `AUTH_EMAIL_FROM` is missing there, email sign-in fails instead of displaying a code. Local `next dev` can show the code only when those mail variables are unset.
+
+Google and Sign in with Apple are the primary buttons when their credentials are set. GitHub is not offered. After the first sign-in, the account panel can add a passkey. Later visits can sign in with that passkey. Passkeys use SimpleWebAuthn and finish in an Auth.js credential session. The experimental Auth.js Passkey provider is not used, because it requires database sessions and an Auth.js user table.
+
+The first sign-in merges the guest library already in this browser into the account: notes on the same ayah keep the newer text, bookmarks and highlights are not duplicated, and reading progress is combined. Delete my account, in the account panel, removes that email’s sealed library, passkeys, and unused codes from Neon after you type `delete`.
 
 The name in the app is a display name. It is not unique. Offensive language is rejected. There is no public username yet. A profile photo or one of the built-in icons can sit beside that name; the photo is cropped small before it is sealed with the library.
 
@@ -63,7 +67,11 @@ Copy `.env.example` to `.env.local`. Required for sign-in and library sync:
 
 `AUTH_PUBLIC_SIGNUP=true` allows any email. Leave it unset for an invite-only beta. Invite-only mode uses `BETA_INVITE_SECRET` (the code is compared in constant time) and an optional `BETA_ALLOWED_EMAILS` comma-separated list.
 
-Optional OAuth: `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET`, `AUTH_GITHUB_ID`, `AUTH_GITHUB_SECRET`.
+Google: `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET`. Redirect URL `https://qurandeck.vercel.app/api/auth/callback/google` and the same path on `qurandeck.com` and `www.qurandeck.com`.
+
+Apple: `AUTH_APPLE_ID` is the Services ID. Set `AUTH_APPLE_SECRET` to the client-secret JWT, or set `AUTH_APPLE_TEAM_ID`, `AUTH_APPLE_KEY_ID`, and `AUTH_APPLE_PRIVATE_KEY` (the `.p8` contents) and QuranDeck signs the JWT. Return URL `https://qurandeck.vercel.app/api/auth/callback/apple`, plus the same path on `qurandeck.com` and `www.qurandeck.com`.
+
+Passkeys are bound to the site host. A passkey created on `qurandeck.com` does not sign in on `qurandeck.vercel.app`. `AUTH_GITHUB_ID` and `AUTH_GITHUB_SECRET` are ignored.
 
 Before a public deploy, verify the sending domain in Resend and set `AUTH_RESEND_KEY`, `AUTH_EMAIL_FROM`, and `AUTH_URL` in the Vercel project. `onboarding@resend.dev` only delivers to the Resend account owner, so it is not a production sender. Until the mail variables are set, production email sign-in returns an error and does not reveal a link.
 

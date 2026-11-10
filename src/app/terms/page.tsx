@@ -46,8 +46,8 @@ export default function TermsPage() {
           username.
         </p>
         <p>
-          You are responsible for the sign-in link sent to your email and for opening it only for yourself. One email
-          is one library.
+          You are responsible for the sign-in code sent to your email and for using it only for yourself. One email is
+          one library.
         </p>
       </LegalSection>
 
