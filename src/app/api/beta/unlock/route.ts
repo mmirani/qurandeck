@@ -1,4 +1,5 @@
 import { BETA_COOKIE } from "@/auth";
+import { safeEqual } from "@/lib/safe-equal";
 
 export async function POST(request: Request) {
   const secret = process.env.BETA_INVITE_SECRET?.trim();
@@ -14,7 +15,7 @@ export async function POST(request: Request) {
     return Response.json({ ok: false, error: "Invalid request." }, { status: 400 });
   }
 
-  if (code !== secret) {
+  if (!safeEqual(code, secret)) {
     return Response.json({ ok: false, error: "That invite code is not valid." }, { status: 403 });
   }
 

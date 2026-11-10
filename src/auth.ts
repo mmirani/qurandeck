@@ -5,6 +5,7 @@ import GitHub from "next-auth/providers/github";
 import Google from "next-auth/providers/google";
 import { cookies } from "next/headers";
 import { verifyMagicToken } from "@/lib/magic-link";
+import { getMagicLinkStore } from "@/lib/magic-link-store";
 
 const BETA_COOKIE = "qurandeck-beta";
 
@@ -31,7 +32,13 @@ function buildProviders() {
           const secret = process.env.AUTH_SECRET;
           const token = credentials?.token;
           if (!secret || typeof token !== "string") return null;
-          const email = verifyMagicToken(token, secret);
+          let email: string | null = null;
+          try {
+            email = await verifyMagicToken(token, secret, getMagicLinkStore());
+          } catch {
+            console.error("Magic-link verification failed");
+            return null;
+          }
           if (!email) return null;
           const local = email.split("@")[0] ?? email;
           const name = local.replace(/[._-]+/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());

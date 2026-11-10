@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   description: "The rules for reading The Noble Quran on QuranDeck.",
 };
 
-const UPDATED = "September 23, 2026";
+const UPDATED = "November 10, 2026";
 
 export default function TermsPage() {
   return (
@@ -46,8 +46,8 @@ export default function TermsPage() {
           username.
         </p>
         <p>
-          You are responsible for the sign-in link sent to your email, or shown to you, and for opening it only for
-          yourself. One email is one library.
+          You are responsible for the sign-in link sent to your email and for opening it only for yourself. One email
+          is one library.
         </p>
       </LegalSection>
 
