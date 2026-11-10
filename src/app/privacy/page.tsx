@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   description: "How QuranDeck handles reading on this device, sign-in, and a sealed library.",
 };
 
-const UPDATED = "September 23, 2026";
+const UPDATED = "November 10, 2026";
 
 export default function PrivacyPage() {
   return (
@@ -35,9 +35,9 @@ export default function PrivacyPage() {
 
       <LegalSection title="Signing in">
         <p>
-          An account uses your email. A one-time sign-in link is valid for about 15 minutes. When email delivery is
-          turned on, that link is sent through an email provider. Otherwise QuranDeck shows the link in the sign-in
-          window so you can open it yourself.
+          An account uses your email. QuranDeck sends a one-time sign-in link to that address. The link is valid for
+          about 15 minutes, works once, and is not shown in the sign-in window. If a message cannot be sent, sign-in
+          stops and does not display the link.
         </p>
         <p>
           If Google or GitHub sign-in is offered and you choose it, that service handles the login under its own
@@ -107,7 +107,7 @@ export default function PrivacyPage() {
       <LegalSection title="How long it stays">
         <p>
           Guest data stays in the browser until you clear it. A signed-in library stays until you ask for it to be
-          deleted or the account is removed. Sign-in links expire after about 15 minutes. There is not yet a delete
+          deleted or the account is removed. Sign-in links expire after about 15 minutes and work only once. There is not yet a delete
           button in the account panel. Ask through the repository and the sealed library for that email will be
           deleted. Anonymous platform rank totals are not tied to your row, so deleting a library does not unwind
           counts already added to those totals.

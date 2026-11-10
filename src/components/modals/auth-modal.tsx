@@ -19,7 +19,7 @@ type AuthConfig = {
   google: boolean;
   github: boolean;
   email: boolean;
-  emailDelivery?: "resend" | "link";
+  emailDelivery?: "resend" | "dev-link" | "unavailable";
   publicSignup: boolean;
   hasSecret: boolean;
 };
@@ -35,6 +35,10 @@ export function AuthModal() {
   const [displayName, setDisplayName] = useState("");
   const [busy, setBusy] = useState(false);
   const [config, setConfig] = useState<AuthConfig | null>(null);
+
+  useEffect(() => {
+    if (modal !== "auth") pendingTab = "email";
+  }, [modal]);
 
   useEffect(() => {
     let cancelled = false;
@@ -63,7 +67,6 @@ export function AuthModal() {
     setDisplayName(user?.displayName ?? "");
   } else if (modal !== "auth" && open) {
     setOpen(false);
-    pendingTab = "email";
   }
 
   if (modal !== "auth") return null;
@@ -191,17 +194,15 @@ export function AuthModal() {
                     url?: string;
                   };
                   if (!response.ok || !data.ok) {
-                    setError(data.error ?? "Could not create sign-in link.");
+                    setError(data.error ?? "Could not send a sign-in link.");
                     return;
                   }
-                  if (data.emailed) {
-                    setInfo("Check your inbox for a secure sign-in link (15 minutes).");
-                    return;
-                  }
-                  if (data.url) {
+                  if (config?.emailDelivery === "dev-link" && data.url) {
                     setMagicUrl(data.url);
-                    setInfo("Beta mode: open this one-time link on this device to finish sign-in.");
+                    setInfo("Local development only: mail is not configured, so this one-time link is shown here.");
+                    return;
                   }
+                  setInfo("Check your inbox for a secure sign-in link. It expires in 15 minutes and works once.");
                 } catch {
                   setError("Network error. Try again.");
                 } finally {
@@ -209,11 +210,18 @@ export function AuthModal() {
                 }
               }}
             >
-              <p className="text-xs text-ink-soft">
-                {config.emailDelivery === "resend"
-                  ? "No password — we email you a one-time link."
-                  : "No password — we generate a one-time link for you (add Resend on Vercel to email it automatically)."}
-              </p>
+              {config.emailDelivery === "unavailable" ? (
+                <p className="text-sm text-danger">
+                  Email sign-in is unavailable until outgoing mail is configured.
+                </p>
+              ) : (
+                <p className="text-xs text-ink-soft">
+                  No password. We email a one-time link to this address. It expires in 15 minutes and works once.
+                  {config.emailDelivery === "dev-link"
+                    ? " This local machine has no mail provider, so the link is shown here instead."
+                    : null}
+                </p>
+              )}
               <label className="block text-sm">
                 Email
                 <input
@@ -227,7 +235,7 @@ export function AuthModal() {
               </label>
               {error ? <p className="text-sm text-danger">{error}</p> : null}
               {info ? <p className="text-sm text-gold-deep">{info}</p> : null}
-              {magicUrl ? (
+              {config.emailDelivery === "dev-link" && magicUrl ? (
                 <a
                   href={magicUrl}
                   className="flex h-12 w-full items-center justify-center rounded-full border border-gold/40 bg-accent-soft text-sm font-semibold text-gold-deep"
@@ -237,10 +245,10 @@ export function AuthModal() {
               ) : null}
               <button
                 type="submit"
-                disabled={busy}
+                disabled={busy || config.emailDelivery === "unavailable"}
                 className="h-14 w-full cursor-pointer rounded-full bg-gold text-lg text-on-gold disabled:opacity-50"
               >
-                {busy ? "Working…" : "Get sign-in link"}
+                {busy ? "Working…" : config.emailDelivery === "dev-link" ? "Create sign-in link" : "Email me a sign-in link"}
               </button>
             </form>
           ) : (
