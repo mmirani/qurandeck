@@ -1135,7 +1135,56 @@ body::before {
 .nur {
   position: fixed;
   z-index: 45;
+  right: max(1.25rem, env(safe-area-inset-right));
+  bottom: calc(6.75rem + env(safe-area-inset-bottom));
   pointer-events: none;
+}
+
+@media (min-width: 1280px) and (max-width: 1535px) {
+  .reader-stream {
+    padding-right: 7rem;
+  }
+}
+
+.nur.is-placed {
+  right: auto;
+  bottom: auto;
+}
+
+.sana-dock {
+  position: fixed;
+  z-index: 40;
+  left: max(0.75rem, env(safe-area-inset-left));
+  bottom: max(0.75rem, env(safe-area-inset-bottom));
+  display: inline-flex;
+  height: 2.75rem;
+  width: 2.75rem;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--gold) 35%, var(--line));
+  background: color-mix(in srgb, var(--surface) 94%, transparent);
+  box-shadow: 0 8px 22px color-mix(in srgb, var(--ink) 12%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.sana-dock.is-audio {
+  bottom: calc(4.75rem + env(safe-area-inset-bottom));
+}
+
+.sana-dock.is-ayah {
+  bottom: calc(8.75rem + env(safe-area-inset-bottom));
+}
+
+.sana-dock.is-ayah.is-audio {
+  bottom: calc(12.75rem + env(safe-area-inset-bottom));
+}
+
+.sana-dock .nur-face {
+  width: 1.75rem;
+  height: 1.75rem;
 }
 
 .nur-orb,
@@ -1363,10 +1412,40 @@ body::before {
   color: var(--ink-soft);
 }
 
+.nur-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.7rem;
+}
+
+.nur-chip {
+  min-height: 2rem;
+  cursor: pointer;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--gold) 35%, var(--line));
+  background: color-mix(in srgb, var(--gold) 12%, var(--surface));
+  padding: 0.2rem 0.75rem;
+  color: var(--ink);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.nur-chip.is-quiet {
+  border-color: var(--line);
+  background: transparent;
+  color: var(--ink-soft);
+  font-weight: 550;
+}
+
+.nur-chip:hover {
+  background: var(--highlight);
+}
+
 .nur-call {
   position: fixed;
-  right: 1rem;
-  bottom: 1.35rem;
+  right: max(1.25rem, env(safe-area-inset-right));
+  bottom: calc(6.75rem + env(safe-area-inset-bottom));
   z-index: 45;
   display: inline-flex;
   cursor: pointer;
@@ -1382,12 +1461,6 @@ body::before {
   font-weight: 650;
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
-}
-
-@media (max-width: 1279px) {
-  .nur-call {
-    bottom: 9.5rem;
-  }
 }
 
 @keyframes nur-bob {
@@ -1512,11 +1585,7 @@ body::before {
 .tour-shade {
   position: fixed;
   pointer-events: auto;
-  border: 0;
-  padding: 0;
-  margin: 0;
   background: color-mix(in srgb, #0b1220 52%, transparent);
-  cursor: default;
 }
 
 .tour-hole {
@@ -1532,6 +1601,8 @@ body::before {
   position: fixed;
   z-index: 71;
   pointer-events: auto;
+  max-height: calc(100dvh - 1.5rem - env(safe-area-inset-bottom));
+  overflow: auto;
   padding: 1rem 1.05rem 0.9rem;
   border-radius: calc(var(--radius) + 10px);
   background: color-mix(in srgb, var(--surface) 94%, transparent);

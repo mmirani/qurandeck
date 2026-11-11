@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { SanaVisual } from "@/components/companion/sana-visual";
 import { useGuide } from "@/components/guide/guide-provider";
@@ -46,6 +46,7 @@ export function TourOverlay() {
   const { active, step, steps, index, next, back, skip } = useGuide();
   const reduce = useReducedMotion();
   const [hole, setHole] = useState<Hole | null>(null);
+  const nextRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     if (!active || !step) return;
@@ -64,6 +65,12 @@ export function TourOverlay() {
     };
   }, [active, reduce, step]);
 
+  useEffect(() => {
+    if (!active) return;
+    const focus = window.setTimeout(() => nextRef.current?.focus(), reduce ? 0 : 40);
+    return () => window.clearTimeout(focus);
+  }, [active, index, reduce]);
+
   return (
     <AnimatePresence>
       {active && step ? (
@@ -76,12 +83,11 @@ export function TourOverlay() {
           transition={{ duration: reduce ? 0 : 0.2 }}
         >
           {shadePanes(hole).map((pane, i) => (
-            <button
+            <div
               key={i}
-              type="button"
               className="tour-shade"
               style={pane}
-              aria-label="Skip walkthrough"
+              aria-hidden="true"
               onClick={skip}
             />
           ))}
@@ -95,6 +101,7 @@ export function TourOverlay() {
           ) : null}
           <motion.div
             role="dialog"
+            aria-modal="true"
             aria-labelledby="tour-title"
             aria-describedby="tour-body"
             className="tour-card"
@@ -122,7 +129,7 @@ export function TourOverlay() {
                     Back
                   </button>
                 ) : null}
-                <button type="button" className="tour-next" onClick={next}>
+                <button ref={nextRef} type="button" className="tour-next" onClick={next}>
                   {index >= steps.length - 1 ? "Done" : "Next"}
                 </button>
               </div>
