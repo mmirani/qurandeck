@@ -314,15 +314,18 @@ export function MushafProvider({ children }: { children: ReactNode }) {
   }, [authSession, authStatus]);
 
   useEffect(() => {
-    if (!hydrated) return;
-    savePreferences(preferences);
     const layout = layoutSignals(preferences);
     document.documentElement.dataset.theme = appliedTheme(pathname, preferences.theme);
     document.documentElement.dataset.layers = String(layout.layers);
     document.documentElement.dataset.size = layout.size;
     document.documentElement.dataset.script = layout.script;
     document.documentElement.style.setProperty("--reading-size", `${preferences.fontSize}px`);
-  }, [hydrated, pathname, preferences]);
+  }, [pathname, preferences]);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    savePreferences(preferences);
+  }, [hydrated, preferences]);
 
   useEffect(() => {
     if (!hydrated) return;

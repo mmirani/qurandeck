@@ -166,7 +166,7 @@ function HomeSignedIn() {
 
       <div className="mt-8 grid items-stretch gap-4 lg:grid-cols-3">
         <div className="flex h-full flex-col rounded-3xl border-2 border-gold bg-highlight p-5 sm:p-6">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-gold-deep">Continue reading</p>
+          <p className="kufic-label text-gold-deep">Continue reading</p>
           <p className="mt-2 font-display text-2xl font-semibold text-ink sm:text-3xl">{place.title}</p>
           <p className="mt-1 text-sm text-ink">Ayah {place.ayah}</p>
           <Link
@@ -249,7 +249,7 @@ function FeatureSketch({ id }: { id: (typeof HOME_FEATURES)[number]["id"] }) {
     return (
       <div className="relative mt-4 flex flex-wrap gap-1.5">
         {["18:10", "kahf", "mercy"].map((chip) => (
-          <span key={chip} className="rounded-full bg-canvas/85 px-2 py-0.5 text-[10px] text-ink-soft ring-1 ring-line">
+          <span key={chip} className="rounded-full bg-canvas/85 px-2 py-0.5 text-xs text-ink-soft ring-1 ring-line">
             {chip}
           </span>
         ))}
@@ -258,7 +258,7 @@ function FeatureSketch({ id }: { id: (typeof HOME_FEATURES)[number]["id"] }) {
   }
   if (id === "place") {
     return (
-      <p className="relative mt-4 text-[11px] font-medium text-gold-deep">Al-Fatihah · ayah 1</p>
+      <p className="relative mt-4 text-xs font-medium text-gold-deep">Al-Fatihah · ayah 1</p>
     );
   }
   if (id === "study") {

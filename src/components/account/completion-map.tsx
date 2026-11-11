@@ -41,7 +41,7 @@ export function CompletionMap() {
 
   return (
     <section className="rounded-3xl border border-line bg-surface p-6 sm:p-7">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-gold-deep">Quran completion</p>
+      <p className="kufic-label text-gold-deep">Quran completion</p>
       <p className="mt-3 max-w-3xl text-sm leading-6 text-ink-soft">
         This is a map of ayahs you have opened, not a score. The Quran is laid left to right from Al-Fatihah to An-Nas. Each
         sliver is a slice of ayahs. Colour follows the surah on a short theme cycle so neighbouring chapters can read

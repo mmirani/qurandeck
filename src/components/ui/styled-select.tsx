@@ -155,7 +155,7 @@ export function StyledSelect({
                       <span className="min-w-0">
                         <span className="block truncate">{option.label}</span>
                         {option.hint ? (
-                          <span className="block truncate text-xs opacity-60">{option.hint}</span>
+                          <span className="block truncate text-xs text-muted">{option.hint}</span>
                         ) : null}
                       </span>
                       {active ? <Check className="h-3.5 w-3.5 shrink-0 text-gold" aria-hidden="true" /> : null}
@@ -186,10 +186,10 @@ export function StyledSelect({
           {selected ? (
             <>
               {selected.label}
-              {selected.hint ? <span className="opacity-60"> · {selected.hint}</span> : null}
+              {selected.hint ? <span className="text-muted"> · {selected.hint}</span> : null}
             </>
           ) : (
-            <span className="opacity-60">{placeholder}</span>
+            <span className="text-muted">{placeholder}</span>
           )}
         </span>
         <ChevronDown

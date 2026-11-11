@@ -99,7 +99,7 @@ export function AudioPlayer({
               className="h-3 w-full cursor-pointer accent-gold"
             />
           </label>
-          <div className="mt-0.5 flex justify-between gap-2 text-[11px] font-medium text-gold">
+          <div className="mt-0.5 flex justify-between gap-2 text-xs font-medium text-gold">
             <span className="truncate">
               {currentKey ?? "—"} · {formatTime(currentTime)}
             </span>

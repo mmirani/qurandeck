@@ -189,7 +189,7 @@ export function ReaderToolbar() {
               >
                 {playingThrough ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
                 {playingThrough ? "Pause" : mode === "juz" ? "Play juz" : "Play surah"}
-                <span className="pointer-events-none absolute left-1/2 top-[calc(100%+8px)] z-30 w-max max-w-[16rem] -translate-x-1/2 rounded-lg bg-panel px-2.5 py-1.5 text-left text-[11px] font-medium leading-snug text-panel-ink opacity-0 shadow-[0_8px_24px_rgba(15,23,42,0.28)] transition duration-150 group-hover/action:opacity-100 group-focus-visible/action:opacity-100">
+                <span className="pointer-events-none absolute left-1/2 top-[calc(100%+8px)] z-30 w-max max-w-[16rem] -translate-x-1/2 rounded-lg bg-panel px-2.5 py-1.5 text-left text-xs font-medium leading-snug text-panel-ink opacity-0 shadow-[0_8px_24px_rgba(15,23,42,0.28)] transition duration-150 group-hover/action:opacity-100 group-focus-visible/action:opacity-100">
                   {playStartLabel}
                 </span>
               </button>
@@ -237,6 +237,7 @@ export function ReaderToolbar() {
               <span className="px-3 text-sm text-muted">Size</span>
               <button
                 type="button"
+                aria-label="Smaller text"
                 className="h-10 w-10 cursor-pointer rounded-full text-lg hover:bg-highlight"
                 onClick={() =>
                   updatePreferences({ fontSize: Math.max(FONT_SIZE_MIN, preferences.fontSize - 2) })
@@ -247,6 +248,7 @@ export function ReaderToolbar() {
               <span className="min-w-12 text-center text-base">{preferences.fontSize}</span>
               <button
                 type="button"
+                aria-label="Larger text"
                 className="h-10 w-10 cursor-pointer rounded-full text-lg hover:bg-highlight"
                 onClick={() =>
                   updatePreferences({ fontSize: Math.min(FONT_SIZE_MAX, preferences.fontSize + 2) })

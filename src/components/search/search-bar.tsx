@@ -98,7 +98,7 @@ export function SearchBar() {
         className="h-12 w-full rounded-full border border-line bg-surface/90 pl-11 pr-36 text-sm text-ink shadow-sm outline-none placeholder:text-muted"
       />
       <div className="absolute right-2 top-1/2 flex -translate-y-1/2 items-center gap-1">
-        <kbd className="hidden rounded-full border border-line px-2 py-1 text-[10px] text-muted sm:inline">⌘ K</kbd>
+        <kbd className="hidden rounded-full border border-line px-2 py-1 text-xs text-muted sm:inline">⌘ K</kbd>
         <button
           type="button"
           onClick={() => openModal("filters")}

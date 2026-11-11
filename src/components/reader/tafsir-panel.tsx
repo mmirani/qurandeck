@@ -181,7 +181,7 @@ export function VerseTafsir({ verseKey }: { verseKey: string }) {
         </button>
       </div>
       {!ready || loading ? (
-        <p className="mt-2 text-sm text-ink-soft/70">Loading commentary…</p>
+        <p className="mt-2 text-sm text-ink-soft">Loading commentary…</p>
       ) : error ? (
         <p className="mt-2 text-sm text-danger">{error}</p>
       ) : body ? (
@@ -205,7 +205,7 @@ export function VerseTafsir({ verseKey }: { verseKey: string }) {
           ) : null}
         </>
       ) : (
-        <p className="mt-2 text-sm text-ink-soft/70">No commentary for this ayah in the selected tafsir.</p>
+        <p className="mt-2 text-sm text-ink-soft">No commentary for this ayah in the selected tafsir.</p>
       )}
     </aside>
   );

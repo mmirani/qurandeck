@@ -48,9 +48,10 @@ describe("languages", () => {
 });
 
 describe("footnotes", () => {
-  it("removes superscript markers stuck to words", () => {
-    assert.equal(stripHtml('Lord<sup foot_note="1">1</sup> of the worlds'), "Lord of the worlds");
-    assert.equal(stripHtml("Mercy<sup>2</sup>."), "Mercy.");
+  it("keeps footnote markers as superscripts instead of baseline digits", () => {
+    assert.equal(stripHtml('Lord<sup foot_note="1">1</sup> of the worlds'), "Lord¹ of the worlds");
+    assert.equal(stripHtml("Mercy<sup>2</sup>."), "Mercy².");
+    assert.equal(stripHtml('Lord<sup foot_note=195933>12</sup> of the worlds'), "Lord¹² of the worlds");
   });
 });
 
