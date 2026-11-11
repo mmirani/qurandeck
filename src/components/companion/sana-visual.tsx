@@ -5,19 +5,16 @@ import { useReducedMotion } from "motion/react";
 import { useCallback, useState, useSyncExternalStore } from "react";
 import {
   NUR_SRC,
+  companionBrandFilterFromDocument,
   companionFilterFromDocument,
-  companionFilterFromGold,
 } from "@/lib/companion";
 import { COMPANION_NAME } from "@/lib/brand";
-import { LUMEN_CANVAS, LUMEN_GOLD } from "@/lib/appearance";
 
 function subscribeTheme(onChange: () => void) {
   const mo = new MutationObserver(onChange);
   mo.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
   return () => mo.disconnect();
 }
-
-const LUMEN_FILTER = companionFilterFromGold(LUMEN_GOLD, LUMEN_CANVAS);
 
 export function SanaVisual({
   className = "",
@@ -30,8 +27,11 @@ export function SanaVisual({
   demoInteractive?: boolean;
 }) {
   const reduce = useReducedMotion();
-  const live = useSyncExternalStore(subscribeTheme, companionFilterFromDocument, () => "none");
-  const filter = lumen ? LUMEN_FILTER : live;
+  const filter = useSyncExternalStore(
+    subscribeTheme,
+    () => (lumen ? companionBrandFilterFromDocument() : companionFilterFromDocument()),
+    () => "none",
+  );
   const alt = `${COMPANION_NAME} floating companion`;
   const [tapped, setTapped] = useState(false);
 
