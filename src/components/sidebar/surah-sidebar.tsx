@@ -97,7 +97,7 @@ export function SurahSidebar() {
         )}
       </div>
       {browse === "juz" ? (
-        <nav className="mt-1 min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 pb-2" aria-label="Juz">
+        <nav className="mt-1 min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 pb-2 xl:pb-28" aria-label="Juz">
           {parts.map((juz) => {
             const active = currentJuz === juz.juzNumber;
             return (
@@ -130,7 +130,7 @@ export function SurahSidebar() {
         </nav>
       ) : (
         <nav
-          className="mt-1 min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 pb-2"
+          className="mt-1 min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 pb-2 xl:pb-28"
           aria-label={browse === "popular" ? "Popular surahs" : "Surahs"}
         >
           {(browse === "popular" ? popular : visible).map((item) => {

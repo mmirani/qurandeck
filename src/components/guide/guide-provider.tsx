@@ -1,10 +1,11 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { FONT_SIZE_MAX, FONT_SIZE_MIN } from "@/lib/appearance";
 import { useMushaf } from "@/components/providers/mushaf-provider";
+import { useReaderChrome } from "@/components/shell/reader-chrome";
 import { LESSONS, WELCOME_TOUR, type TourId, type TourStep } from "@/lib/guide/catalog";
 import { matchHelper } from "@/lib/guide/commands";
+import { performHelper, type PendingJob } from "@/lib/guide/perform";
 import {
   GUIDE_EVENT,
   defaultGuideProgress,
@@ -14,6 +15,7 @@ import {
   type GuideProgress,
 } from "@/lib/guide/progress";
 import { defaultCorner, loadCompanionPose, saveCompanionPose } from "@/lib/companion";
+import { downloadLibraryJson, downloadStatsCsv } from "@/lib/export-library";
 
 type GuideKind = "welcome" | "lesson" | null;
 
@@ -25,6 +27,7 @@ type GuideContextValue = {
   index: number;
   step: TourStep | null;
   reply: string | null;
+  suggestions: string[];
   startWelcome: () => void;
   startLesson: (id: TourId) => void;
   next: () => void;
@@ -47,18 +50,44 @@ export function GuideProvider({ children }: { children: ReactNode }) {
     updatePreferences,
     verses,
     selectedVerseKey,
+    mode,
+    currentJuz,
+    selectedWord,
     playFrom,
+    playVerse,
+    playWord,
     togglePlay,
     isPlaying,
+    openSurah,
+    openJuz,
+    selectVerse,
+    toggleBookmarkVerse,
     highlightAyah,
+    clearVerseHighlights,
+    saveNote,
+    runSearch,
+    setSearchQuery,
+    openModal,
+    highlights,
+    swatches,
+    bookmarks,
+    notes,
+    translations,
+    recitations,
+    user,
+    progress: readingProgress,
     loading,
+    chapter,
   } = useMushaf();
+  const { openStudy } = useReaderChrome();
   const [progress, setProgress] = useState<GuideProgress>(defaultGuideProgress);
   const autoStarted = useRef(false);
   const [kind, setKind] = useState<GuideKind>(null);
   const [steps, setSteps] = useState<TourStep[]>([]);
   const [index, setIndex] = useState(0);
   const [reply, setReply] = useState<string | null>(null);
+  const [suggestions, setSuggestions] = useState<string[]>(["Play this surah", "Go to 2:255", "Add a note", "Where is search"]);
+  const pendingRef = useRef<PendingJob | null>(null);
 
   const openSteps = useCallback((nextSteps: TourStep[], nextKind: GuideKind, startAt = 0) => {
     updatePreferences({ focusMode: false, showNavRail: true, showStudyRail: true });
@@ -108,50 +137,152 @@ export function GuideProvider({ children }: { children: ReactNode }) {
     finish();
   }, [finish]);
 
-  const ask = useCallback(
-    (text: string) => {
-      const match = matchHelper(text);
-      setReply(match.reply);
-      if (match.action === "tour") startWelcome();
-      else if (match.action === "lesson" && match.lesson) startLesson(match.lesson);
-      else if (match.action === "play-surah" && verses[0]) void playFrom(verses[0].verseKey);
-      else if (match.action === "play-from") {
-        const key = selectedVerseKey ?? verses[0]?.verseKey;
-        if (key) void playFrom(key);
-      } else if (match.action === "pause" && isPlaying) togglePlay();
-      else if (match.action === "bigger") {
-        updatePreferences({ fontSize: Math.min(FONT_SIZE_MAX, preferences.fontSize + 2) });
-      } else if (match.action === "smaller") {
-        updatePreferences({ fontSize: Math.max(FONT_SIZE_MIN, preferences.fontSize - 2) });
-      } else if (match.action === "highlight") {
-        const verse = verses.find((item) => item.verseKey === selectedVerseKey) ?? verses[0];
-        if (verse) highlightAyah(verse);
-      } else if (match.action === "study") {
-        updatePreferences({ showStudyRail: true, focusMode: false });
-        startLesson("study");
-      } else if (match.action === "focus") {
-        updatePreferences({ focusMode: !preferences.focusMode });
-      } else if (match.action === "search") {
-        startLesson("search");
-        window.setTimeout(() => document.getElementById("quran-search")?.focus(), 200);
-      } else if (match.action === "rest") {
-        saveCompanionPose({ ...loadCompanionPose(), hidden: true });
-      }
-    },
-    [
-      highlightAyah,
-      isPlaying,
-      playFrom,
-      preferences.focusMode,
-      preferences.fontSize,
+  const ask = useCallback((text: string) => {
+    const match = matchHelper(text);
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const replyText = performHelper(match, {
+      verses,
+      chapterId: chapter?.id ?? null,
+      mode,
+      currentJuz,
       selectedVerseKey,
-      startLesson,
-      startWelcome,
+      selectedWord,
+      isPlaying,
+      fontSize: preferences.fontSize,
+      focusMode: preferences.focusMode,
+      showTafsir: preferences.showTafsir,
+      showTransliteration: preferences.showTransliteration,
+      translationIds: preferences.translationIds,
+      signedIn: Boolean(user),
+      notes,
+      bookmarks,
+      translations,
+      recitations,
+      versesRead: readingProgress.versesRead.length,
+      surahsFinished: readingProgress.surahsRead.length,
+      streak: readingProgress.streak,
+      openSurah,
+      openJuz,
+      selectVerse,
+      playFrom: (key) => void playFrom(key),
+      playVerse: (key) => void playVerse(key),
+      playWord: (word) => void playWord(word),
       togglePlay,
       updatePreferences,
-      verses,
-    ],
-  );
+      openModal,
+      toggleBookmark: toggleBookmarkVerse,
+      highlightAyah,
+      clearHighlights: clearVerseHighlights,
+      saveNote,
+      runSearch: (query) => {
+        setSearchQuery(query);
+        void runSearch(query);
+      },
+      focusSearch: () => {
+        window.setTimeout(() => document.getElementById("quran-search")?.focus(), 80);
+      },
+      focusNote: (verseKey) => {
+        selectVerse(verseKey);
+        updatePreferences({ showStudyRail: true, focusMode: false });
+        openStudy();
+        window.setTimeout(() => document.getElementById("verse-note")?.focus(), 180);
+      },
+      openStudy: () => {
+        updatePreferences({ showStudyRail: true, focusMode: false });
+        openStudy();
+      },
+      startWelcome,
+      startLesson,
+      rest: () => saveCompanionPose({ ...loadCompanionPose(), hidden: true }),
+      download: (kind) => {
+        const input = {
+          progress: readingProgress,
+          bookmarks,
+          notes,
+          highlights,
+          swatches,
+          preferences,
+          user,
+        };
+        if (kind === "stats") downloadStatsCsv(input);
+        else downloadLibraryJson(input);
+      },
+      schedule: (job) => {
+        pendingRef.current = job;
+      },
+      reveal: (verseNumber) => {
+        window.setTimeout(() => {
+          document.getElementById(`ayah-${verseNumber}`)?.scrollIntoView({
+            block: "center",
+            behavior: reduce ? "auto" : "smooth",
+          });
+        }, 60);
+      },
+    });
+    setReply(replyText);
+    setSuggestions(match.suggestions);
+  }, [
+    bookmarks,
+    chapter?.id,
+    clearVerseHighlights,
+    currentJuz,
+    highlightAyah,
+    highlights,
+    isPlaying,
+    mode,
+    notes,
+    openJuz,
+    openModal,
+    openStudy,
+    openSurah,
+    playFrom,
+    playVerse,
+    playWord,
+    preferences,
+    readingProgress,
+    recitations,
+    runSearch,
+    saveNote,
+    selectVerse,
+    selectedVerseKey,
+    selectedWord,
+    setSearchQuery,
+    startLesson,
+    startWelcome,
+    swatches,
+    toggleBookmarkVerse,
+    togglePlay,
+    translations,
+    updatePreferences,
+    user,
+    verses,
+  ]);
+
+  useEffect(() => {
+    const job = pendingRef.current;
+    if (!job || verses.length === 0) return;
+    if (job.kind === "play-first") {
+      pendingRef.current = null;
+      void playFrom(verses[0].verseKey);
+      return;
+    }
+    const verse = verses.find((item) => item.verseKey === job.verseKey);
+    if (!verse) return;
+    pendingRef.current = null;
+    selectVerse(verse.verseKey);
+    if (job.kind === "play-verse") void playVerse(verse.verseKey);
+    else if (job.kind === "play-from") void playFrom(verse.verseKey);
+    else if (job.kind === "bookmark") toggleBookmarkVerse(verse);
+    else if (job.kind === "highlight") highlightAyah(verse);
+    else if (job.kind === "clear-highlight") clearVerseHighlights(verse.verseKey);
+    else if (job.kind === "tafsir") updatePreferences({ showTafsir: true });
+    else if (job.kind === "save-note" && job.noteBody) saveNote(verse.verseKey, job.noteBody);
+    else if (job.kind === "focus-note") {
+      updatePreferences({ showStudyRail: true, focusMode: false });
+      openStudy();
+      window.setTimeout(() => document.getElementById("verse-note")?.focus(), 180);
+    }
+  }, [clearVerseHighlights, highlightAyah, openStudy, playFrom, playVerse, saveNote, selectVerse, toggleBookmarkVerse, updatePreferences, verses]);
 
   useEffect(() => {
     const boot = (force = false) => {
@@ -186,6 +317,7 @@ export function GuideProvider({ children }: { children: ReactNode }) {
       index,
       step: steps[index] ?? null,
       reply,
+      suggestions,
       startWelcome,
       startLesson,
       next,
@@ -193,7 +325,7 @@ export function GuideProvider({ children }: { children: ReactNode }) {
       skip,
       ask,
     }),
-    [ask, back, index, kind, loading, next, progress, reply, skip, startLesson, startWelcome, steps],
+    [ask, back, index, kind, loading, next, progress, reply, skip, startLesson, startWelcome, steps, suggestions],
   );
 
   return <GuideContext.Provider value={value}>{children}</GuideContext.Provider>;

@@ -3,10 +3,8 @@
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import Image from "next/image";
 import { COMPANION_NAME } from "@/lib/brand";
-import { BottomSheet } from "@/components/shell/bottom-sheet";
 import { SanaGuidePanel } from "@/components/guide/sana-guide-panel";
 import { useGuide } from "@/components/guide/guide-provider";
-import { useMushaf } from "@/components/providers/mushaf-provider";
 import {
   NUR_SIZE,
   NUR_SRC,
@@ -20,17 +18,8 @@ import {
 } from "@/lib/companion";
 
 const POSE_EVENT = "nur-pose";
-const companionAlt = `${COMPANION_NAME} floating companion`;
-
-function subscribeNever() {
-  return () => {};
-}
 
 function subscribePose(onChange: () => void) {
-  const current = loadCompanionPose();
-  if (current.left == null || current.top == null) {
-    saveCompanionPose({ ...defaultCorner(), hidden: current.hidden });
-  }
   window.addEventListener(POSE_EVENT, onChange);
   window.addEventListener("storage", onChange);
   window.addEventListener("resize", onChange);
@@ -52,95 +41,113 @@ function subscribeTheme(onChange: () => void) {
   return () => mo.disconnect();
 }
 
-export function SanaCompanion({ audioBarVisible = false }: { audioBarVisible?: boolean }) {
+export function SanaCompanion({
+  audioBarVisible = false,
+  ayahMode = false,
+}: {
+  audioBarVisible?: boolean;
+  ayahMode?: boolean;
+}) {
   return (
     <>
-      <div className="lg:hidden">
-        <SanaMobileDock audioBarVisible={audioBarVisible} />
+      <div className="xl:hidden">
+        <SanaDock audioBarVisible={audioBarVisible} ayahMode={ayahMode} />
       </div>
-      <div className="hidden lg:contents">
+      <div className="hidden xl:contents">
         <SanaFloatingCompanion />
       </div>
     </>
   );
 }
 
-function SanaMobileDock({ audioBarVisible }: { audioBarVisible: boolean }) {
-  const { selectedVerseKey } = useMushaf();
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [peek, setPeek] = useState(false);
+function SanaDock({ audioBarVisible, ayahMode }: { audioBarVisible: boolean; ayahMode: boolean }) {
+  const [open, setOpen] = useState(false);
   const filter = useSyncExternalStore(subscribeTheme, companionFilterFromDocument, () => "none");
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const close = useCallback(() => {
+    setOpen(false);
+    window.setTimeout(() => buttonRef.current?.focus(), 0);
+  }, []);
 
-  const closeSheet = () => {
-    setMobileOpen(false);
-    setPeek(false);
-  };
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") close();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [close, open]);
 
   return (
     <>
       <button
+        ref={buttonRef}
         type="button"
-        className={`sana-mobile-fab fixed right-3 z-40 inline-flex cursor-pointer items-center rounded-full border border-gold/30 bg-surface/95 shadow-[0_6px_18px_rgba(15,23,42,0.12)] backdrop-blur-md transition-[width,padding,gap] duration-200 md:hidden ${
-          peek ? "h-11 gap-2 px-3" : "h-10 w-10 justify-center p-0"
-        } ${audioBarVisible ? "bottom-[4.25rem]" : "bottom-3"}`}
-        style={{ touchAction: "manipulation" }}
+        className={`sana-dock ${ayahMode ? "is-ayah" : ""} ${audioBarVisible ? "is-audio" : ""}`}
         aria-label={`Open ${COMPANION_NAME}`}
-        aria-expanded={peek || mobileOpen}
-        onClick={() => {
-          if (!peek) {
-            setPeek(true);
-            window.setTimeout(() => setMobileOpen(true), 160);
-            return;
-          }
-          setMobileOpen(true);
-        }}
+        aria-expanded={open}
+        aria-haspopup="dialog"
+        onClick={() => setOpen(true)}
       >
         <Image
           src={NUR_SRC}
-          alt={companionAlt}
-          width={24}
-          height={24}
-          className="nur-face h-6 w-6 shrink-0 object-contain"
+          alt=""
+          width={28}
+          height={28}
+          className="nur-face h-7 w-7 shrink-0 object-contain"
           style={{ filter }}
         />
-        {peek ? <span className="text-xs font-semibold text-ink">{COMPANION_NAME}</span> : null}
       </button>
-      <BottomSheet open={mobileOpen} onClose={closeSheet} title={COMPANION_NAME}>
-        {selectedVerseKey ? (
-          <p className="border-b border-line/60 px-4 pb-3 text-sm text-ink-soft">Near ayah {selectedVerseKey}</p>
-        ) : null}
-        <SanaGuidePanel onClose={closeSheet} onRest={closeSheet} />
-      </BottomSheet>
+      {open ? (
+        <div className="fixed inset-0 z-50">
+          <button type="button" className="absolute inset-0 cursor-pointer bg-black/45" aria-label={`Close ${COMPANION_NAME}`} onClick={close} />
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="sana-title"
+            className="sana-sheet absolute inset-x-0 bottom-0 flex max-h-[min(85dvh,40rem)] flex-col overflow-hidden rounded-t-3xl border-t border-line bg-surface shadow-[0_-20px_50px_rgba(15,23,42,0.18)]"
+          >
+            <div className="mx-auto mt-2 h-1 w-10 shrink-0 rounded-full bg-line" aria-hidden="true" />
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-[max(0.85rem,env(safe-area-inset-bottom))] pt-3">
+              <SanaGuidePanel onClose={close} onRest={close} />
+            </div>
+          </div>
+        </div>
+      ) : null}
     </>
   );
 }
 
 function SanaFloatingCompanion() {
   const { active: guiding } = useGuide();
-  const mounted = useSyncExternalStore(subscribeNever, () => true, () => false);
   const pose = useSyncExternalStore(subscribePose, loadCompanionPose, () => defaultPose);
   const filter = useSyncExternalStore(subscribeTheme, companionFilterFromDocument, () => "none");
   const [open, setOpen] = useState(false);
   const [dragging, setDragging] = useState(false);
   const moved = useRef(false);
   const drag = useRef<{ x: number; y: number; left: number; top: number } | null>(null);
-
   const rootRef = useRef<HTMLDivElement>(null);
+  const orbRef = useRef<HTMLButtonElement>(null);
   const setPose = useCallback((next: CompanionPose) => {
     writePose(next);
   }, []);
 
   if (guiding && open) setOpen(false);
 
+  const close = useCallback(() => {
+    setOpen(false);
+    window.setTimeout(() => orbRef.current?.focus(), 0);
+  }, []);
+
   useEffect(() => {
     if (!open) return;
     const onPointer = (event: PointerEvent) => {
       const node = event.target as Node;
       if (rootRef.current?.contains(node)) return;
-      setOpen(false);
+      close();
     };
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setOpen(false);
+      if (event.key === "Escape") close();
     };
     window.addEventListener("pointerdown", onPointer);
     window.addEventListener("keydown", onKey);
@@ -148,19 +155,24 @@ function SanaFloatingCompanion() {
       window.removeEventListener("pointerdown", onPointer);
       window.removeEventListener("keydown", onKey);
     };
-  }, [open]);
+  }, [close, open]);
 
-  if (!mounted) return null;
+  const placed = pose.left != null && pose.top != null;
+  const place = placed ? clampPose(pose.left ?? 0, pose.top ?? 0) : null;
+  const panelOnLeft = place ? place.left > window.innerWidth / 2 : true;
 
-  const place =
-    pose.left == null || pose.top == null ? defaultCorner() : clampPose(pose.left, pose.top);
-  const panelLeft = place.left > window.innerWidth / 2;
+  const origin = () => {
+    const box = rootRef.current?.getBoundingClientRect();
+    if (box) return { left: box.left, top: box.top };
+    return defaultCorner();
+  };
 
   const startDrag = (event: React.PointerEvent<HTMLButtonElement>) => {
     if (event.button !== 0) return;
     moved.current = false;
     event.currentTarget.setPointerCapture(event.pointerId);
-    drag.current = { x: event.clientX, y: event.clientY, left: place.left, top: place.top };
+    const start = place ?? origin();
+    drag.current = { x: event.clientX, y: event.clientY, left: start.left, top: start.top };
     setDragging(true);
   };
 
@@ -181,7 +193,8 @@ function SanaFloatingCompanion() {
   };
 
   const nudge = (dx: number, dy: number) => {
-    setPose({ ...pose, ...clampPose(place.left + dx, place.top + dy) });
+    const start = place ?? origin();
+    setPose({ ...pose, ...clampPose(start.left + dx, start.top + dy), hidden: false });
   };
 
   if (pose.hidden) {
@@ -194,7 +207,7 @@ function SanaFloatingCompanion() {
           setOpen(true);
         }}
       >
-        <Image src={NUR_SRC} alt={companionAlt} width={36} height={32} className="nur-face" style={{ filter }} />
+        <Image src={NUR_SRC} alt="" width={36} height={32} className="nur-face" style={{ filter }} />
         Call {COMPANION_NAME}
       </button>
     );
@@ -203,28 +216,32 @@ function SanaFloatingCompanion() {
   return (
     <div
       ref={rootRef}
-      className={`nur ${dragging ? "is-dragging" : ""} ${open ? "is-open" : ""}`}
-      style={{ left: place.left, top: place.top, width: NUR_SIZE, height: NUR_SIZE }}
+      className={`nur ${dragging ? "is-dragging" : ""} ${open ? "is-open" : ""} ${placed ? "is-placed" : ""}`}
+      style={place ? { left: place.left, top: place.top, width: NUR_SIZE, height: NUR_SIZE } : { width: NUR_SIZE, height: NUR_SIZE }}
     >
       {open ? (
-        <div role="dialog" aria-labelledby="sana-title" className={`nur-panel ${panelLeft ? "is-left" : "is-right"}`}>
-          <SanaGuidePanel
-            onClose={() => setOpen(false)}
-            onRest={() => {
-              setOpen(false);
-              setPose({ ...pose, hidden: true });
-            }}
-          />
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="sana-title"
+          className={`nur-panel ${panelOnLeft ? "is-left" : "is-right"}`}
+        >
+          <SanaGuidePanel onClose={close} onRest={() => {
+            close();
+            setPose({ ...pose, hidden: true });
+          }} />
         </div>
       ) : null}
 
       <span className="nur-halo" aria-hidden="true" />
       <span className="nur-floor" aria-hidden="true" />
       <button
+        ref={orbRef}
         type="button"
         className="nur-orb"
         aria-label={`${COMPANION_NAME}, reading companion. Drag to move, click to talk.`}
         aria-expanded={open}
+        aria-haspopup="dialog"
         onPointerDown={startDrag}
         onPointerMove={onMove}
         onPointerUp={endDrag}
@@ -234,18 +251,19 @@ function SanaFloatingCompanion() {
           setOpen((value) => !value);
         }}
         onKeyDown={(event) => {
+          const step = event.shiftKey ? 48 : 16;
           if (event.key === "ArrowLeft") {
             event.preventDefault();
-            nudge(-16, 0);
+            nudge(-step, 0);
           } else if (event.key === "ArrowRight") {
             event.preventDefault();
-            nudge(16, 0);
+            nudge(step, 0);
           } else if (event.key === "ArrowUp") {
             event.preventDefault();
-            nudge(0, -16);
+            nudge(0, -step);
           } else if (event.key === "ArrowDown") {
             event.preventDefault();
-            nudge(0, 16);
+            nudge(0, step);
           }
         }}
       >

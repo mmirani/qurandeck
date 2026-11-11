@@ -89,9 +89,9 @@ export function stepById(id: TourId) {
 }
 
 export const HELPER_HINTS = [
-  "walk me through",
   "play this surah",
-  "bigger text",
-  "highlight this ayah",
-  "open my desk",
+  "go to 2:255",
+  "add a note",
+  "open tafsir",
+  "where is search",
 ];

@@ -66,13 +66,13 @@ function AppShellFrame() {
   const mobileAyahMode = mobile && !focus && preferences.mobileReadingMode === "ayah";
 
   return (
-    <GuideProvider>
-      <ReaderChromeProvider
-        openNav={() => setNavOpen(true)}
-        closeNav={() => setNavOpen(false)}
-        openStudy={() => setStudyOpen(true)}
-        closeStudy={() => setStudyOpen(false)}
-      >
+    <ReaderChromeProvider
+      openNav={() => setNavOpen(true)}
+      closeNav={() => setNavOpen(false)}
+      openStudy={() => setStudyOpen(true)}
+      closeStudy={() => setStudyOpen(false)}
+    >
+      <GuideProvider>
         <div
           id="main-content"
           className={`relative z-[1] flex h-dvh flex-col overflow-hidden bg-canvas text-ink ${
@@ -133,7 +133,7 @@ function AppShellFrame() {
             </div>
           ) : null}
 
-          {book || mobileAyahMode ? null : <SanaCompanion audioBarVisible={showMobileAudio} />}
+          {book ? null : <SanaCompanion audioBarVisible={showMobileAudio} ayahMode={mobileAyahMode} />}
 
           <BottomSheet open={navOpen && !focus} onClose={() => setNavOpen(false)} title="Surahs & Juz">
             <SurahSidebar />
@@ -145,8 +145,8 @@ function AppShellFrame() {
           <TourOverlay />
           <AppModals />
         </div>
-      </ReaderChromeProvider>
-    </GuideProvider>
+      </GuideProvider>
+    </ReaderChromeProvider>
   );
 }
 

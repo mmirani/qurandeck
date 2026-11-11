@@ -18,7 +18,7 @@ export function BottomSheet({
   if (!open) return null;
 
   return (
-    <div className={`fixed inset-0 z-50 md:hidden ${className}`} role="presentation">
+    <div className={`fixed inset-0 z-50 xl:hidden ${className}`} role="presentation">
       <button type="button" aria-label="Close sheet" className="absolute inset-0 bg-black/45" onClick={onClose} />
       <div
         role="dialog"

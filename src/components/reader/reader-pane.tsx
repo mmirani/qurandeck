@@ -163,7 +163,7 @@ export function ReaderPane() {
           <AyahReaderMobile verses={verses} mode={mode} />
         ) : (
           <div
-            className="reader-stream flex flex-col gap-5 pb-8"
+            className="reader-stream flex flex-col gap-5 pb-24 xl:pb-8"
             data-layers={layers}
             data-size={preferences.fontSize >= 34 ? "xl" : undefined}
             data-script={arabicOnly ? "ar" : undefined}
