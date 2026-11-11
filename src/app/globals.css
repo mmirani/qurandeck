@@ -1205,13 +1205,23 @@ body::before {
   color: var(--companion-gold);
 }
 
+/* Noor's Sana stays teal. The halo and floor are a soft bloom and can stay
+   light. The orb, call button, stage, and dock use a deeper teal so the
+   launcher edge and any mark that has to be seen clears the page:
+   #0c5e56 is 5.81:1 on the Noor canvas (#e4dcff) and 7.25:1 on the surface.
+   #34baab on that canvas is 1.82:1 and stays on the decorative bloom only. */
 [data-theme="iris"] .nur-halo,
-[data-theme="iris"] .nur-floor,
-[data-theme="iris"] .nur-orb,
-[data-theme="iris"] .nur-call,
-[data-theme="iris"] .nur-stage {
+[data-theme="iris"] .nur-floor {
   --gold: #34baab;
   --gold-deep: #2a9890;
+}
+
+[data-theme="iris"] .nur-orb,
+[data-theme="iris"] .nur-call,
+[data-theme="iris"] .nur-stage,
+[data-theme="iris"] .sana-dock {
+  --gold: #0c5e56;
+  --gold-deep: #0a4c47;
 }
 
 .nur {
@@ -1467,6 +1477,11 @@ body::before {
   font-size: 0.85rem;
 }
 
+.nur-ask input::placeholder {
+  color: var(--muted);
+  opacity: 1;
+}
+
 .nur-name {
   margin: 0;
   font-weight: 700;
@@ -1543,6 +1558,38 @@ body::before {
   font-weight: 650;
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
+}
+
+/* Day and paper themes: Sana's lines were a light tint of --line (about 1.1:1
+   to 2.9:1). A 72% mix of the theme mark clears 3:1 on every light canvas.
+   Night themes keep the softer border they already pass with. */
+html:is(
+  [data-theme="manuscript"],
+  [data-theme="emerald"],
+  [data-theme="ottoman"],
+  [data-theme="ivory"],
+  [data-theme="iris"],
+  [data-theme="pastels"],
+  [data-theme="blush"],
+  [data-theme="sepia"],
+  [data-theme="contrast"]
+) :is(.sana-dock, .nur-call, .nur-chip, .nur-ask input, .nur-icon, .nur-mic) {
+  border-color: color-mix(in srgb, var(--gold) 72%, var(--line));
+}
+
+html:is(
+  [data-theme="manuscript"],
+  [data-theme="emerald"],
+  [data-theme="ottoman"],
+  [data-theme="ivory"],
+  [data-theme="iris"],
+  [data-theme="pastels"],
+  [data-theme="blush"],
+  [data-theme="sepia"],
+  [data-theme="contrast"]
+) .nur-mic.is-on {
+  border-color: color-mix(in srgb, var(--gold-deep) 85%, var(--line));
+  color: var(--gold-deep);
 }
 
 @keyframes nur-bob {
