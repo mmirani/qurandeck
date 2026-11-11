@@ -203,14 +203,14 @@ function HighlightFeed({ marks }: { marks: Highlight[] }) {
                 });
               }}
             >
-              <p className="text-[10px] text-gold">{copy.title}</p>
+              <p className="text-xs text-gold">{copy.title}</p>
               {copy.body ? <p className="line-clamp-2 text-xs">{copy.body}</p> : null}
             </button>
             <button
               type="button"
               aria-label={`Remove highlight ${copy.title}`}
               onClick={() => deleteHighlight(item.id)}
-              className="shrink-0 cursor-pointer rounded-full px-2 py-1 text-[10px] text-danger hover:bg-canvas"
+              className="shrink-0 cursor-pointer rounded-full px-2 py-1 text-xs text-danger hover:bg-canvas"
             >
               Remove
             </button>

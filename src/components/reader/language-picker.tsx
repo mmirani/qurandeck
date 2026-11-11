@@ -294,7 +294,7 @@ function Chip({
     tone === "accent" ? "bg-chip-alt text-on-chip-alt" : "bg-gold text-on-gold";
   const idle =
     tone === "accent"
-      ? "border-2 border-chip-alt bg-chip-alt/20 text-chip-alt"
+      ? "border-2 border-chip-ink bg-chip-alt/20 text-chip-ink"
       : "border border-gold/35 bg-accent-soft/40 text-ink-soft";
   return (
     <button

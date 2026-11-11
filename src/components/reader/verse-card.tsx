@@ -180,14 +180,14 @@ export function VerseCard({
           <div className="verse-actions hidden flex-wrap justify-end gap-1 md:flex" data-tour={tourAnchor ? "ayah" : undefined}>
             <IconAction label="Play this ayah only, then stop" onClick={() => playVerse(verse.verseKey)}>
               <Play className="h-4 w-4" />
-              <span className="pr-1 text-[10px] font-medium">Ayah</span>
+              <span className="pr-1 text-xs font-medium">Ayah</span>
             </IconAction>
             <IconAction
               label={mode === "juz" ? "Play from here through the rest of this juz" : "Play from here through the rest of this surah"}
               onClick={() => playFrom(verse.verseKey)}
             >
               <Play className="h-4 w-4" />
-              <span className="pr-1 text-[10px] font-medium">{mode === "juz" ? "Rest of Juz" : "Rest of Surah"}</span>
+              <span className="pr-1 text-xs font-medium">{mode === "juz" ? "Rest of Juz" : "Rest of Surah"}</span>
             </IconAction>
             <IconAction
               label="Write a note on this ayah"
@@ -197,7 +197,7 @@ export function VerseCard({
               }}
             >
               <NotebookPen className={`h-4 w-4 ${note ? "text-gold" : ""}`} />
-              <span className="pr-1 text-[10px] font-medium">Note</span>
+              <span className="pr-1 text-xs font-medium">Note</span>
             </IconAction>
             <IconAction
               label={favorited ? "Remove favorite" : "Favorite this ayah"}
@@ -274,7 +274,7 @@ export function VerseCard({
                 return (
                   <div key={column.id} dir={rtl ? "rtl" : "ltr"} lang={group?.key} className="order-2 @min-[42rem]:order-none">
                     {translationCols.length > 1 || group ? (
-                      <p className="kufic-label mb-2 text-[10px] text-gold-deep">
+                      <p className="kufic-label mb-2 text-gold-deep">
                         {group?.label ?? "Translation"}
                         {group && group.editions.length > 1
                           ? ` · ${group.editions.find((item) => item.id === column.id)?.name ?? ""}`
@@ -341,7 +341,7 @@ export function VerseCard({
                   active ? "" : "line-clamp-2"
                 }`}
               >
-                <p className="kufic-label mb-1 text-[10px] text-gold-deep">Note</p>
+                <p className="kufic-label mb-1 text-gold-deep">Note</p>
                 <p className="whitespace-pre-wrap">{note.body}</p>
               </div>
             ) : null}
@@ -563,7 +563,7 @@ function ArabicBlock({
                   }
                   if (!highlighting) void playWord(word);
                 }}
-                className={`mx-[2px] inline cursor-pointer rounded-md px-1 leading-[2.1] ${
+                className={`mx-[2px] inline cursor-pointer rounded-md px-1 leading-[2.25] ${
                   on ? "bg-gold/25" : "hover:bg-gold/10"
                 }`}
                 style={pen ? { background: `color-mix(in srgb, ${pen.color} 62%, transparent)` } : undefined}
@@ -601,10 +601,10 @@ function IconAction({
         event.stopPropagation();
         onClick();
       }}
-      className="group/action relative inline-flex min-h-11 min-w-11 cursor-pointer items-center justify-center gap-1 rounded-full border border-gold/30 px-1.5 text-ink-soft hover:bg-accent-soft hover:text-accent"
+      className="group/action relative inline-flex min-h-11 min-w-11 cursor-pointer items-center justify-center gap-1 rounded-full border border-gold/30 px-1.5 text-ink-soft hover:bg-accent-soft hover:text-gold-deep"
     >
       {children}
-      <span className="pointer-events-none absolute left-1/2 top-[calc(100%+8px)] z-30 w-max max-w-[14rem] -translate-x-1/2 rounded-lg bg-panel px-2.5 py-1.5 text-left text-[11px] font-medium leading-snug text-panel-ink opacity-0 shadow-[0_8px_24px_rgba(15,23,42,0.28)] transition duration-150 group-hover/action:opacity-100 group-focus-visible/action:opacity-100">
+      <span className="pointer-events-none absolute left-1/2 top-[calc(100%+8px)] z-30 w-max max-w-[14rem] -translate-x-1/2 rounded-lg bg-panel px-2.5 py-1.5 text-left text-xs font-medium leading-snug text-panel-ink opacity-0 shadow-[0_8px_24px_rgba(15,23,42,0.28)] transition duration-150 group-hover/action:opacity-100 group-focus-visible/action:opacity-100">
         {label}
       </span>
     </button>

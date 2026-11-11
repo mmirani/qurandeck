@@ -73,11 +73,30 @@ export function wordByWordAudioUrl(location?: string | null) {
   return `${AUDIO_QURANCDN}/wbw/${pad3(chapter)}_${pad3(verse)}_${pad3(word)}.mp3`;
 }
 
+const SUPERSCRIPT_DIGIT: Record<string, string> = {
+  "0": "⁰",
+  "1": "¹",
+  "2": "²",
+  "3": "³",
+  "4": "⁴",
+  "5": "⁵",
+  "6": "⁶",
+  "7": "⁷",
+  "8": "⁸",
+  "9": "⁹",
+};
+
+function footnoteMark(inner: string) {
+  const plain = inner.replace(/<[^>]+>/g, "").replace(/\s+/g, "");
+  if (!plain) return "";
+  return plain.replace(/\d/g, (digit) => SUPERSCRIPT_DIGIT[digit] ?? digit);
+}
+
 export function stripHtml(value: string) {
   return value
-    .replace(/<sup\b[^>]*>[\s\S]*?<\/sup>/gi, "")
-    .replace(/<a\b[^>]*class=["'][^"']*footnote[^"']*["'][^>]*>[\s\S]*?<\/a>/gi, "")
-    .replace(/<span\b[^>]*class=["'][^"']*footnote[^"']*["'][^>]*>[\s\S]*?<\/span>/gi, "")
+    .replace(/<sup\b[^>]*>([\s\S]*?)<\/sup>/gi, (_, inner: string) => footnoteMark(inner))
+    .replace(/<a\b[^>]*class=["'][^"']*footnote[^"']*["'][^>]*>([\s\S]*?)<\/a>/gi, (_, inner: string) => footnoteMark(inner))
+    .replace(/<span\b[^>]*class=["'][^"']*footnote[^"']*["'][^>]*>([\s\S]*?)<\/span>/gi, (_, inner: string) => footnoteMark(inner))
     .replace(/<[^>]+>/g, "")
     .replace(/&nbsp;/g, " ")
     .replace(/&amp;/g, "&")

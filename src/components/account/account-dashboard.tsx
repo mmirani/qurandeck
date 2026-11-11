@@ -122,7 +122,7 @@ export function AccountRailCard() {
           <RailToggle side="study" compact />
         </div>
       </div>
-      <p className="mt-1 text-[10px] uppercase tracking-[0.16em] text-gold">{PROMISE_LINE}</p>
+      <p className="kufic-label mt-1 text-gold">{PROMISE_LINE}</p>
       <p className="mt-2 text-sm text-ink-soft">{user ? `${user.displayName}. ${PROMISE_WHY}` : PROMISE_WHY}</p>
       <div className="mt-3">
         <UserMenu fill />
@@ -419,7 +419,7 @@ export function ContinueCard({ compact = false }: { compact?: boolean }) {
           : "mt-3 rounded-2xl border-2 border-gold bg-highlight p-4"
       }
     >
-      <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-gold-deep">
+      <p className="kufic-label flex items-center gap-1.5 text-gold-deep">
         <Bookmark className="h-3.5 w-3.5 shrink-0" aria-hidden="true" strokeWidth={2.25} />
         Auto Bookmark
       </p>
@@ -449,7 +449,7 @@ export function ContinueCard({ compact = false }: { compact?: boolean }) {
 export function StatCard({ label, value, hint }: { label: string; value: string; hint: string }) {
   return (
     <div className="rounded-2xl border border-line bg-surface px-4 py-3">
-      <p className="text-[10px] uppercase tracking-[0.16em] text-gold-deep">{label}</p>
+      <p className="kufic-label text-gold-deep">{label}</p>
       <p className="mt-1 font-display text-3xl text-ink">{value}</p>
       <p className="mt-1 text-xs text-ink-soft">{hint}</p>
     </div>

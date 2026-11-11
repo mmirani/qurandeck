@@ -12,7 +12,7 @@ const jakarta = Plus_Jakarta_Sans({
 const sourceSerif = Source_Serif_4({
   variable: "--font-source-serif",
   subsets: ["latin"],
-  weight: ["400", "600"],
+  weight: ["400", "500", "600"],
 });
 
 const naskh = Noto_Naskh_Arabic({
@@ -72,7 +72,7 @@ export const viewport: Viewport = {
   colorScheme: "light",
 };
 
-const themeScript = `try{var p=JSON.parse(localStorage.getItem('al-mushaf-preferences')||'{}');var home=location.pathname==='/';var t=home?'iris':(p.theme||'iris');document.documentElement.dataset.theme=t;}catch(e){document.documentElement.dataset.theme='iris'}document.documentElement.dataset.scroll=/^\\/(read$|surah\\/|juz\\/)/.test(location.pathname)?'lock':'page';`;
+const themeScript = `try{var p=JSON.parse(localStorage.getItem('al-mushaf-preferences')||'{}');var home=location.pathname==='/';var t=home?'iris':(p.theme||'iris');document.documentElement.dataset.theme=t;var size=Number(p.fontSize);if(size>=14&&size<=36)document.documentElement.style.setProperty('--reading-size',size+'px');}catch(e){document.documentElement.dataset.theme='iris'}document.documentElement.dataset.scroll=/^\\/(read$|surah\\/|juz\\/)/.test(location.pathname)?'lock':'page';`;
 
 export default function RootLayout({
   children,

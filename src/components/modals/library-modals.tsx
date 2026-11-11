@@ -140,7 +140,7 @@ export function HighlightsModal() {
                   Remove
                 </button>
               ) : (
-                <span className="text-[10px] text-muted">Default</span>
+                <span className="text-xs text-muted">Default</span>
               )}
             </li>
           ))}

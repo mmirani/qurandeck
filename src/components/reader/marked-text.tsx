@@ -114,13 +114,13 @@ export function HighlightPopover({
       <button
         type="button"
         onClick={() => onPick(activeId)}
-        className="inline-flex h-8 cursor-pointer items-center gap-1 rounded-full px-2 text-[11px] text-ink"
+        className="inline-flex h-8 cursor-pointer items-center gap-1 rounded-full px-2 text-xs text-ink"
       >
         <Highlighter className="h-3.5 w-3.5" />
         Mark
       </button>
       {onAyah ? (
-        <button type="button" onClick={onAyah} className="h-8 cursor-pointer rounded-full px-2 text-[11px] text-gold-deep">
+        <button type="button" onClick={onAyah} className="h-8 cursor-pointer rounded-full px-2 text-xs text-gold-deep">
           Whole ayah
         </button>
       ) : null}
@@ -129,7 +129,7 @@ export function HighlightPopover({
           type="button"
           aria-label="Remove highlight"
           onClick={onErase}
-          className="inline-flex h-8 cursor-pointer items-center gap-1 rounded-full px-2 text-[11px] text-danger"
+          className="inline-flex h-8 cursor-pointer items-center gap-1 rounded-full px-2 text-xs text-danger"
         >
           <Eraser className="h-3.5 w-3.5" />
           Remove
