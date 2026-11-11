@@ -45,6 +45,10 @@
   --mushaf-rule: color-mix(in srgb, #8c6818 38%, #e4d6b8);
   --chip-alt: #a54e3e;
   --on-chip-alt: #ffffff;
+  --google-btn-fill: #ffffff;
+  --google-btn-ink: #1f1f1f;
+  --google-btn-stroke: #747775;
+  --google-btn-hover: #f2f2f2;
 }
 
 @theme inline {
@@ -517,6 +521,20 @@ html {
   --mushaf-field: var(--gold);
   --mushaf-rose: var(--gold);
   --mushaf-rule: color-mix(in srgb, var(--ink) 18%, var(--surface));
+  --google-btn-fill: #131314;
+  --google-btn-ink: #e3e3e3;
+  --google-btn-stroke: #8e918f;
+  --google-btn-hover: #1f1f1f;
+}
+
+.sign-in-google {
+  background-color: var(--google-btn-fill);
+  color: var(--google-btn-ink);
+  border: 1px solid var(--google-btn-stroke);
+}
+
+.sign-in-google:hover:not(:disabled) {
+  background-color: var(--google-btn-hover);
 }
 
 html {

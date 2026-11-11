@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
+import { KeyRound, Mail } from "lucide-react";
 import { signIn } from "next-auth/react";
 import { addPasskey, signInWithPasskey } from "@/components/account/passkey-actions";
+import { AppleMark, GoogleMark } from "@/components/auth/provider-marks";
 import { useMushaf } from "@/components/providers/mushaf-provider";
 import { Modal } from "@/components/ui/modal";
 import { PROMISE_LINE, PROMISE_STORY } from "@/lib/brand";
@@ -18,6 +20,36 @@ type AuthConfig = {
   publicSignup: boolean;
   hasSecret: boolean;
 };
+
+function AuthChoiceButton({
+  type = "button",
+  label,
+  disabled,
+  onClick,
+  className,
+  icon,
+}: {
+  type?: "button" | "submit";
+  label: string;
+  disabled?: boolean;
+  onClick?: () => void;
+  className: string;
+  icon: ReactNode;
+}) {
+  return (
+    <button
+      type={type}
+      disabled={disabled}
+      onClick={onClick}
+      className={`relative flex w-full cursor-pointer items-center justify-center rounded-full px-12 disabled:opacity-50 ${className}`}
+    >
+      <span className="pointer-events-none absolute left-3 flex size-5 items-center justify-center" aria-hidden="true">
+        {icon}
+      </span>
+      {label}
+    </button>
+  );
+}
 
 export function AuthModal() {
   const { modal, closeModal, signOut, updateDisplayName, user } = useMushaf();
@@ -167,48 +199,44 @@ export function AuthModal() {
 
           <div className="space-y-2">
             {config?.google ? (
-              <button
-                type="button"
+              <AuthChoiceButton
+                label="Continue with Google"
                 disabled={busy}
                 onClick={() => {
                   setBusy(true);
                   void signIn("google", { callbackUrl: "/read" });
                 }}
-                className="flex h-12 w-full cursor-pointer items-center justify-center rounded-full border border-line bg-surface text-sm font-medium text-ink disabled:opacity-50"
-              >
-                Continue with Google
-              </button>
+                className="sign-in-google h-12 text-sm font-medium leading-5"
+                icon={<GoogleMark />}
+              />
             ) : null}
             {config?.apple ? (
-              <button
-                type="button"
+              <AuthChoiceButton
+                label="Sign in with Apple"
                 disabled={busy}
                 onClick={() => {
                   setBusy(true);
                   void signIn("apple", { callbackUrl: "/read" });
                 }}
-                className="flex h-12 w-full cursor-pointer items-center justify-center rounded-full border border-line bg-surface text-sm font-medium text-ink disabled:opacity-50"
-              >
-                Sign in with Apple
-              </button>
+                className="h-12 border border-line bg-surface text-sm font-medium leading-5 text-ink"
+                icon={<AppleMark />}
+              />
             ) : null}
             {config?.passkey ? (
-              <button
-                type="button"
+              <AuthChoiceButton
+                label="Sign in with a passkey"
                 disabled={busy}
                 onClick={() => {
                   setBusy(true);
                   setError(null);
-                  void signInWithPasskey()
-                    .catch((reason: unknown) => {
-                      setError(reason instanceof Error ? reason.message : "Could not use a passkey.");
-                      setBusy(false);
-                    });
+                  void signInWithPasskey().catch((reason: unknown) => {
+                    setError(reason instanceof Error ? reason.message : "Could not use a passkey.");
+                    setBusy(false);
+                  });
                 }}
-                className="flex h-12 w-full cursor-pointer items-center justify-center rounded-full border border-line bg-surface text-sm font-medium text-ink disabled:opacity-50"
-              >
-                Sign in with a passkey
-              </button>
+                className="h-12 border border-line bg-surface text-sm font-medium leading-5 text-ink"
+                icon={<KeyRound className="size-5" aria-hidden="true" strokeWidth={1.75} />}
+              />
             ) : null}
           </div>
 
@@ -309,13 +337,13 @@ export function AuthModal() {
               ) : null}
               {error ? <p className="text-sm text-danger">{error}</p> : null}
               {info ? <p className="text-sm text-gold-deep">{info}</p> : null}
-              <button
+              <AuthChoiceButton
                 type="submit"
                 disabled={busy || config.emailDelivery === "unavailable"}
-                className="h-14 w-full cursor-pointer rounded-full bg-gold text-lg text-on-gold disabled:opacity-50"
-              >
-                {busy ? "Working…" : codeSent ? "Sign in" : "Email me a code"}
-              </button>
+                label={busy ? "Working…" : codeSent ? "Sign in" : "Email me a code"}
+                className="h-14 bg-gold text-lg text-on-gold"
+                icon={<Mail className="size-5" aria-hidden="true" strokeWidth={1.75} />}
+              />
             </form>
           ) : null}
         </div>
