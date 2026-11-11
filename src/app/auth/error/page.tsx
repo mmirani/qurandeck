@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AuthFailureBeacon } from "@/components/analytics/auth-failure";
 
 export default async function AuthErrorPage({
   searchParams,
@@ -10,6 +11,7 @@ export default async function AuthErrorPage({
 
   return (
     <main className="mx-auto flex min-h-dvh max-w-md flex-col justify-center gap-4 px-6 py-12">
+      <AuthFailureBeacon error={typeof error === "string" ? error : undefined} />
       <h1 className="font-display text-2xl font-semibold text-ink">
         {betaBlocked ? "Beta invite required" : "Sign-in issue"}
       </h1>

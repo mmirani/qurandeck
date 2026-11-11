@@ -1,6 +1,6 @@
 import { auth } from "@/auth";
 import { clientAddress, getRateLimiter } from "@/lib/rate-limit";
-import { acceptUsagePost, parseUsageRequest } from "@/lib/usage";
+import { USAGE_BODY_LIMIT, acceptUsagePost, parseUsageRequest } from "@/lib/usage";
 import { getUsageInserter } from "@/lib/usage-store";
 
 export const dynamic = "force-dynamic";
@@ -9,7 +9,7 @@ const noStore = { "Cache-Control": "no-store" };
 
 export async function POST(request: Request) {
   const raw = await request.text();
-  if (raw.length > 2_000) {
+  if (raw.length > USAGE_BODY_LIMIT) {
     return Response.json({ ok: false, error: "Invalid request." }, { status: 400, headers: noStore });
   }
 
@@ -24,7 +24,7 @@ export async function POST(request: Request) {
 
   const parsed = parseUsageRequest(body);
   let email: string | null = null;
-  if (parsed.ok && parsed.kind === "guest_merge") {
+  if (parsed.ok && (parsed.kind === "guest_merge" || parsed.kind === "batch")) {
     try {
       const session = await auth();
       email = session?.user?.email ?? null;

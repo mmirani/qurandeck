@@ -66,6 +66,8 @@ import {
 } from "@/lib/storage";
 import { cleanDisplayName, validateDisplayName } from "@/lib/display-name";
 import { layoutSignals, appliedTheme } from "@/lib/appearance";
+import { preferenceUsageEvents } from "@/lib/usage-catalog";
+import { trackUsage } from "@/lib/usage-client";
 import {
   addReadingSeconds,
   defaultReadingProgress,
@@ -212,6 +214,7 @@ export function MushafProvider({ children }: { children: ReactNode }) {
   const { data: authSession, status: authStatus } = useSession();
   const audioRef = useRef<HTMLAudioElement>(null);
   const [preferences, setPreferences] = useState<Preferences>(defaultPreferences);
+  const prefsRef = useRef(preferences);
   const [hydrated, setHydrated] = useState(false);
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [juzs, setJuzs] = useState<Juz[]>([]);
@@ -572,24 +575,28 @@ export function MushafProvider({ children }: { children: ReactNode }) {
     };
   }, [loadJuzData, loadSurah, pathname]);
 
+  useEffect(() => {
+    prefsRef.current = preferences;
+  }, [preferences]);
+
   const updatePreferences = useCallback((partial: Partial<Preferences>) => {
-    setPreferences((current) => {
-      const next = {
-        ...current,
-        ...partial,
-        studyCards: partial.studyCards
-          ? mergeStudyCards(current.studyCards, partial.studyCards)
-          : current.studyCards,
-      };
-      if (partial.translationIds) {
-        return { ...next, ...withTranslationIds(partial.translationIds) };
-      }
-      if (partial.translationId != null && partial.translationIds === undefined) {
-        const rest = current.translationIds.filter((id) => id !== partial.translationId);
-        return { ...next, ...withTranslationIds([partial.translationId, ...rest]) };
-      }
-      return next;
-    });
+    const current = prefsRef.current;
+    let next: Preferences = {
+      ...current,
+      ...partial,
+      studyCards: partial.studyCards
+        ? mergeStudyCards(current.studyCards, partial.studyCards)
+        : current.studyCards,
+    };
+    if (partial.translationIds) {
+      next = { ...next, ...withTranslationIds(partial.translationIds) };
+    } else if (partial.translationId != null && partial.translationIds === undefined) {
+      const rest = current.translationIds.filter((id) => id !== partial.translationId);
+      next = { ...next, ...withTranslationIds([partial.translationId, ...rest]) };
+    }
+    prefsRef.current = next;
+    setPreferences(next);
+    for (const event of preferenceUsageEvents(current, next)) trackUsage(event);
   }, []);
 
   const loadSource = useCallback(
@@ -646,12 +653,13 @@ export function MushafProvider({ children }: { children: ReactNode }) {
       setSelectedVerseKey(verseKey);
       setProgress((current) => saveReadingPlace(markVerseRead(current, verseKey), verseKey));
       await playSource(verse.audioUrl);
+      trackUsage({ name: "feature", feature: "audio_play" });
     },
     [playSource, verses],
   );
 
   const playFrom = useCallback(
-    async (verseKey: string) => {
+    async (verseKey: string, origin: "user" | "continue" = "user") => {
       const verse = verses.find((item) => item.verseKey === verseKey);
       if (!verse) return;
       setPlayMode("from-here");
@@ -660,6 +668,7 @@ export function MushafProvider({ children }: { children: ReactNode }) {
       setSelectedVerseKey(verseKey);
       setProgress((current) => saveReadingPlace(markVerseRead(current, verseKey), verseKey));
       await playSource(verse.audioUrl);
+      if (origin === "user") trackUsage({ name: "feature", feature: "audio_play" });
     },
     [playSource, verses],
   );
@@ -670,6 +679,7 @@ export function MushafProvider({ children }: { children: ReactNode }) {
       setPlayingWordLocation(word.location);
       setSelectedWord(word);
       await playSource(wordByWordAudioUrl(word.location) ?? word.audioUrl);
+      trackUsage({ name: "feature", feature: "audio_play" });
     },
     [playSource],
   );
@@ -692,7 +702,12 @@ export function MushafProvider({ children }: { children: ReactNode }) {
     }
     if (audio.src && playingVerseKey) {
       audio.playbackRate = preferences.playbackRate;
-      void audio.play().then(() => setIsPlaying(true));
+      void audio.play()
+        .then(() => {
+          setIsPlaying(true);
+          trackUsage({ name: "feature", feature: "audio_play" });
+        })
+        .catch(() => undefined);
       return;
     }
     if (playingVerseKey) void playFrom(playingVerseKey);
@@ -718,7 +733,7 @@ export function MushafProvider({ children }: { children: ReactNode }) {
         const index = verseIndex(verses, playingVerseKey);
         const next = verses[index + 1];
         if (next) {
-          void playFrom(next.verseKey);
+          void playFrom(next.verseKey, "continue");
           return;
         }
       }
@@ -769,6 +784,7 @@ export function MushafProvider({ children }: { children: ReactNode }) {
         setSearchResults([]);
         return;
       }
+      trackUsage({ name: "feature", feature: "search_performed" });
       setSearching(true);
       try {
         const topicHits: SearchHit[] = filters.themes.flatMap((id) => {
@@ -834,6 +850,7 @@ export function MushafProvider({ children }: { children: ReactNode }) {
               createdAt: new Date().toISOString(),
             },
           ];
+      if (!exists) trackUsage({ name: "feature", feature: "bookmark_added" });
       saveBookmarks(next);
       return next;
     });
@@ -853,6 +870,9 @@ export function MushafProvider({ children }: { children: ReactNode }) {
           createdAt: new Date().toISOString(),
         },
       ];
+      if (current.every((item) => item.wordLocation !== word.location)) {
+        trackUsage({ name: "feature", feature: "bookmark_added" });
+      }
       saveBookmarks(next);
       return next;
     });
@@ -862,6 +882,7 @@ export function MushafProvider({ children }: { children: ReactNode }) {
     setNotes((current) => {
       const trimmed = body.trim();
       const existing = current.find((item) => item.verseKey === verseKey);
+      if (trimmed && !existing) trackUsage({ name: "feature", feature: "note_added" });
       const next = !trimmed
         ? current.filter((item) => item.verseKey !== verseKey)
         : existing
@@ -878,8 +899,11 @@ export function MushafProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const commitHighlights = useCallback((next: Highlight[]) => {
+    setHighlights((current) => {
+      if (next.length > current.length) trackUsage({ name: "feature", feature: "highlight_added" });
+      return next;
+    });
     saveHighlights(next);
-    setHighlights(next);
   }, []);
 
   const setActiveSwatch = useCallback((id: string) => {

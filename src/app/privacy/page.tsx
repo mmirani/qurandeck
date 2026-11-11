@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { LegalPage, LegalSection } from "@/components/legal/legal-page";
+import { COMPANION_NAME } from "@/lib/brand";
 
 export const metadata: Metadata = {
   title: "Privacy policy — QuranDeck",
@@ -101,11 +102,33 @@ export default function PrivacyPage() {
           Sign-in API routes are not measured. These tools do not set a cookie.
         </p>
         <p>
-          QuranDeck also stores its own product events: a guest session starting, a sign-up, a sign-in (email code,
-          passkey, Google, or Apple), a guest library merging into an account, and an account deletion. The browser
-          keeps a random id in local storage for the guest session. That id is not a cookie. The database stores the
-          event type, the time, the sign-in method when there is one, and a one-way hash of the guest id or the
-          account. It does not store your email, name, IP address, browser, notes, or what you read.
+          QuranDeck also stores its own product events. The browser keeps a random id in local storage. That id is not
+          a cookie. The database stores a one-way hash of that id, or of the account when you are signed in, plus the
+          time and an event from a fixed list. It does not store your email, name, IP address, or browser.
+        </p>
+        <p>
+          The list covers a guest session starting, a sign-up, a sign-in (email code, passkey, Google, or Apple), a
+          guest library merging into an account, and an account deletion. It also covers product actions: audio
+          started, a note, bookmark, or highlight added, tafsir opened, a search run, a share, a translation toggle,
+          word by word, focus mode, an export, and the mobile reading layout. Those rows are counts. They do not
+          include which ayah you opened, the words of a note or highlight, or the search text.
+        </p>
+        <p>
+          {COMPANION_NAME} events are just as narrow: the companion was opened, a recognized command name such as
+          play_surah or bigger_text, a count when a command was not understood, a guided tour started or finished, and
+          a count when a religious question was refused. The words you type or speak to {COMPANION_NAME} are not stored.
+        </p>
+        <p>
+          Display settings are stored as the choice itself: the theme name in use, text size, ink, and similar on or
+          off options such as translation, mushaf view, and playback speed. Not your notes, and not your place in the
+          Quran.
+        </p>
+        <p>
+          Once a day, the app can record that it was opened, and a coarse device bucket: phone, tablet, or desktop, and
+          whether it is installed or running in a browser. It does not store the user agent, operating system version,
+          or screen size. Sign-in health counts whether an email code was requested or used, and whether a passkey,
+          Google, or Apple sign-in started, finished, or failed. A failure is a short category such as access denied or
+          a redirect mismatch, not your email and not the raw error text.
         </p>
         <p>Those event rows are deleted after about 13 months.</p>
       </LegalSection>
