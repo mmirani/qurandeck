@@ -1,4 +1,5 @@
 import { PRODUCT_NAME } from "@/lib/brand";
+import { trackUsage } from "@/lib/usage-client";
 import {
   formatReadingMinutes,
   normalizeSurahCompletions,
@@ -164,6 +165,7 @@ export function downloadTextFile(filename: string, contents: string, mime: strin
 
 export function downloadStatsCsv(input: LibraryExportInput) {
   downloadTextFile(exportFilename("stats"), buildStatsCsv(input), "text/csv;charset=utf-8");
+  trackUsage({ name: "feature", feature: "export" });
 }
 
 export function downloadLibraryJson(input: LibraryExportInput) {
@@ -173,4 +175,5 @@ export function downloadLibraryJson(input: LibraryExportInput) {
     `${JSON.stringify(doc, null, 2)}\n`,
     "application/json;charset=utf-8",
   );
+  trackUsage({ name: "feature", feature: "export" });
 }

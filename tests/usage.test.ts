@@ -2,11 +2,20 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { accountId } from "../src/lib/library-seal";
 import { MemoryRateLimiter, rateLimitKey } from "../src/lib/rate-limit";
+import { defaultPreferences } from "../src/lib/storage";
 import {
+  coarseAuthReason,
+  deviceBucketFrom,
+  preferenceUsageEvents,
+  sanaCommandName,
+} from "../src/lib/usage-catalog";
+import {
+  CLIENT_BATCH_LIMIT,
   DELETE_DEDUPE_MS,
   GUEST_EVENT_LIMIT,
   MERGE_EVENT_LIMIT,
   SIGN_IN_DEDUPE_MS,
+  SUBJECT_EVENT_LIMIT,
   USAGE_RETENTION_MONTHS,
   acceptUsagePost,
   accountUsageSubject,
@@ -22,6 +31,7 @@ import {
   recordAuthEvents,
   signInMethod,
   usageChartDays,
+  usageSchemaStatements,
   usageSubject,
   type UsageInserter,
 } from "../src/lib/usage";
@@ -302,5 +312,222 @@ describe("usage stats", () => {
     assert.equal(stats.daily[29]?.signUps, 1);
     assert.equal(stats.daily[28]?.signIns, 4);
     assert.equal(stats.daily.some((day) => day.day === "2026-10-01"), false);
+  });
+
+  it("counts features, commands, themes, readers, and sign-in failures", () => {
+    const now = new Date("2026-11-11T12:00:00Z");
+    const stats = assembleUsageStats(
+      [
+        { eventType: "feature", method: null, detail: "audio_play", all: 9, d30: 4, d7: 1, readersAll: 3, readers30: 2, readers7: 1 },
+        { eventType: "feature", method: null, detail: "2:255", all: 50, d30: 50, d7: 50, readersAll: 50, readers30: 50, readers7: 50 },
+        { eventType: "sana_command", method: null, detail: "play_surah", all: 6, d30: 2, d7: 1, readersAll: 4, readers30: 2, readers7: 1 },
+        { eventType: "sana_command", method: null, detail: "what is riba", all: 8, d30: 8, d7: 8 },
+        { eventType: "sana_unknown", method: null, detail: null, all: 3, d30: 1, d7: 0 },
+        { eventType: "sana_refusal", method: null, detail: null, all: 2, d30: 2, d7: 1 },
+        { eventType: "setting", method: null, detail: "text_size:20", all: 5, d30: 1, d7: 0 },
+        { eventType: "auth_requested", method: "google", detail: null, all: 7, d30: 3, d7: 1 },
+        { eventType: "auth_code_used", method: "email_code", detail: null, all: 4, d30: 1, d7: 1 },
+        { eventType: "auth_failed", method: "google", detail: "redirect_uri_mismatch", all: 2, d30: 2, d7: 0 },
+        { eventType: "auth_failed", method: null, detail: "reader@example.com", all: 9, d30: 9, d7: 9 },
+      ],
+      [],
+      now,
+      {
+        activity: { day: 4, d7: 11, d30: 20, all: 30 },
+        retention: { eligible: 10, returned: 4, recentEligible: 6, recentReturned: 2 },
+        themes: [{ detail: "theme:obsidian", all: 8, d30: 3, d7: 1 }],
+        devices: [{ detail: "phone_installed", all: 5, d30: 2, d7: 1 }],
+        dailyActive: [{ day: "2026-11-11", readers: 4 }],
+      },
+    );
+
+    assert.equal(stats.features.find((feature) => feature.id === "audio_play")?.counts.all, 9);
+    assert.equal(stats.features.find((feature) => feature.id === "audio_play")?.readers.d7, 1);
+    assert.equal(stats.features.some((feature) => String(feature.id) === "2:255"), false);
+    assert.equal(stats.sana.commands.length, 1);
+    assert.equal(stats.sana.commands[0]?.command, "play_surah");
+    assert.equal(stats.sana.commands[0]?.readers.all, 4);
+    assert.equal(stats.sana.unknown.all, 3);
+    assert.equal(stats.sana.refusals.d7, 1);
+    assert.equal(stats.settings[0]?.setting, "text_size:20");
+    assert.equal(stats.themes[0]?.theme, "obsidian");
+    assert.equal(stats.themes[0]?.readers.d30, 3);
+    assert.equal(stats.devices.find((device) => device.device === "phone_installed")?.readers.all, 5);
+    assert.equal(stats.devices.find((device) => device.device === "desktop_browser")?.readers.all, 0);
+    assert.equal(stats.activity.d7, 11);
+    assert.equal(stats.retention.rate, 0.4);
+    assert.equal(stats.retention.recentRate, 2 / 6);
+    assert.equal(stats.authHealth.find((row) => row.method === "google")?.requested.all, 7);
+    assert.equal(stats.authHealth.find((row) => row.method === "google")?.failed.d30, 2);
+    assert.equal(stats.authHealth.find((row) => row.method === "email_code")?.codeUsed.d7, 1);
+    assert.equal(stats.authFailures.length, 1);
+    assert.equal(stats.authFailures[0]?.reason, "redirect_uri_mismatch");
+    assert.equal(stats.dailyActive[29]?.readers, 4);
+    assert.equal(JSON.stringify(stats).includes("reader@example.com"), false);
+    assert.equal(JSON.stringify(stats).includes("what is riba"), false);
+    assert.equal(JSON.stringify(stats).includes("2:255"), false);
+  });
+});
+
+describe("product usage privacy", () => {
+  const ip = "203.0.113.50";
+
+  function endpoint(store: UsageInserter, now = Date.now()) {
+    const seen: string[] = [];
+    const memory = new MemoryRateLimiter();
+    return {
+      seen,
+      post(body: unknown, email: string | null = null) {
+        return acceptUsagePost({
+          body,
+          signedInEmail: email,
+          ip,
+          now,
+          secret: SECRET,
+          store,
+          limiter: {
+            hit(key, limit, windowMs, at) {
+              seen.push(key);
+              return memory.hit(key, limit, windowMs, at);
+            },
+          },
+        });
+      },
+    };
+  }
+
+  it("rejects forged events, unknown properties, and free text", async () => {
+    const store = createMemoryUsageStore();
+    const api = endpoint(store);
+    const forged = [
+      { events: [{ name: "sign_in", method: "google" }] },
+      { events: [{ name: "sign_up", method: "email_code" }] },
+      { events: [{ name: "account_deleted" }] },
+      { events: [{ name: "feature", feature: "audio_play", query: "mercy" }] },
+      { events: [{ name: "feature", feature: "read_surah" }] },
+      { events: [{ name: "sana_unknown", text: "what is the ruling on riba" }] },
+      { events: [{ name: "sana_command", command: "play this surah slowly" }] },
+      { events: [{ name: "setting", setting: "theme:obsidian", note: "my note" }] },
+      { events: [{ name: "setting", setting: "theme:not-a-theme" }] },
+      { events: [{ name: "session_open", device: "phone_browser", userAgent: "Mozilla/5.0" }] },
+      { events: [{ name: "session_open", device: "watch" }] },
+      { events: [{ name: "auth_failed", method: "google", reason: "redirect_uri_mismatch", email: "reader@example.com" }] },
+      { events: [{ name: "auth_failed", reason: "something the provider returned verbatim" }] },
+      { event: "guest_started", anonId: ANON, events: [{ name: "feature", feature: "share" }] },
+      { events: [{ name: "feature", feature: "audio_play" }, { name: "feature", feature: "nope" }] },
+      { query: "2:255", events: [{ name: "feature", feature: "search_performed" }] },
+      { events: Array.from({ length: CLIENT_BATCH_LIMIT + 1 }, () => ({ name: "sana_opened" })) },
+    ];
+    for (const body of forged) {
+      const result = await api.post(body, "reader@example.com");
+      assert.equal(result.status, 400);
+    }
+    assert.equal(store.events.length, 0);
+    assert.equal(parseUsageRequest({ events: [{ name: "sana_unknown", text: "hello" }] }).ok, false);
+  });
+
+  it("stores allowlisted product events as hashes, never the payload text", async () => {
+    const store = createMemoryUsageStore();
+    const api = endpoint(store);
+    const anon = ANON;
+    const body = {
+      anonId: anon,
+      events: [
+        { name: "feature", feature: "audio_play" },
+        { name: "sana_command", command: "bigger_text" },
+        { name: "sana_unknown" },
+        { name: "setting", setting: "theme:iris" },
+        { name: "session_open", device: "phone_installed" },
+        { name: "auth_failed", method: "google", reason: "access_denied" },
+      ],
+    };
+    const result = await api.post(body);
+    assert.equal(result.status, 200);
+    assert.equal(store.events.length, 6);
+    assert.equal(store.events.every((event) => event.subjectHash === guestUsageSubject(anon, SECRET)), true);
+    const saved = JSON.stringify(store.events);
+    assert.equal(saved.includes(anon), false);
+    assert.equal(saved.includes(ip), false);
+    assert.equal(saved.includes("bigger"), true);
+    assert.equal(store.events.find((event) => event.eventType === "sana_unknown")?.detail ?? null, null);
+    assert.equal(store.events.find((event) => event.eventType === "feature")?.detail, "audio_play");
+
+    const signedIn = await api.post(body, "Reader@Example.com");
+    assert.equal(signedIn.status, 200);
+    const accountEvents = store.events.slice(6);
+    assert.equal(accountEvents.every((event) => event.subjectHash === accountUsageSubject("reader@example.com", SECRET)), true);
+    assert.equal(JSON.stringify(accountEvents).includes("reader@example.com"), false);
+    assert.equal((await api.post({ events: [{ name: "feature", feature: "share" }] })).status, 400);
+  });
+
+  it("caps client events per reader and does not keep the address", async () => {
+    const store = createMemoryUsageStore();
+    const api = endpoint(store);
+    for (let index = 0; index < SUBJECT_EVENT_LIMIT; index += 1) {
+      const result = await api.post({ anonId: ANON, events: [{ name: "sana_opened" }] });
+      assert.equal(result.status, 200);
+    }
+    const blocked = await api.post({ anonId: ANON, events: [{ name: "sana_opened" }] });
+    assert.equal(blocked.status, 429);
+    assert.equal(blocked.headers?.["Retry-After"] !== undefined, true);
+    assert.equal(api.seen[0], rateLimitKey("ip", `usage-client:${ip}`));
+    assert.equal(api.seen[0]?.includes(ip), false);
+    assert.equal(store.events.length, 1);
+  });
+
+  it("dedupes a daily open and repeats a theme only after a week", async () => {
+    let now = new Date("2026-11-11T12:00:00Z");
+    const store = createMemoryUsageStore([], () => now);
+    const subject = guestUsageSubject(ANON, SECRET);
+    const open = { eventType: "session_open" as const, method: null, subjectHash: subject, detail: "phone_browser" };
+    assert.equal((await store.insert(open)).toString(), "inserted");
+    assert.equal((await store.insert({ ...open, detail: "desktop_browser" })).toString(), "duplicate");
+    now = new Date("2026-11-12T00:00:00Z");
+    assert.equal((await store.insert(open)).toString(), "inserted");
+
+    const theme = { eventType: "setting" as const, method: null, subjectHash: subject, detail: "theme:obsidian" };
+    assert.equal((await store.insert(theme)).toString(), "inserted");
+    now = new Date("2026-11-15T12:00:00Z");
+    assert.equal((await store.insert(theme)).toString(), "duplicate");
+    now = new Date("2026-11-19T12:00:00Z");
+    assert.equal((await store.insert(theme)).toString(), "inserted");
+  });
+
+  it("records display choices and command names, not what someone typed", () => {
+    const next = preferenceUsageEvents(defaultPreferences, {
+      ...defaultPreferences,
+      theme: "obsidian",
+      fontSize: 20,
+      showTafsir: true,
+      showTranslation: false,
+    });
+    assert.deepEqual(
+      next.map((event) => ("setting" in event ? event.setting : "feature" in event ? event.feature : event.name)).sort(),
+      ["tafsir:on", "tafsir_opened", "text_size:20", "theme:obsidian", "translation:off", "translation_toggle"].sort(),
+    );
+    assert.equal(JSON.stringify(next).includes("2:255"), false);
+    assert.equal(sanaCommandName("play-surah"), "play_surah");
+    assert.equal(sanaCommandName("bigger"), "bigger_text");
+    assert.equal(sanaCommandName("none"), null);
+    assert.equal(sanaCommandName("refuse"), null);
+    assert.equal(sanaCommandName("what does 2:255 mean"), null);
+    assert.equal(coarseAuthReason("redirect_uri_mismatch"), "redirect_uri_mismatch");
+    assert.equal(coarseAuthReason("AccessDenied"), "access_denied");
+    assert.equal(coarseAuthReason("OAuthCallback"), "oauth_callback");
+    assert.equal(coarseAuthReason("reader@example.com could not sign in"), "unknown");
+    assert.equal(deviceBucketFrom(390, false), "phone_browser");
+    assert.equal(deviceBucketFrom(390, true), "phone_installed");
+    assert.equal(deviceBucketFrom(800, false), "tablet_browser");
+    assert.equal(deviceBucketFrom(1280, true), "desktop_installed");
+  });
+
+  it("builds the database allowlist from the same tokens", () => {
+    const sql = usageSchemaStatements().join("\n");
+    for (const token of ["audio_play", "play_surah", "bigger_text", "theme:iris", "text_size:18", "phone_installed", "redirect_uri_mismatch", "access_denied"]) {
+      assert.equal(sql.includes(`'${token}'`), true);
+    }
+    assert.equal(sql.includes("userAgent"), false);
+    assert.equal(sql.includes("reader@example.com"), false);
+    assert.equal(sql.includes("2:255"), false);
   });
 });

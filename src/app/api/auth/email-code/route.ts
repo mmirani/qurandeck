@@ -3,6 +3,8 @@ import { getEmailCodeStore } from "@/lib/email-code-store";
 import { issueEmailCode } from "@/lib/email-code";
 import { getRateLimiter } from "@/lib/rate-limit";
 import { emailSignInAllowed } from "@/lib/signup-gate";
+import type { AuthReason } from "@/lib/usage";
+import { recordAuthFailed, recordAuthRequested } from "@/lib/usage-store";
 
 export const dynamic = "force-dynamic";
 
@@ -69,6 +71,26 @@ export async function POST(request: Request) {
     });
     const response = Response.json(issued.body, { status: issued.status });
     if (issued.retryAfterSec) response.headers.set("Retry-After", String(issued.retryAfterSec));
+    const reason: AuthReason | null =
+      issued.status === 200
+        ? null
+        : issued.status === 502
+          ? "send_failed"
+          : issued.status === 429
+            ? "rate_limited"
+            : issued.status === 403
+              ? "not_allowed"
+              : issued.status === 503
+                ? "unavailable"
+                : null;
+    if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized)) {
+      try {
+        if (issued.status === 200) await recordAuthRequested(normalized, "email_code");
+        else if (reason) await recordAuthFailed(normalized, "email_code", reason);
+      } catch {
+        console.error("Usage email request event failed");
+      }
+    }
     return response;
   } catch {
     console.error("Email code request failed");

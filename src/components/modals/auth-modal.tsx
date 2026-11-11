@@ -9,6 +9,7 @@ import { AppleMark, GoogleMark } from "@/components/auth/provider-marks";
 import { useMushaf } from "@/components/providers/mushaf-provider";
 import { Modal } from "@/components/ui/modal";
 import { PROMISE_LINE, PROMISE_STORY } from "@/lib/brand";
+import { rememberAuthMethod, trackUsage } from "@/lib/usage-client";
 
 type AuthConfig = {
   google: boolean;
@@ -204,6 +205,8 @@ export function AuthModal() {
                 disabled={busy}
                 onClick={() => {
                   setBusy(true);
+                  rememberAuthMethod("google");
+                  trackUsage({ name: "auth_requested", method: "google" });
                   void signIn("google", { callbackUrl: "/read" });
                 }}
                 className="sign-in-google h-12 text-sm font-medium leading-5"
@@ -216,6 +219,8 @@ export function AuthModal() {
                 disabled={busy}
                 onClick={() => {
                   setBusy(true);
+                  rememberAuthMethod("apple");
+                  trackUsage({ name: "auth_requested", method: "apple" });
                   void signIn("apple", { callbackUrl: "/read" });
                 }}
                 className="h-12 border border-line bg-surface text-sm font-medium leading-5 text-ink"

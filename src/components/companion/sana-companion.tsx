@@ -5,6 +5,7 @@ import Image from "next/image";
 import { COMPANION_NAME } from "@/lib/brand";
 import { SanaGuidePanel } from "@/components/guide/sana-guide-panel";
 import { useGuide } from "@/components/guide/guide-provider";
+import { trackUsage } from "@/lib/usage-client";
 import {
   NUR_SIZE,
   NUR_SRC,
@@ -68,6 +69,10 @@ function SanaDock({ audioBarVisible, ayahMode }: { audioBarVisible: boolean; aya
     setOpen(false);
     window.setTimeout(() => buttonRef.current?.focus(), 0);
   }, []);
+
+  useEffect(() => {
+    if (open) trackUsage({ name: "sana_opened" });
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -138,6 +143,10 @@ function SanaFloatingCompanion() {
     setOpen(false);
     window.setTimeout(() => orbRef.current?.focus(), 0);
   }, []);
+
+  useEffect(() => {
+    if (open) trackUsage({ name: "sana_opened" });
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;

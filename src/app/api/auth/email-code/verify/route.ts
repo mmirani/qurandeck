@@ -2,6 +2,8 @@ import { getEmailCodeStore } from "@/lib/email-code-store";
 import { verifyEmailCode } from "@/lib/email-code";
 import { clientIp } from "@/lib/email-sign-in";
 import { getRateLimiter, rateLimitKey } from "@/lib/rate-limit";
+import type { AuthReason } from "@/lib/usage";
+import { recordAuthCodeUsed, recordAuthFailed } from "@/lib/usage-store";
 
 export const dynamic = "force-dynamic";
 
@@ -37,6 +39,17 @@ export async function POST(request: Request) {
       secret: process.env.AUTH_SECRET,
       store,
     });
+    const normalized = email.trim().toLowerCase();
+    const reason: AuthReason | null =
+      result.status === 401 ? "mismatch" : result.status === 429 ? "locked" : result.status === 503 ? "unavailable" : null;
+    if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized)) {
+      try {
+        if (result.status === 200) await recordAuthCodeUsed(normalized);
+        else if (reason) await recordAuthFailed(normalized, "email_code", reason);
+      } catch {
+        console.error("Usage email code event failed");
+      }
+    }
     return Response.json(result.body, { status: result.status });
   } catch {
     console.error("Email code verification failed");

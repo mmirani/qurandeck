@@ -1,4 +1,5 @@
 import type { Verse } from "@/lib/quran/types";
+import { trackUsage } from "@/lib/usage-client";
 
 export const POPULAR_SURAH_IDS = [1, 2, 3, 4, 18, 36, 55, 67, 112] as const;
 export const TOTAL_SURAHS = 114;
@@ -369,6 +370,7 @@ export async function shareOrCopy(title: string, text: string) {
     if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
       await navigator.share({ title, text: payload });
       announce("Shared");
+      trackUsage({ name: "feature", feature: "share" });
       return;
     }
   } catch (error) {
@@ -377,6 +379,7 @@ export async function shareOrCopy(title: string, text: string) {
   try {
     await navigator.clipboard.writeText(payload);
     announce("Link copied");
+    trackUsage({ name: "feature", feature: "share" });
   } catch {
     announce("Copy this link", payload);
   }

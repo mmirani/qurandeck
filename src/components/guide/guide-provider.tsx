@@ -16,6 +16,8 @@ import {
 } from "@/lib/guide/progress";
 import { defaultCorner, loadCompanionPose, saveCompanionPose } from "@/lib/companion";
 import { downloadLibraryJson, downloadStatsCsv } from "@/lib/export-library";
+import { sanaCommandName } from "@/lib/usage-catalog";
+import { trackUsage } from "@/lib/usage-client";
 
 type GuideKind = "welcome" | "lesson" | null;
 
@@ -99,6 +101,7 @@ export function GuideProvider({ children }: { children: ReactNode }) {
   }, [updatePreferences]);
 
   const startWelcome = useCallback(() => {
+    trackUsage({ name: "tour_started" });
     openSteps(WELCOME_TOUR, "welcome");
   }, [openSteps]);
 
@@ -111,7 +114,8 @@ export function GuideProvider({ children }: { children: ReactNode }) {
     [openSteps],
   );
 
-  const finish = useCallback(() => {
+  const finish = useCallback((completed: boolean) => {
+    if (completed) trackUsage({ name: "tour_completed" });
     setProgress((current) => {
       const next = kind === "welcome" ? markWelcomeDone(current) : current;
       const step = steps[index];
@@ -125,20 +129,27 @@ export function GuideProvider({ children }: { children: ReactNode }) {
   const next = useCallback(() => {
     const step = steps[index];
     if (step) setProgress((current) => markLessonSeen(current, step.id));
-    if (index >= steps.length - 1) finish();
+    if (index >= steps.length - 1) finish(kind === "welcome");
     else setIndex((value) => value + 1);
-  }, [finish, index, steps]);
+  }, [finish, index, kind, steps]);
 
   const back = useCallback(() => {
     setIndex((value) => Math.max(0, value - 1));
   }, []);
 
   const skip = useCallback(() => {
-    finish();
+    finish(false);
   }, [finish]);
 
   const ask = useCallback((text: string) => {
     const match = matchHelper(text);
+    if (match.action === "refuse") trackUsage({ name: "sana_refusal" });
+    else if (match.action === "none") trackUsage({ name: "sana_unknown" });
+    else {
+      const command = sanaCommandName(match.action);
+      if (command) trackUsage({ name: "sana_command", command });
+      else trackUsage({ name: "sana_unknown" });
+    }
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const replyText = performHelper(match, {
       verses,
