@@ -3,10 +3,10 @@ import { LegalPage, LegalSection } from "@/components/legal/legal-page";
 
 export const metadata: Metadata = {
   title: "Privacy policy — QuranDeck",
-  description: "How QuranDeck handles reading on this device, sign-in, and a sealed library.",
+  description: "How QuranDeck handles reading on this device, sign-in, a sealed library, and cookieless usage counts.",
 };
 
-const UPDATED = "November 10, 2026";
+const UPDATED = "November 11, 2026";
 
 export default function PrivacyPage() {
   return (
@@ -87,7 +87,27 @@ export default function PrivacyPage() {
           A sign-in cookie keeps the session on that browser. Signing out clears it. If an invite-only beta is turned
           on, a separate cookie can remember that this browser was invited, for about 90 days.
         </p>
-        <p>QuranDeck does not set advertising cookies and does not run an ads or analytics tracker.</p>
+        <p>QuranDeck does not set advertising cookies.</p>
+      </LegalSection>
+
+      <LegalSection title="How usage is counted">
+        <p>
+          QuranDeck keeps two cookieless counts so the reading room can stay reliable. Neither one is used for
+          advertising, and neither one is sold.
+        </p>
+        <p>
+          Vercel Web Analytics and Speed Insights measure aggregate page views and how fast pages load. A page address
+          is sent without its query string, so a sign-in code, magic-link token, or other parameter is removed first.
+          Sign-in API routes are not measured. These tools do not set a cookie.
+        </p>
+        <p>
+          QuranDeck also stores its own product events: a guest session starting, a sign-up, a sign-in (email code,
+          passkey, Google, or Apple), a guest library merging into an account, and an account deletion. The browser
+          keeps a random id in local storage for the guest session. That id is not a cookie. The database stores the
+          event type, the time, the sign-in method when there is one, and a one-way hash of the guest id or the
+          account. It does not store your email, name, IP address, browser, notes, or what you read.
+        </p>
+        <p>Those event rows are deleted after about 13 months.</p>
       </LegalSection>
 
       <LegalSection title="Quran text, tafsir, and audio">
@@ -103,9 +123,9 @@ export default function PrivacyPage() {
 
       <LegalSection title="Hosting">
         <p>
-          The site runs on Vercel. The sealed library and the anonymous reading-rank counters are stored in Neon
-          Postgres. Those hosts keep ordinary connection logs, such as IP address and time, to operate and protect the
-          service. QuranDeck does not use those logs to build an advertising profile.
+          The site runs on Vercel. The sealed library, the anonymous reading-rank counters, and the anonymous usage
+          events are stored in Neon Postgres. Those hosts keep ordinary connection logs, such as IP address and time,
+          to operate and protect the service. QuranDeck does not use those logs to build an advertising profile.
         </p>
       </LegalSection>
 
@@ -114,6 +134,7 @@ export default function PrivacyPage() {
           Guest data stays in the browser until you clear it. A signed-in library stays until you delete the account
           from the account panel or ask for it to be removed. Delete my account removes that email’s sealed library,
           passkeys, and unused sign-in codes. Sign-in codes expire after about 10 minutes and work only once. Anonymous
+          usage events are removed after about 13 months. Anonymous
           platform rank totals are not tied to your row, so deleting an account does not unwind counts already added
           to those totals. Notes that never left this browser stay here until you clear site data.
         </p>

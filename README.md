@@ -49,6 +49,10 @@ After sign-in, `LibrarySync` merges that device library with `GET/PUT /api/libra
 
 On each successful library put, QuranDeck compares the previous sealed visit map with the new one and may add one anonymous opening per ayah per account per day to `reading_ranks` (`verse_key`, `visits`), capped at 40 new ayahs a day. That table has no account id. It is a usage counter, not a spiritual score. Public read: `GET /api/ranks`. Before launch, set `RANK_RESET_TOKEN` and `POST /api/ranks/reset` with `Authorization: Bearer <token>` to clear test totals.
 
+Anonymous product events live in `usage_events` (`event_type`, `method`, `subject_hash`, `created_at`). The subject is an HMAC of a random guest id or the account email, keyed from `AUTH_SECRET` separately from `account_id`. The table does not store emails, names, IP addresses, user agents, or reading content. A guest session starts from a random id in `localStorage` (`al-mushaf-anon`), not a cookie. `POST /api/usage` accepts only `guest_started` and, when signed in, `guest_merge`. Sign-up, sign-in, and account deletion are recorded on the server. Rows older than 13 months are deleted when the table is prepared. `/admin/stats` is visible to emails in `ADMIN_EMAILS` and returns 404 for everyone else.
+
+Vercel Web Analytics and Speed Insights load from the root layout. Enable both in the Vercel project or they have nothing to report. Query strings are stripped before a page view is sent, and `/api/auth` is skipped.
+
 QuranDeck can decrypt a library while the reader is signed in, so sync works. The libraries table itself is not readable text. Deleting a cloud library is a request for now; there is no delete button yet. Platform rank totals are anonymous and are not unwound when a library is deleted.
 
 Used sign-in tokens are stored in `magic_link_tokens` (`jti`, `expires_at`) so a link works once. Request counters live in `auth_rate_limits`. Neither table stores the email address.
@@ -61,7 +65,8 @@ Copy `.env.example` to `.env.local`. Required for sign-in and library sync:
 
 - `AUTH_SECRET` — signs the session and encrypts the library. Use a long random string.
 - `AUTH_URL` — public origin baked into emailed sign-in links, such as `https://qurandeck.vercel.app`. No trailing slash.
-- `DATABASE_URL` — Neon Postgres connection string. Also stores consumed sign-in tokens and rate-limit counters.
+- `DATABASE_URL` — Neon Postgres connection string. Also stores consumed sign-in tokens, rate-limit counters, and anonymous usage events.
+- `ADMIN_EMAILS` — comma-separated owner emails allowed to open `/admin/stats`. Compared with the signed-in session on the server. Unset or empty means nobody.
 - `AUTH_RESEND_KEY` — Resend API key. Required for email sign-in in production.
 - `AUTH_EMAIL_FROM` — sender on a domain verified in Resend, such as `QuranDeck <sign-in@example.com>`. Required for email sign-in in production.
 
@@ -80,7 +85,7 @@ Before a public deploy, verify the sending domain in Resend and set `AUTH_RESEND
 - [/privacy](https://qurandeck.vercel.app/privacy)
 - [/terms](https://qurandeck.vercel.app/terms)
 
-Footer links on the home page. Both are dated from the beta behavior above: no ads, no sale of reading data, Quran text and audio fetched without sending notes or email.
+Footer links on the home page. Both are dated from the beta behavior above: no ads, no sale of reading data, cookieless usage counts, Quran text and audio fetched without sending notes or email.
 
 ## Sources
 

@@ -6,6 +6,7 @@ import Google from "next-auth/providers/google";
 import { cookies } from "next/headers";
 import { appleClientSecretFromEnv } from "@/lib/apple-client-secret";
 import { verifyMagicToken } from "@/lib/magic-link";
+import { recordSignIn } from "@/lib/usage-store";
 import { getMagicLinkStore } from "@/lib/magic-link-store";
 
 const BETA_COOKIE = "qurandeck-beta";
@@ -104,6 +105,13 @@ export const authConfig = {
       }
       if (account?.provider) token.authProvider = account.provider;
       if (profile?.email && !token.email) token.email = profile.email;
+      if (user?.email && account?.provider) {
+        try {
+          await recordSignIn(user.email, account.provider);
+        } catch {
+          console.error("Usage sign-in event failed");
+        }
+      }
       return token;
     },
     async session({ session, token }) {

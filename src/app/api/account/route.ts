@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import { getSql } from "@/lib/db";
 import { deleteStoredAccount } from "@/lib/delete-account";
+import { recordAccountDeleted } from "@/lib/usage-store";
 import { getEmailCodeStore } from "@/lib/email-code-store";
 import { prepareLibraryStore } from "@/lib/library-seal";
 import { getPasskeyStore } from "@/lib/passkey-store";
@@ -52,6 +53,11 @@ export async function DELETE(request: Request) {
       },
       email,
     );
+    try {
+      await recordAccountDeleted(email);
+    } catch {
+      console.error("Usage deletion event failed");
+    }
     return Response.json({
       ok: true,
       libraries: removed.libraries,
