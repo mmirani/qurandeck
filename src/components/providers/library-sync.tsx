@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { ANON_STORAGE_KEY, canonicalAnonId, GUEST_MERGED_KEY } from "@/lib/anon-id";
 import { mergeLibraries, normalizeLibrary, type LibrarySnapshot } from "@/lib/library";
 import {
   loadBookmarks,
@@ -36,12 +37,31 @@ async function pullLibrary() {
   return normalizeLibrary(body.library);
 }
 
+async function recordGuestMerge() {
+  try {
+    if (localStorage.getItem(GUEST_MERGED_KEY) === "1") return;
+    const stored = localStorage.getItem(ANON_STORAGE_KEY);
+    const anonId = stored ? canonicalAnonId(stored) : null;
+    if (!anonId) return;
+    const response = await fetch("/api/usage", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ event: "guest_merge", anonId }),
+      keepalive: true,
+    });
+    if (response.ok) localStorage.setItem(GUEST_MERGED_KEY, "1");
+  } catch {
+    // The next library save on this browser can retry.
+  }
+}
+
 async function pushLibrary(library: LibrarySnapshot) {
-  await fetch("/api/library", {
+  const response = await fetch("/api/library", {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ library }),
   });
+  if (response.ok) await recordGuestMerge();
 }
 
 export function LibrarySync({

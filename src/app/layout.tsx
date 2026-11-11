@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Noto_Naskh_Arabic, Noto_Nastaliq_Urdu, Noto_Sans_Hebrew, Noto_Sans_Thaana, Plus_Jakarta_Sans, Source_Serif_4 } from "next/font/google";
+import { PrivacyAnalytics } from "@/components/analytics/privacy-analytics";
 import { AppProviders } from "@/components/providers/app-providers";
 import { PRODUCT_NAME, SITE_DESCRIPTION, SITE_TITLE, siteUrl } from "@/lib/brand";
 import "./globals.css";
@@ -94,6 +95,7 @@ export default function RootLayout({
           Skip to content
         </a>
         <AppProviders>{children}</AppProviders>
+        <PrivacyAnalytics />
       </body>
     </html>
   );
