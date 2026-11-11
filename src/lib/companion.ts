@@ -113,14 +113,12 @@ export function companionFilterFromGold(gold: string, canvas = "") {
   const lightBg = canvasRgb ? rgbToHsl(canvasRgb.r, canvasRgb.g, canvasRgb.b).l > 0.42 : true;
   if (s < 0.12) {
     return lightBg
-      ? "grayscale(0.15) contrast(1.45) brightness(0.52) saturate(0.25)"
+      ? "grayscale(0.12) contrast(1.28) brightness(0.7) saturate(0.3)"
       : "grayscale(0.35) contrast(1.12) brightness(0.92) saturate(0.4)";
   }
   const rotate = Math.round(h - BASE_HUE);
-  // Light pages need a deeper body so the face clears 3:1. Highlights stay
-  // in the contrast boost. Dark themes keep the brighter glow.
   if (lightBg) {
-    return `hue-rotate(${rotate}deg) saturate(1.85) brightness(0.5) contrast(1.48)`;
+    return `hue-rotate(${rotate}deg) saturate(1.65) brightness(0.74) contrast(1.24)`;
   }
   return `hue-rotate(${rotate}deg) saturate(1.38) brightness(1.06)`;
 }
@@ -132,11 +130,4 @@ export function companionFilterFromDocument() {
   }
   const styles = getComputedStyle(document.documentElement);
   return companionFilterFromGold(styles.getPropertyValue("--gold"), styles.getPropertyValue("--canvas"));
-}
-
-/** Brand teal hue, with lightness taken from the theme that is actually on screen. */
-export function companionBrandFilterFromDocument() {
-  if (typeof document === "undefined") return "none";
-  const canvas = getComputedStyle(document.documentElement).getPropertyValue("--canvas");
-  return companionFilterFromGold(LUMEN_GOLD, canvas);
 }
