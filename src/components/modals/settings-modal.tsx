@@ -12,21 +12,21 @@ export function ReadingSettings() {
 
   return (
       <div className="grid gap-8 lg:grid-cols-2">
-        <section>
+        <section className="qd-stack">
           <h3 className="kufic-label text-gold-deep">Appearance</h3>
-          <p className="mt-2 text-sm text-ink-soft">Background, ink, and accent colours.</p>
+          <p className="text-sm leading-6 text-ink-soft">Background, ink, and accent colours.</p>
           <button
             type="button"
             onClick={() => openModal("themes")}
-            className="mt-3 inline-flex h-11 cursor-pointer items-center gap-2 rounded-full border border-line px-5 text-sm text-ink"
+            className="inline-flex h-11 cursor-pointer items-center gap-2 rounded-full border border-line px-5 text-sm text-ink"
           >
             <Palette className="h-4 w-4" />
             {APPEARANCE_THEMES.find((item) => item.id === preferences.theme)?.name ?? preferences.theme}
           </button>
         </section>
-        <section>
+        <section className="qd-stack">
           <h3 className="kufic-label text-gold-deep">Text size</h3>
-          <div className="mt-3 flex items-center gap-3">
+          <div className="flex items-center gap-3">
             <button
               type="button"
               className="h-11 w-11 cursor-pointer rounded-full border border-line"
@@ -48,10 +48,10 @@ export function ReadingSettings() {
             </button>
           </div>
         </section>
-        <section>
+        <section className="qd-stack">
           <h3 className="kufic-label text-gold-deep">Visible layers</h3>
-          <div className="mt-3 space-y-2 text-sm">
-            <label className="flex cursor-pointer items-center gap-3">
+          <div className="flex flex-col gap-2 text-sm">
+            <label className="flex min-h-11 cursor-pointer items-center gap-3">
               <input
                 type="checkbox"
                 checked={preferences.showIntroduction}
@@ -59,7 +59,7 @@ export function ReadingSettings() {
               />
               Surah introduction
             </label>
-            <label className="flex cursor-pointer items-center gap-3">
+            <label className="flex min-h-11 cursor-pointer items-center gap-3">
               <input
                 type="checkbox"
                 checked={preferences.showTafsir}
@@ -67,7 +67,7 @@ export function ReadingSettings() {
               />
               Tafsir under each ayah
             </label>
-            <label className="flex cursor-pointer items-center gap-3">
+            <label className="flex min-h-11 cursor-pointer items-center gap-3">
               <input
                 type="checkbox"
                 checked={preferences.showWordByWord}
@@ -80,25 +80,22 @@ export function ReadingSettings() {
             </p>
           </div>
         </section>
-        <section className="lg:col-span-2">
+        <section className="qd-stack lg:col-span-2">
           <h3 className="kufic-label text-gold-deep">Languages</h3>
-          <p className="mt-2 text-sm text-ink-soft">
+          <p className="text-sm leading-6 text-ink-soft">
             Add as many as you want side by side. The circular arrow resets to Arabic and English.
           </p>
-          <div className="mt-3">
-            <LanguagePicker />
-          </div>
+          <LanguagePicker />
         </section>
-        <section>
+        <section className="qd-stack">
           <h3 className="kufic-label text-gold-deep">Tafsir</h3>
-          <p className="mt-2 text-sm text-ink-soft">
+          <p className="text-sm leading-6 text-ink-soft">
             Off until you turn on the Tafsir chip. Commentary then sits under each ayah. The chip’s arrow picks the work.
           </p>
         </section>
-        <section>
+        <section className="qd-stack">
           <h3 className="kufic-label text-gold-deep">Reciter</h3>
           <StyledSelect
-            className="mt-3"
             value={String(preferences.recitationId)}
             onChange={(next) => updatePreferences({ recitationId: Number(next) })}
             options={recitations.map((item) => ({
@@ -107,7 +104,7 @@ export function ReadingSettings() {
               hint: item.style ?? undefined,
             }))}
           />
-          <label className="mt-3 flex cursor-pointer items-center gap-3 text-sm">
+          <label className="flex min-h-11 cursor-pointer items-center gap-3 text-sm">
             <input
               type="checkbox"
               checked={preferences.autoFollow}

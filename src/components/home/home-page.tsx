@@ -81,28 +81,28 @@ export function HomePage() {
 function HomeNav({ signedIn }: { signedIn: boolean }) {
   return (
     <header className="fixed inset-x-0 top-0 z-50 border-b border-line/70 bg-canvas/95 backdrop-blur-md">
-      <div className="mx-auto flex h-14 min-h-14 max-w-6xl items-center gap-2 px-4 sm:gap-3 sm:px-6 md:h-16 md:min-h-16">
-        <Link href="/" className="flex min-w-0 cursor-pointer items-center gap-2 sm:gap-2.5">
+      <div className="qd-gutter mx-auto flex h-14 min-h-14 max-w-6xl items-center gap-2 md:h-16 md:min-h-16">
+        <Link href="/" className="flex shrink-0 items-center gap-2">
           <MihrabMark className="h-6 w-6 shrink-0 sm:h-7 sm:w-7 md:h-8 md:w-8" />
-          <BrandWordmark className="truncate text-xl leading-none sm:text-2xl md:text-3xl" />
+          <BrandWordmark className="text-lg leading-none sm:text-2xl md:text-3xl" />
         </Link>
-        <div className="ml-auto flex shrink-0 items-center justify-end gap-2">
+        <div className="ml-auto flex min-w-0 items-center justify-end gap-2">
           {signedIn ? (
             <>
               <Link
                 href="/read"
-                className="inline-flex h-11 min-h-11 cursor-pointer items-center rounded-full border border-gold/40 px-4 text-sm font-medium text-gold-deep hover:bg-highlight"
+                className="inline-flex h-11 min-h-11 shrink-0 cursor-pointer items-center rounded-full border border-gold/40 px-3 text-sm font-medium text-gold-deep hover:bg-highlight sm:px-4"
               >
                 <span className="hidden sm:inline">Open mushaf</span>
                 <span className="sm:hidden">Read</span>
               </Link>
-              <UserMenu />
+              <UserMenu compact />
             </>
           ) : (
             <>
               <Link
                 href="/read"
-                className="inline-flex h-11 min-h-11 shrink-0 cursor-pointer items-center rounded-full bg-gold px-4 text-sm font-semibold text-on-gold md:hidden"
+                className="inline-flex h-11 min-h-11 shrink-0 cursor-pointer items-center rounded-full bg-gold px-3 text-sm font-semibold text-on-gold sm:px-4 md:hidden"
               >
                 Start Reading
               </Link>
@@ -121,16 +121,16 @@ function HomeGuestHero() {
   const { openModal } = useMushaf();
 
   return (
-    <section className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-14 lg:py-20">
+    <section className="qd-gutter qd-section-lg mx-auto max-w-6xl">
       <div className="mx-auto max-w-2xl text-center md:mx-0 md:text-left">
         <h1 className="mx-auto max-w-xl font-display text-[clamp(2rem,6vw,2.5rem)] font-semibold leading-tight tracking-tight text-ink sm:text-4xl md:mx-0 lg:text-[3.25rem] lg:leading-[1.08]">
           A personal mushaf for {WORK_TITLE}
         </h1>
-        <p className="mx-auto mt-3 max-w-lg text-base leading-7 text-ink-soft sm:mt-4 sm:text-lg md:mx-0">
+        <p className="mx-auto mt-4 max-w-lg text-base leading-7 text-ink-soft sm:text-lg md:mx-0">
           QuranDeck is a free, private reading room for the Quran. Search, recitation, notes, and a place that stays
           with you.
         </p>
-        <div className="mx-auto mt-6 flex max-w-md flex-col items-stretch gap-3 sm:mt-7 md:mx-0 md:max-w-none md:flex-row md:flex-wrap md:items-center md:gap-x-5">
+        <div className="mx-auto mt-6 flex max-w-md flex-col items-stretch gap-4 md:mx-0 md:max-w-none md:flex-row md:flex-wrap md:items-center">
           <Link
             href="/read"
             className="inline-flex h-[3.25rem] min-h-11 w-full cursor-pointer items-center justify-center rounded-full bg-gold px-6 text-base font-semibold text-on-gold md:w-auto"
@@ -145,7 +145,7 @@ function HomeGuestHero() {
             Sync your notes across devices
           </button>
         </div>
-        <p className="mt-3 text-center text-sm text-muted md:text-left">Free • Private • No ads or tracking</p>
+        <p className="mt-4 text-center text-sm text-muted md:text-left">Free • Private • No ads or tracking</p>
       </div>
     </section>
   );
@@ -157,18 +157,20 @@ function HomeSignedIn() {
   const minutes = formatReadingMinutes(progress.totalSeconds);
 
   return (
-    <section className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:py-14">
-      <p className="kufic-label text-gold-deep">{PROMISE_LINE}</p>
-      <h1 className="mt-2 font-display text-4xl font-semibold tracking-tight text-ink sm:text-5xl">
-        Assalamu alaykum, {user?.displayName}.
-      </h1>
-      <p className="mt-3 max-w-2xl text-ink-soft">Your place, your notes, your map of {WORK_TITLE} — saved with your account.</p>
+    <section className="qd-gutter qd-section mx-auto flex max-w-6xl flex-col gap-8">
+      <div className="qd-stack">
+        <p className="kufic-label text-gold-deep">{PROMISE_LINE}</p>
+        <h1 className="font-display text-4xl font-semibold tracking-tight text-ink sm:text-5xl">
+          Assalamu alaykum, {user?.displayName}.
+        </h1>
+        <p className="max-w-2xl text-ink-soft">Your place, your notes, your map of {WORK_TITLE} — saved with your account.</p>
+      </div>
 
-      <div className="mt-8 grid items-stretch gap-4 lg:grid-cols-3">
-        <div className="flex h-full flex-col rounded-3xl border-2 border-gold bg-highlight p-5 sm:p-6">
+      <div className="grid items-stretch gap-4 lg:grid-cols-3">
+        <div className="qd-card h-full rounded-3xl border-2 border-gold bg-highlight">
           <p className="kufic-label text-gold-deep">Continue reading</p>
-          <p className="mt-2 font-display text-2xl font-semibold text-ink sm:text-3xl">{place.title}</p>
-          <p className="mt-1 text-sm text-ink">Ayah {place.ayah}</p>
+          <p className="font-display text-2xl font-semibold leading-tight text-ink sm:text-3xl">{place.title}</p>
+          <p className="text-sm leading-6 text-ink">Ayah {place.ayah}</p>
           <Link
             href={place.href}
             className="mt-auto inline-flex h-11 w-full cursor-pointer items-center justify-center rounded-full bg-gold text-sm font-semibold text-on-gold sm:h-12 sm:text-base"
@@ -178,7 +180,7 @@ function HomeSignedIn() {
         </div>
         <HomeReadingRanks />
       </div>
-      <div className="mt-4">
+      <div>
         <HomeStats
           versesRead={progress.versesRead.length}
           surahsFinished={progress.surahsRead.length}
@@ -189,9 +191,7 @@ function HomeSignedIn() {
           highlights={highlights.length}
         />
       </div>
-      <div className="mt-10">
-        <CompletionMap />
-      </div>
+      <CompletionMap />
     </section>
   );
 }
@@ -199,34 +199,36 @@ function HomeSignedIn() {
 function HomeFeatures() {
   return (
     <section id="features" className="border-t border-line/70 bg-surface">
-      <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6">
+      <div className="qd-gutter qd-section mx-auto flex max-w-6xl flex-col gap-8">
+        <div className="qd-stack">
         <p className="kufic-label text-gold-deep">What you can do</p>
-        <h2 className="mt-2 max-w-xl font-display text-3xl font-semibold tracking-tight text-ink">
+        <h2 className="max-w-xl font-display text-3xl font-semibold tracking-tight text-ink">
           The mushaf, with the tools you actually use while reading.
         </h2>
-        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {HOME_FEATURES.map((feature) => {
             const Icon = FEATURE_ICONS[feature.id];
             return (
               <article key={feature.id} className="overflow-hidden rounded-3xl border border-line bg-canvas/70">
-                <div className="relative bg-highlight px-5 py-5">
+                <div className="qd-pad relative bg-highlight">
                   <MihrabMark className="pointer-events-none absolute -right-2 -top-3 h-16 w-16 opacity-15" />
                   <span className="relative flex h-12 w-12 items-center justify-center rounded-2xl bg-canvas text-gold shadow-[0_8px_18px_rgba(15,23,42,0.06)] ring-1 ring-gold/25">
                     <Icon className="h-6 w-6" aria-hidden="true" />
                   </span>
                   <FeatureSketch id={feature.id} />
                 </div>
-                <div className="p-5 pt-4">
+                <div className="qd-pad qd-stack">
                   <h3 className="font-display text-xl font-semibold text-ink">{feature.title}</h3>
-                  <p className="mt-2 text-sm leading-6 text-ink-soft">{feature.body}</p>
+                  <p className="text-sm leading-6 text-ink-soft">{feature.body}</p>
                 </div>
               </article>
             );
           })}
         </div>
-        <div className="mt-10">
+        <div className="qd-stack">
           <p className="kufic-label text-gold-deep">Open a surah</p>
-          <div className="mt-3 flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2">
             {HOME_STARTS.map((surah) => (
               <Link
                 key={surah.id}
@@ -301,32 +303,32 @@ function FeatureSketch({ id }: { id: (typeof HOME_FEATURES)[number]["id"] }) {
 
 function HomeMore() {
   return (
-    <section className="mx-auto max-w-6xl px-4 py-14 sm:px-6">
+    <section className="qd-gutter qd-section mx-auto flex max-w-6xl flex-col gap-8">
       <div className="grid gap-4 sm:grid-cols-3">
         {HOME_PROMISES.map((item) => {
           const Icon = PROMISE_ICONS[item.title];
           return (
-            <article key={item.title} className="rounded-3xl border border-line bg-surface p-6">
+            <article key={item.title} className="qd-card rounded-3xl border border-line bg-surface">
               <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-highlight text-gold ring-1 ring-gold/20">
                 <Icon className="h-6 w-6" aria-hidden="true" />
               </span>
-              <p className="mt-4 kufic-label text-gold-deep">{item.title}</p>
-              <p className="mt-3 text-base leading-7 text-ink">{item.body}</p>
+              <p className="kufic-label text-gold-deep">{item.title}</p>
+              <p className="text-base leading-7 text-ink">{item.body}</p>
             </article>
           );
         })}
       </div>
-      <div className="mt-8 grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-2">
         {HOME_MORE.map((item) => {
           const Icon = MORE_ICONS[item.title];
           return (
-            <article key={item.title} className="flex gap-3 rounded-2xl border border-line/80 p-4">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-highlight text-gold">
+            <article key={item.title} className="qd-pad flex items-start gap-4 rounded-2xl border border-line/80">
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-highlight text-gold">
                 <Icon className="h-4 w-4" aria-hidden="true" />
               </span>
-              <div>
+              <div className="qd-cluster min-w-0">
                 <h3 className="font-medium text-ink">{item.title}</h3>
-                <p className="mt-1 text-sm text-ink-soft">{item.body}</p>
+                <p className="text-sm leading-6 text-ink-soft">{item.body}</p>
               </div>
             </article>
           );
@@ -339,13 +341,13 @@ function HomeMore() {
 function HomeCta() {
   return (
     <section className="border-t border-line/70 bg-highlight">
-      <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-14 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
-        <div>
+      <div className="qd-gutter qd-section mx-auto flex max-w-6xl flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+        <div className="qd-stack">
           <p className="kufic-label text-gold-deep">{PROMISE_LINE}</p>
-          <h2 className="mt-2 max-w-lg font-display text-3xl font-semibold tracking-tight text-ink">
+          <h2 className="max-w-lg font-display text-3xl font-semibold tracking-tight text-ink">
             Keep a private profile when you are ready.
           </h2>
-          <p className="mt-3 max-w-xl text-ink-soft">{PROMISE_STORY}</p>
+          <p className="max-w-xl text-ink-soft">{PROMISE_STORY}</p>
         </div>
         <div className="flex flex-wrap gap-3">
           <GuestAuthButtons size="cta" />
@@ -398,7 +400,7 @@ function HomeFooter() {
   return (
     <footer className="border-t border-line/70">
       {showGuestLinks ? (
-        <div className="border-b border-line/60 bg-canvas/80 px-4 py-4 text-center md:hidden">
+        <div className="qd-gutter border-b border-line/60 bg-canvas/80 py-4 text-center md:hidden">
           <button
             type="button"
             onClick={() => openModal("auth")}
@@ -408,21 +410,21 @@ function HomeFooter() {
           </button>
         </div>
       ) : null}
-      <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-8 text-sm text-ink-soft sm:px-6">
+      <div className="qd-gutter mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 py-8 text-sm text-ink-soft">
         <p>
           {PRODUCT_NAME} · {WORK_TITLE}
         </p>
-        <nav aria-label="Site" className="flex flex-wrap items-center gap-x-4 gap-y-2">
-          <Link href="/about" className="underline-offset-4 hover:text-ink hover:underline">
+        <nav aria-label="Site" className="flex flex-wrap items-center gap-x-4 gap-y-1">
+          <Link href="/about" className="inline-flex min-h-11 items-center underline-offset-4 hover:text-ink hover:underline">
             About
           </Link>
-          <Link href="/contact" className="underline-offset-4 hover:text-ink hover:underline">
+          <Link href="/contact" className="inline-flex min-h-11 items-center underline-offset-4 hover:text-ink hover:underline">
             Contact
           </Link>
-          <Link href="/privacy" className="underline-offset-4 hover:text-ink hover:underline">
+          <Link href="/privacy" className="inline-flex min-h-11 items-center underline-offset-4 hover:text-ink hover:underline">
             Privacy
           </Link>
-          <Link href="/terms" className="underline-offset-4 hover:text-ink hover:underline">
+          <Link href="/terms" className="inline-flex min-h-11 items-center underline-offset-4 hover:text-ink hover:underline">
             Terms
           </Link>
         </nav>

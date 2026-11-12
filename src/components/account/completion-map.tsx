@@ -40,15 +40,15 @@ export function CompletionMap() {
   };
 
   return (
-    <section className="rounded-3xl border border-line bg-surface p-6 sm:p-7">
+    <section className="qd-card rounded-3xl border border-line bg-surface">
       <p className="kufic-label text-gold-deep">Quran completion</p>
-      <p className="mt-3 max-w-3xl text-sm leading-6 text-ink-soft">
+      <p className="max-w-3xl text-sm leading-6 text-ink-soft">
         This is a map of ayahs you have opened, not a score. The Quran is laid left to right from Al-Fatihah to An-Nas. Each
         sliver is a slice of ayahs. Colour follows the surah on a short theme cycle so neighbouring chapters can read
         apart. Brighter means more of that slice is lit. Empty slivers are still unread.
       </p>
       <div
-        className="mt-6 grid h-14 gap-px overflow-hidden rounded-2xl bg-line/80 p-1"
+        className="grid h-14 gap-px overflow-hidden rounded-2xl bg-line/80 p-1"
         style={{ gridTemplateColumns: `repeat(${COMPLETION_PIECES}, minmax(0, 1fr))` }}
         role="img"
         aria-label={`Quran completion map, ${read} of ${TOTAL_AYAHS} ayahs, ${map.percent} percent`}

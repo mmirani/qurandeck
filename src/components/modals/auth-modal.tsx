@@ -130,7 +130,7 @@ export function AuthModal() {
             <label className="block text-sm">
               Display name
               <input
-                className="mt-1 h-11 w-full rounded-2xl border border-line bg-surface px-3"
+                className="mt-2 h-11 w-full rounded-2xl border border-line bg-surface px-4"
                 value={displayName}
                 onChange={(event) => {
                   setDisplayName(event.target.value);
@@ -309,7 +309,7 @@ export function AuthModal() {
                 Email
                 <input
                   type="email"
-                  className="mt-1 h-11 w-full rounded-2xl border border-line bg-surface px-3"
+                  className="mt-2 h-11 w-full rounded-2xl border border-line bg-surface px-4"
                   value={email}
                   onChange={(event) => {
                     setEmail(event.target.value);
@@ -328,7 +328,7 @@ export function AuthModal() {
                     autoComplete="one-time-code"
                     pattern="[0-9]{6}"
                     maxLength={6}
-                    className="mt-1 h-11 w-full rounded-2xl border border-line bg-surface px-3 tracking-[0.3em]"
+                    className="mt-2 h-11 w-full rounded-2xl border border-line bg-surface px-4 tracking-[0.3em]"
                     value={oneTimeCode}
                     onChange={(event) => setOneTimeCode(event.target.value.replace(/\D/g, "").slice(0, 6))}
                     required

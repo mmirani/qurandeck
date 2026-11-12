@@ -67,7 +67,7 @@ export function ReaderToolbar() {
 
   if (preferences.focusMode) {
     return (
-      <div className="relative shrink-0 border-b border-line/30 bg-canvas/90 px-3 py-2 md:px-5">
+      <div className="qd-gutter relative shrink-0 border-b border-line/30 bg-canvas/90 py-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h1 className="flex min-w-0 items-baseline gap-2 text-ink">
             <span className="truncate font-display text-base font-semibold tracking-tight md:text-lg">
@@ -85,7 +85,7 @@ export function ReaderToolbar() {
               <button
                 type="button"
                 aria-label="Smaller text"
-                className="h-8 w-8 cursor-pointer rounded-full text-base hover:bg-highlight"
+                className="h-11 w-11 cursor-pointer rounded-full text-base hover:bg-highlight"
                 onClick={() =>
                   updatePreferences({ fontSize: Math.max(FONT_SIZE_MIN, preferences.fontSize - 2) })
                 }
@@ -96,7 +96,7 @@ export function ReaderToolbar() {
               <button
                 type="button"
                 aria-label="Larger text"
-                className="h-8 w-8 cursor-pointer rounded-full text-base hover:bg-highlight"
+                className="h-11 w-11 cursor-pointer rounded-full text-base hover:bg-highlight"
                 onClick={() =>
                   updatePreferences({ fontSize: Math.min(FONT_SIZE_MAX, preferences.fontSize + 2) })
                 }
@@ -107,7 +107,7 @@ export function ReaderToolbar() {
             <button
               type="button"
               onClick={() => openModal("themes")}
-              className="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-full border border-line bg-highlight px-3 text-sm capitalize text-gold-deep"
+              className="inline-flex h-11 min-h-11 cursor-pointer items-center gap-2 rounded-full border border-line bg-highlight px-3 text-sm capitalize text-gold-deep"
             >
               <Palette className="h-3.5 w-3.5" />
               {themeName}
@@ -115,7 +115,7 @@ export function ReaderToolbar() {
             <button
               type="button"
               onClick={() => updatePreferences({ focusMode: false })}
-              className="inline-flex h-9 shrink-0 cursor-pointer items-center gap-2 rounded-full bg-gold px-4 text-sm font-semibold text-on-gold"
+              className="inline-flex h-11 min-h-11 shrink-0 cursor-pointer items-center gap-2 rounded-full bg-gold px-4 text-sm font-semibold text-on-gold"
             >
               <Minimize2 className="h-4 w-4" />
               Exit focus
@@ -130,7 +130,7 @@ export function ReaderToolbar() {
     <>
       <MobileReaderBar />
       <div
-        className={`relative hidden shrink-0 border-b border-line/40 bg-canvas/95 px-4 py-3 lg:block lg:px-6 xl:px-8 xl:py-4`}
+        className="qd-gutter relative hidden shrink-0 border-b border-line/40 bg-canvas/95 py-4 lg:block"
       >
       {art ? (
         <div className="surah-art hidden overflow-hidden xl:block" aria-hidden="true">

@@ -22,7 +22,7 @@ export function ReaderHint() {
   if (!open) return null;
 
   return (
-    <aside className="mb-4 rounded-3xl border border-gold/30 bg-highlight/80 px-4 py-4 text-sm leading-6 text-ink sm:px-5">
+    <aside className="qd-pad mb-4 rounded-3xl border border-gold/30 bg-highlight/80 text-sm leading-6 text-ink">
       <p className="font-display text-base font-semibold text-ink">A quiet start</p>
       <ul className="mt-2 space-y-1 text-ink-soft">
         <li>Search is the top box: a word, a theme, or 2:255.</li>

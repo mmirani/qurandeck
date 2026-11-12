@@ -11,7 +11,7 @@ export function ContactForm() {
 
   return (
     <form
-      className="space-y-4"
+      className="flex flex-col gap-4"
       onSubmit={(event) => {
         event.preventDefault();
         setStatus("sending");
@@ -41,7 +41,7 @@ export function ContactForm() {
           value={name}
           onChange={(event) => setName(event.target.value)}
           autoComplete="name"
-          className="mt-1 h-12 w-full rounded-2xl border border-line bg-surface px-4 text-base text-ink outline-none"
+          className="mt-2 h-12 w-full rounded-2xl border border-line bg-surface px-4 text-base text-ink outline-none"
         />
       </label>
       <label className="block text-sm font-medium text-ink">
@@ -51,7 +51,7 @@ export function ContactForm() {
           value={email}
           onChange={(event) => setEmail(event.target.value)}
           autoComplete="email"
-          className="mt-1 h-12 w-full rounded-2xl border border-line bg-surface px-4 text-base text-ink outline-none"
+          className="mt-2 h-12 w-full rounded-2xl border border-line bg-surface px-4 text-base text-ink outline-none"
         />
       </label>
       <label className="block text-sm font-medium text-ink">
@@ -62,7 +62,7 @@ export function ContactForm() {
           value={message}
           onChange={(event) => setMessage(event.target.value)}
           rows={6}
-          className="mt-1 w-full rounded-2xl border border-line bg-surface px-4 py-3 text-base leading-7 text-ink outline-none"
+          className="mt-2 w-full rounded-2xl border border-line bg-surface px-4 py-4 text-base leading-7 text-ink outline-none"
         />
       </label>
       <button

@@ -26,7 +26,7 @@ export function BottomSheet({
         aria-label={title}
         className="absolute bottom-0 left-0 right-0 flex max-h-[min(85dvh,640px)] flex-col overflow-hidden rounded-t-3xl border-t border-line bg-surface shadow-[0_-20px_50px_rgba(15,23,42,0.18)]"
       >
-        <div className="flex shrink-0 flex-col gap-2 border-b border-line/60 px-4 pb-3 pt-2">
+        <div className="qd-pad flex shrink-0 flex-col gap-2 border-b border-line/60">
           <div className="mx-auto h-1 w-10 rounded-full bg-line" aria-hidden="true" />
           <div className="flex items-center justify-between gap-2">
             {title ? <p className="font-display text-base font-semibold text-ink">{title}</p> : <span />}

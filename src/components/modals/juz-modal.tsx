@@ -38,7 +38,7 @@ export function JuzModal() {
                 closeModal();
                 openJuz(juz.juzNumber);
               }}
-              className={`cursor-pointer rounded-3xl border p-4 text-left ${
+              className={`qd-pad cursor-pointer rounded-3xl border text-left ${
                 active ? "border-gold bg-highlight" : "border-line hover:border-gold"
               }`}
             >

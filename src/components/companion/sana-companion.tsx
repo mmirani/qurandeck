@@ -113,7 +113,10 @@ function SanaDock({ audioBarVisible, ayahMode }: { audioBarVisible: boolean; aya
             className="sana-sheet absolute inset-x-0 bottom-0 flex max-h-[min(85dvh,40rem)] flex-col overflow-hidden rounded-t-3xl border-t border-line bg-surface shadow-[0_-20px_50px_rgba(15,23,42,0.18)]"
           >
             <div className="mx-auto mt-2 h-1 w-10 shrink-0 rounded-full bg-line" aria-hidden="true" />
-            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-[max(0.85rem,env(safe-area-inset-bottom))] pt-3">
+            <div
+              className="qd-pad min-h-0 flex-1 overflow-y-auto overscroll-contain"
+              style={{ paddingBottom: "max(var(--card-pad), env(safe-area-inset-bottom))" }}
+            >
               <SanaGuidePanel onClose={close} onRest={close} />
             </div>
           </div>

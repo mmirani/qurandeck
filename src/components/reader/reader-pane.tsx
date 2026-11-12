@@ -144,17 +144,17 @@ export function ReaderPane() {
         ref={scroller}
         id="main-reader"
         className={`reader-scroll-surface @container flex min-h-0 flex-1 flex-col ${
-          ayahMode ? "overflow-hidden px-0 py-0" : "overflow-y-auto overscroll-contain px-5 py-5 md:px-8 md:py-6 lg:px-10"
+          ayahMode ? "overflow-hidden p-0" : "qd-reader-inset overflow-y-auto overscroll-contain"
         } ${traditional && preferences.focusMode ? "mushaf-desk" : ""} ${
           ayahMode ? "pb-0" : isPlaying ? "pb-28 lg:pb-8" : "pb-8"
         }`}
       >
         {!loading && !preferences.focusMode ? <ReaderHint /> : null}
         {error ? (
-          <p className="rounded-3xl border border-danger/40 bg-surface p-6 text-danger">{error}</p>
+          <p className="qd-pad rounded-3xl border border-danger/40 bg-surface text-danger">{error}</p>
         ) : null}
         {loading ? (
-          <div className="space-y-5 px-4 py-4">
+          <div className="flex flex-col gap-4">
             {Array.from({ length: 4 }).map((_, index) => (
               <div key={index} className="h-40 animate-pulse rounded-3xl bg-surface" />
             ))}
@@ -163,7 +163,7 @@ export function ReaderPane() {
           <AyahReaderMobile verses={verses} mode={mode} />
         ) : (
           <div
-            className="reader-stream flex flex-col gap-5 pb-24 xl:pb-8"
+            className="reader-stream flex flex-col gap-4 pb-24 xl:pb-8"
             data-layers={layers}
             data-size={preferences.fontSize >= 34 ? "xl" : undefined}
             data-script={arabicOnly ? "ar" : undefined}
@@ -250,7 +250,7 @@ function SurahIntroduction({
 
   if (mobile) {
     return (
-      <section className="rounded-3xl border border-line bg-surface p-5">
+      <section className="qd-card rounded-3xl border border-line bg-surface">
         <button
           type="button"
           onClick={() => setOpen((value) => !value)}
@@ -263,15 +263,15 @@ function SurahIntroduction({
             aria-hidden
           />
         </button>
-        {open ? <p className="mt-3 text-base leading-relaxed text-ink">{introduction}</p> : null}
+        {open ? <p className="text-base leading-relaxed text-ink">{introduction}</p> : null}
       </section>
     );
   }
 
   return (
-    <section className="rounded-3xl border border-line bg-surface p-5 md:p-6">
+    <section className="qd-card rounded-3xl border border-line bg-surface">
       <h3 className="section-heading text-gold-deep">Introduction</h3>
-      <p className="mt-3 text-base leading-relaxed text-ink">{introduction}</p>
+      <p className="text-base leading-relaxed text-ink">{introduction}</p>
     </section>
   );
 }

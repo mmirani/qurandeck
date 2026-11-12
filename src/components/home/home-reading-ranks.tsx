@@ -16,14 +16,14 @@ export function HomeReadingRanks() {
     <>
       <RankCard title="Surahs you finished" detail="Your own full readings. Not a score.">
         {surahs.length === 0 ? (
-          <p className="mt-3 text-sm text-ink-soft">Finish a surah and it will show here.</p>
+          <p className="text-sm leading-6 text-ink-soft">Finish a surah and it will show here.</p>
         ) : (
-          <ol className="mt-3 flex-1 divide-y divide-line/60">
+          <ol className="flex-1 divide-y divide-line/60">
             {surahs.map((item) => (
               <li key={item.chapterId}>
                 <Link
                   href={`/surah/${item.chapterId}`}
-                  className="flex min-h-11 items-center justify-between gap-2 py-1.5 hover:text-gold-deep"
+                  className="qd-row hover:text-gold-deep"
                 >
                   <span className="min-w-0 truncate text-sm font-medium text-ink">{surahName(item.chapterId)}</span>
                   <span className="shrink-0 text-xs tabular-nums text-ink-soft">
@@ -38,9 +38,9 @@ export function HomeReadingRanks() {
 
       <RankCard title="Ayahs you return to" detail="Places you have spent time. Not a spiritual rank.">
         {ayahs.length === 0 ? (
-          <p className="mt-3 text-sm text-ink-soft">Stay with an ayah and it will start to rise here.</p>
+          <p className="text-sm leading-6 text-ink-soft">Stay with an ayah and it will start to rise here.</p>
         ) : (
-          <ol className="mt-3 flex-1 divide-y divide-line/60">
+          <ol className="flex-1 divide-y divide-line/60">
             {ayahs.map((item) => (
               <li key={item.verseKey}>
                 <Link
@@ -49,7 +49,7 @@ export function HomeReadingRanks() {
                     event.preventDefault();
                     openSurah(item.chapterId, item.verseNumber);
                   }}
-                  className="flex min-h-11 items-center justify-between gap-2 py-1.5 hover:text-gold-deep"
+                  className="qd-row hover:text-gold-deep"
                 >
                   <span className="min-w-0 truncate text-sm font-medium text-ink">
                     {surahName(item.chapterId)} · {item.verseKey}
@@ -75,9 +75,9 @@ function RankCard({
   children: React.ReactNode;
 }) {
   return (
-    <section className="flex h-full min-h-0 flex-col rounded-3xl border border-line bg-surface px-4 py-4 sm:px-5">
-      <h3 className="text-sm font-semibold text-ink">{title}</h3>
-      <p className="mt-0.5 text-xs text-ink-soft">{detail}</p>
+    <section className="qd-card h-full min-h-0 rounded-3xl border border-line bg-surface">
+      <h3 className="text-sm font-semibold leading-5 text-ink">{title}</h3>
+      <p className="text-xs leading-5 text-ink-soft">{detail}</p>
       {children}
     </section>
   );

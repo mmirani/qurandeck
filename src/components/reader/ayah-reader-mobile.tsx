@@ -62,7 +62,7 @@ export function AyahReaderMobile({ verses, mode }: { verses: Verse[]; mode: stri
 
   return (
     <div className="reader-ayah-stage flex min-h-0 flex-1 flex-col">
-      <div className="flex shrink-0 items-center justify-center gap-2 border-b border-line/50 px-4 py-2 text-xs text-ink-soft">
+      <div className="qd-gutter flex min-h-11 shrink-0 items-center justify-center gap-2 border-b border-line/50 py-2 text-xs text-ink-soft">
         <span className="font-medium text-ink">
           {mode === "juz" && chapterName ? `${chapterName} · ` : ""}
           Ayah {verse.verseKey}
@@ -77,7 +77,7 @@ export function AyahReaderMobile({ verses, mode }: { verses: Verse[]; mode: stri
         <VerseCard verse={verse} showSurahLabel={showSurahLabel} ayahFocus />
       </div>
 
-      <footer className="reader-ayah-footer shrink-0 border-t border-line/60 bg-canvas/95 px-3 py-3">
+      <footer className="reader-ayah-footer shrink-0 border-t border-line/60 bg-canvas/95">
         <QuranCredit compact className="mb-2 text-center" />
         <div className="flex gap-2">
           <button

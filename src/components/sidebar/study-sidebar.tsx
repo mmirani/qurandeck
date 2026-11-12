@@ -43,14 +43,14 @@ export function StudySidebar() {
   const words = verse?.words.filter((item) => item.charType === "word") ?? [];
 
   return (
-    <aside className="mushaf-rail flex h-full min-h-0 flex-col overflow-hidden p-4" data-tour="study">
-      <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain">
+    <aside className="mushaf-rail qd-pad flex h-full min-h-0 flex-col overflow-hidden" data-tour="study">
+      <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto overscroll-contain">
       <AccountRailCard />
-      <section className="rail-card rounded-2xl p-4">
+      <section className="rail-card qd-card rounded-2xl">
         <h2 className="section-heading text-gold">Notes</h2>
-        <p className="mt-1 text-base">Ayah {verse?.verseKey ?? "—"}</p>
+        <p className="text-base leading-6">Ayah {verse?.verseKey ?? "—"}</p>
         {note ? (
-          <p className="mt-1 rounded-xl bg-gold/15 px-2 py-1 text-xs text-gold">This ayah has a saved note</p>
+          <p className="rounded-xl bg-gold/15 px-3 py-2 text-xs leading-5 text-gold">This ayah has a saved note</p>
         ) : (
           <p className="text-xs text-muted">{savedAgo}</p>
         )}
@@ -59,7 +59,7 @@ export function StudySidebar() {
           value={draft}
           onChange={(event) => setDraft(event.target.value)}
           placeholder="Write a personal note about this ayah…"
-          className="mt-3 h-28 w-full resize-none rounded-2xl border border-gold/20 bg-transparent p-3 text-sm"
+          className="h-28 w-full resize-none rounded-2xl border border-gold/20 bg-transparent p-3 text-sm"
         />
         <button
           type="button"
@@ -69,12 +69,12 @@ export function StudySidebar() {
             saveNote(verse.verseKey, draft);
             setSavedAgo("Saved just now");
           }}
-          className="mt-3 h-11 w-full cursor-pointer rounded-full bg-gold/20 text-base text-gold"
+          className="h-11 w-full cursor-pointer rounded-full bg-gold/20 text-base text-gold"
         >
           Save note
         </button>
       </section>
-      <section className="rail-card rounded-2xl p-4">
+      <section className="rail-card qd-card rounded-2xl">
         <div className="flex items-center justify-between gap-2">
           <h2 className="section-heading text-gold">Highlights</h2>
           <div className="flex items-center gap-3">
@@ -82,23 +82,23 @@ export function StudySidebar() {
               <button
                 type="button"
                 onClick={() => deleteHighlights(viewMarks.map((item) => item.id))}
-                className="cursor-pointer text-sm text-danger underline-offset-2 hover:underline"
+                className="inline-flex min-h-11 cursor-pointer items-center text-sm text-danger underline-offset-2 hover:underline"
               >
                 Clear
               </button>
             ) : null}
-            <button type="button" onClick={() => openModal("highlights")} className="cursor-pointer text-sm text-gold underline-offset-2 hover:underline">
+            <button type="button" onClick={() => openModal("highlights")} className="inline-flex min-h-11 cursor-pointer items-center text-sm text-gold underline-offset-2 hover:underline">
               See all
             </button>
           </div>
         </div>
-        <p className="mt-1 text-sm text-ink-soft">{rangeLabel(viewKeys)}</p>
+        <p className="text-sm leading-6 text-ink-soft">{rangeLabel(viewKeys)}</p>
         <HighlightFeed marks={viewMarks} />
       </section>
       {preferences.showWordByWord ? (
-      <section className="rail-card rounded-2xl p-4">
+      <section className="rail-card qd-card rounded-2xl">
         <h2 className="section-heading text-gold">Word by word</h2>
-        <p className="mt-1 text-sm text-ink-soft">
+        <p className="text-sm leading-6 text-ink-soft">
           Tap a word in the verse to hear it, without starting the whole chapter.
         </p>
         <ArabesqueDivider className="my-3 text-gold/50" />
@@ -110,7 +110,7 @@ export function StudySidebar() {
                 key={word.location || word.position}
                 type="button"
                 onClick={() => playWord(word)}
-                className={`block w-full cursor-pointer rounded-2xl px-3 py-2 text-left ${active ? "bg-highlight" : "hover:bg-canvas"}`}
+                className={`qd-pad-sm block w-full min-h-11 cursor-pointer rounded-2xl text-left ${active ? "bg-highlight" : "hover:bg-canvas"}`}
               >
                 <p dir="rtl" lang="ar" className="font-arabic text-xl">
                   {word.textUthmani}
@@ -125,7 +125,7 @@ export function StudySidebar() {
           <button
             type="button"
             onClick={() => bookmarkWord(verse, selectedWord)}
-            className="mt-3 w-full cursor-pointer text-xs text-gold"
+            className="inline-flex min-h-11 w-full cursor-pointer items-center justify-center text-xs text-gold"
           >
             Bookmark this word
           </button>
@@ -168,14 +168,14 @@ function HighlightFeed({ marks }: { marks: Highlight[] }) {
 
   if (shown.length === 0) {
     return (
-      <div className={`highlight-feed mt-3 ${updating ? "is-updating" : ""}`}>
+      <div className={`highlight-feed ${updating ? "is-updating" : ""}`}>
         <p className="text-xs text-muted">Marks on the ayahs in view will appear here.</p>
       </div>
     );
   }
 
   return (
-    <ul className={`highlight-feed mt-3 space-y-2 ${updating ? "is-updating" : ""}`}>
+    <ul className={`highlight-feed flex flex-col gap-2 ${updating ? "is-updating" : ""}`}>
       {shown.map((item) => {
         const pen = swatches.find((swatch) => swatch.id === item.swatchId);
         const verse = verses.find((entry) => entry.verseKey === item.verseKey);
@@ -186,11 +186,11 @@ function HighlightFeed({ marks }: { marks: Highlight[] }) {
           penName: item.label?.trim() || pen?.name,
         });
         return (
-          <li key={item.id} className="flex items-start gap-2 rounded-2xl bg-surface px-3 py-2">
+          <li key={item.id} className="qd-pad-sm flex items-start gap-2 rounded-2xl bg-surface">
             <span className="mt-1 h-3 w-3 shrink-0 rounded-full" style={{ background: pen?.color ?? "#F5D76E" }} />
             <button
               type="button"
-              className="min-w-0 flex-1 cursor-pointer text-left"
+              className="min-h-11 min-w-0 flex-1 cursor-pointer py-1 text-left"
               onClick={() => {
                 const [chapterId, verseNumber] = item.verseKey.split(":").map(Number);
                 jumpToHit({

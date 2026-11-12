@@ -5,7 +5,7 @@ import { COMPANION_NAME, COMPANION_NAME_AR } from "@/lib/brand";
 export function HomeSana() {
   return (
     <section className="border-t border-line/70 bg-highlight/60">
-      <div className="mx-auto grid max-w-6xl items-center gap-8 px-4 py-12 sm:px-6 md:gap-10 md:py-14 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:py-16">
+      <div className="qd-gutter qd-section mx-auto grid max-w-6xl items-center gap-8 md:gap-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
         <div className="order-1 flex justify-center touch-pan-y lg:order-none lg:justify-start">
           <div
             className="relative flex h-56 w-56 max-w-full items-center justify-center rounded-[2rem] bg-canvas shadow-[inset_0_0_0_1px_var(--line)] sm:h-64 sm:w-64 md:h-72 md:w-72"
@@ -16,7 +16,7 @@ export function HomeSana() {
         </div>
         <div className="order-2 text-center md:text-left lg:order-none">
           <p className="kufic-label text-gold-deep">A companion, not a widget</p>
-          <h2 className="mt-2 font-display text-2xl font-semibold tracking-tight text-ink sm:text-3xl md:text-4xl">
+          <h2 className="mt-4 font-display text-2xl font-semibold tracking-tight text-ink sm:text-3xl md:text-4xl">
             Meet {COMPANION_NAME}{" "}
             <span lang="ar" className="font-arabic text-gold">
               {COMPANION_NAME_AR}

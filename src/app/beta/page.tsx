@@ -11,16 +11,16 @@ export default function BetaInvitePage() {
   const [loading, setLoading] = useState(false);
 
   return (
-    <main className="mx-auto flex min-h-dvh max-w-md flex-col justify-center gap-5 px-6 py-12">
+    <main className="qd-gutter mx-auto flex min-h-dvh max-w-md flex-col justify-center gap-6 py-12">
       <div>
         <p className="kufic-label text-gold-deep">QuranDeck beta</p>
-        <h1 className="mt-2 font-display text-2xl font-semibold text-ink">Enter invite code</h1>
-        <p className="mt-2 text-sm leading-relaxed text-ink-soft">
+        <h1 className="mt-4 font-display text-2xl font-semibold text-ink">Enter invite code</h1>
+        <p className="mt-4 text-sm leading-6 text-ink-soft">
           Paste the private link code you received. This device will be cleared for beta sign-in for 90 days.
         </p>
       </div>
       <form
-        className="space-y-3"
+        className="flex flex-col gap-4"
         onSubmit={async (event) => {
           event.preventDefault();
           setLoading(true);
@@ -48,7 +48,7 @@ export default function BetaInvitePage() {
         <label className="block text-sm">
           Invite code
           <input
-            className="mt-1 h-11 w-full rounded-2xl border border-line bg-surface px-3"
+            className="mt-2 h-11 w-full rounded-2xl border border-line bg-surface px-4"
             value={code}
             onChange={(event) => setCode(event.target.value)}
             autoComplete="off"

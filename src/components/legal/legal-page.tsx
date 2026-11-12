@@ -16,33 +16,35 @@ export function LegalPage({
   return (
     <div className="min-h-dvh bg-canvas text-ink">
       <header className="border-b border-line/70">
-        <div className="mx-auto flex h-16 max-w-3xl items-center px-4 sm:px-6">
+        <div className="qd-gutter mx-auto flex h-16 max-w-3xl items-center">
           <Link href="/" className="flex items-center gap-2">
             <MihrabMark className="h-7 w-7" />
             <BrandWordmark className="text-2xl leading-none" />
           </Link>
         </div>
       </header>
-      <main id="main-content" className="mx-auto max-w-3xl px-4 py-10 sm:px-6 sm:py-14">
-        <p className="kufic-label text-gold-deep">QuranDeck</p>
-        <h1 className="mt-2 font-display text-4xl font-semibold tracking-tight text-ink">{title}</h1>
-        <p className="mt-2 text-sm text-ink-soft">Last updated {updated}</p>
-        <div className="mt-8 space-y-8">{children}</div>
+      <main id="main-content" className="qd-gutter qd-section mx-auto flex max-w-3xl flex-col gap-8">
+        <div className="qd-stack">
+          <p className="kufic-label text-gold-deep">QuranDeck</p>
+          <h1 className="font-display text-4xl font-semibold tracking-tight text-ink">{title}</h1>
+          <p className="text-sm leading-6 text-ink-soft">Last updated {updated}</p>
+        </div>
+        <div className="flex flex-col gap-8">{children}</div>
         <QuranCredit className="mt-12" />
-        <nav aria-label="Site" className="mt-6 flex flex-wrap gap-4 border-t border-line/70 pt-6 text-sm text-ink-soft">
-          <Link href="/about" className="underline-offset-4 hover:text-ink hover:underline">
+        <nav aria-label="Site" className="mt-4 flex flex-wrap gap-x-4 gap-y-1 border-t border-line/70 pt-6 text-sm text-ink-soft">
+          <Link href="/about" className="inline-flex min-h-11 items-center underline-offset-4 hover:text-ink hover:underline">
             About
           </Link>
-          <Link href="/contact" className="underline-offset-4 hover:text-ink hover:underline">
+          <Link href="/contact" className="inline-flex min-h-11 items-center underline-offset-4 hover:text-ink hover:underline">
             Contact
           </Link>
-          <Link href="/privacy" className="underline-offset-4 hover:text-ink hover:underline">
+          <Link href="/privacy" className="inline-flex min-h-11 items-center underline-offset-4 hover:text-ink hover:underline">
             Privacy
           </Link>
-          <Link href="/terms" className="underline-offset-4 hover:text-ink hover:underline">
+          <Link href="/terms" className="inline-flex min-h-11 items-center underline-offset-4 hover:text-ink hover:underline">
             Terms
           </Link>
-          <Link href="/" className="underline-offset-4 hover:text-ink hover:underline">
+          <Link href="/" className="inline-flex min-h-11 items-center underline-offset-4 hover:text-ink hover:underline">
             Home
           </Link>
         </nav>
@@ -53,7 +55,7 @@ export function LegalPage({
 
 export function LegalSection({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <section className="max-w-[68ch] space-y-3 text-base leading-7 text-ink-soft">
+    <section className="qd-stack max-w-[68ch] text-base leading-7 text-ink-soft">
       <h2 className="font-display text-2xl font-semibold text-ink">{title}</h2>
       {children}
     </section>

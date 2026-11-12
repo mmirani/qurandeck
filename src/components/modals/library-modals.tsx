@@ -15,7 +15,7 @@ export function BookmarksModal() {
           Star an ayah to favorite it, or bookmark a word. Everything you save appears here.
         </p>
       ) : (
-        <ul className="space-y-2">
+        <ul className="flex flex-col gap-2">
           {bookmarks.map((item) => {
             const [chapterId, verseNumber] = item.verseKey.split(":").map(Number);
             return (
@@ -32,7 +32,7 @@ export function BookmarksModal() {
                       source: "jump",
                     })
                   }
-                  className="w-full cursor-pointer rounded-2xl border border-line px-4 py-3 text-left hover:bg-highlight"
+                  className="qd-pad-sm qd-cluster min-h-11 w-full cursor-pointer rounded-2xl border border-line text-left hover:bg-highlight"
                 >
                   <p className="text-xs capitalize text-gold-deep">{item.type === "verse" ? "Favorite ayah" : item.type}</p>
                   <p className="text-sm text-ink">{item.label}</p>
@@ -55,11 +55,11 @@ export function NotesModal() {
       {notes.length === 0 ? (
         <p className="text-sm text-ink-soft">Write a note on any verse. It stays attached to that ayah.</p>
       ) : (
-        <ul className="space-y-3">
+        <ul className="flex flex-col gap-3">
           {notes.map((note) => {
             const [chapterId, verseNumber] = note.verseKey.split(":").map(Number);
             return (
-              <li key={note.id} className="rounded-2xl border border-line p-4">
+              <li key={note.id} className="qd-pad-sm qd-cluster rounded-2xl border border-line">
                 <button
                   type="button"
                   className="cursor-pointer text-xs text-gold-deep"
@@ -76,7 +76,7 @@ export function NotesModal() {
                 >
                   {note.verseKey}
                 </button>
-                <p className="mt-1 whitespace-pre-wrap text-sm">{note.body}</p>
+                <p className="whitespace-pre-wrap text-sm leading-6">{note.body}</p>
               </li>
             );
           })}
@@ -108,10 +108,10 @@ export function HighlightsModal() {
     <Modal eyebrow="Study" title="Highlights" onClose={closeModal} wide>
       <section className="mb-8">
         <h3 className="kufic-label text-gold-deep">Pens</h3>
-        <p className="mt-1 text-sm text-ink-soft">Name your colours. Yellow is the default pen.</p>
-        <ul className="mt-4 space-y-2">
+        <p className="mt-2 text-sm leading-6 text-ink-soft">Name your colours. Yellow is the default pen.</p>
+        <ul className="mt-4 flex flex-col gap-2">
           {swatches.map((pen) => (
-            <li key={pen.id} className="flex flex-wrap items-center gap-2 rounded-2xl border border-line px-3 py-2">
+            <li key={pen.id} className="qd-pad-sm flex flex-wrap items-center gap-2 rounded-2xl border border-line">
               <input
                 type="color"
                 value={pen.color}
@@ -122,12 +122,12 @@ export function HighlightsModal() {
               <input
                 value={pen.name}
                 onChange={(event) => updateSwatch(pen.id, { name: event.target.value })}
-                className="h-9 min-w-40 flex-1 rounded-xl border border-line bg-transparent px-3 text-sm"
+                className="h-11 min-w-40 flex-1 rounded-xl border border-line bg-transparent px-3 text-sm"
               />
               <button
                 type="button"
                 onClick={() => setActiveSwatch(pen.id)}
-                className="h-9 cursor-pointer rounded-full px-3 text-xs text-gold-deep"
+                className="h-11 min-h-11 cursor-pointer rounded-full px-3 text-xs text-gold-deep"
               >
                 Use
               </button>
@@ -135,7 +135,7 @@ export function HighlightsModal() {
                 <button
                   type="button"
                   onClick={() => removeSwatch(pen.id)}
-                  className="h-9 cursor-pointer rounded-full px-3 text-xs text-danger"
+                  className="h-11 min-h-11 cursor-pointer rounded-full px-3 text-xs text-danger"
                 >
                   Remove
                 </button>
@@ -171,7 +171,7 @@ export function HighlightsModal() {
             Select English or transliteration, or turn on Highlight and tap Arabic words. Marks stay on this device.
           </p>
         ) : (
-          <ul className="mt-3 space-y-2">
+          <ul className="mt-4 flex flex-col gap-2">
             {highlights
               .slice()
               .reverse()
@@ -186,11 +186,11 @@ export function HighlightsModal() {
                   penName: item.label?.trim() || pen?.name,
                 });
                 return (
-                  <li key={item.id} className="flex items-start gap-3 rounded-2xl border border-line p-3">
+                  <li key={item.id} className="qd-pad-sm flex items-start gap-3 rounded-2xl border border-line">
                     <span className="mt-1 h-4 w-4 shrink-0 rounded-full" style={{ background: pen?.color ?? "#F5D76E" }} />
                     <button
                       type="button"
-                      className="min-w-0 flex-1 cursor-pointer text-left"
+                      className="min-h-11 min-w-0 flex-1 cursor-pointer text-left"
                       onClick={() =>
                         jumpToHit({
                           verseKey: item.verseKey,
@@ -210,7 +210,7 @@ export function HighlightsModal() {
                     <button
                       type="button"
                       onClick={() => deleteHighlight(item.id)}
-                      className="h-9 cursor-pointer rounded-full px-3 text-xs text-danger"
+                      className="h-11 min-h-11 cursor-pointer rounded-full px-3 text-xs text-danger"
                     >
                       Remove
                     </button>
