@@ -11,7 +11,8 @@ export const ogSize = { width: 1200, height: 630 };
 /**
  * Iris, the live home theme (`[data-theme="iris"]` in globals.css).
  * Values are copied so a share card does not depend on CSS variables.
- * Canvas is the page colour; the wash echoes body::before (accent, gold, accent-soft).
+ * The corner wash is a light teal (`#7fe3d6`–`#b8f3ec`). It fades in that
+ * hue, not toward transparent black, which was turning the aqua grey.
  */
 const INK = "#1e1b4b";
 const INK_SOFT = "#3d1779";
@@ -22,8 +23,8 @@ const LINE = "#c4b5fd";
 const WASH = [
   "radial-gradient(circle at 8% 0%, rgba(6, 182, 212, 0.22), transparent 36%)",
   "radial-gradient(circle at 100% 8%, rgba(87, 41, 167, 0.18), transparent 32%)",
-  "radial-gradient(circle at 80% 100%, rgba(165, 243, 252, 0.9), transparent 42%)",
-  "linear-gradient(122deg, #e4dcff 0%, #f4f0ff 46%, #d7f6fb 100%)",
+  "radial-gradient(circle at 100% 108%, #8fe9db 0%, #b8f3ec 28%, #e7faf6 52%, rgba(231, 250, 246, 0) 70%)",
+  "linear-gradient(122deg, #e4dcff 0%, #f6f3ff 48%, #f4f2ff 100%)",
 ].join(", ");
 
 export const HOME_ARABIC = "القرآن الكريم";
