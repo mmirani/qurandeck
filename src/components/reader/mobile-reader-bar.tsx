@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronLeft, Menu, Settings2 } from "lucide-react";
+import { Menu, Settings2 } from "lucide-react";
 import { HeaderAccount } from "@/components/auth/header-account";
 import { MihrabMark } from "@/components/art/ornaments";
 import { APPEARANCE_THEMES, FONT_SIZE_MAX, FONT_SIZE_MIN } from "@/lib/appearance";
@@ -21,14 +21,7 @@ export function MobileReaderBar() {
 
   return (
     <div className="sticky top-0 z-30 shrink-0 border-b border-line/60 bg-canvas/95 backdrop-blur-md lg:hidden">
-      <div className="qd-gutter flex h-14 min-h-14 items-center gap-2">
-        <Link
-          href="/"
-          className="inline-flex h-11 min-h-11 min-w-11 shrink-0 cursor-pointer items-center justify-center rounded-full hover:bg-highlight"
-          aria-label="Back to home"
-        >
-          <ChevronLeft className="h-5 w-5" />
-        </Link>
+      <div className="qd-gutter flex min-h-14 items-center gap-[var(--space-3)] py-[var(--space-2)]">
         <Link
           href="/"
           className="inline-flex h-11 min-h-11 min-w-11 shrink-0 cursor-pointer items-center justify-center rounded-full hover:bg-highlight"
@@ -57,7 +50,7 @@ export function MobileReaderBar() {
         </h1>
         <HeaderAccount />
       </div>
-      <div className="qd-gutter flex flex-wrap items-center gap-2 border-t border-line/50 py-2" role="group" aria-label="Reading controls">
+      <div className="qd-gutter flex flex-wrap items-center gap-[var(--space-2)] border-t border-line/50 py-[var(--space-2)]" role="group" aria-label="Reading controls">
         <LayoutChip
           active={!ayahMode}
           onClick={() => updatePreferences({ mobileReadingMode: "scroll" })}

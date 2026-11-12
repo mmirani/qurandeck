@@ -147,7 +147,7 @@ export function ReaderToolbar() {
         </div>
       ) : null}
       <div className="relative space-y-3">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-[var(--space-3)]">
           <button
             type="button"
             onClick={openNav}
@@ -158,7 +158,7 @@ export function ReaderToolbar() {
           </button>
           <Link
             href="/"
-            className="inline-flex h-11 min-h-11 shrink-0 cursor-pointer items-center gap-2 rounded-full px-1 hover:bg-highlight"
+            className="inline-flex h-11 min-h-11 min-w-11 shrink-0 cursor-pointer items-center gap-[var(--space-2)] rounded-full px-1 hover:bg-highlight"
             aria-label="QuranDeck home"
           >
             <MihrabMark className="h-7 w-7" />
