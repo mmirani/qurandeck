@@ -5,6 +5,7 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { SanaVisual } from "@/components/companion/sana-visual";
 import { useGuide } from "@/components/guide/guide-provider";
 import { COMPANION_NAME } from "@/lib/brand";
+import { useMediaQuery } from "@/lib/use-media-query";
 import {
   TOUR_NARROW_MAX,
   clampTourHole,
@@ -98,6 +99,7 @@ function focusable(root: HTMLElement) {
 export function TourOverlay() {
   const { active, step, steps, index, next, back, skip } = useGuide();
   const reduce = useReducedMotion();
+  const coarsePointer = useMediaQuery("(pointer: coarse), (hover: none)");
   const insets = useSafeInsets();
   const cardRef = useRef<HTMLDivElement>(null);
   const nextRef = useRef<HTMLButtonElement>(null);
@@ -135,7 +137,7 @@ export function TourOverlay() {
   }, [active, step]);
 
   const viewport = typeof window === "undefined" ? null : readViewport(insets);
-  const shown = step && viewport ? shownStep(step, viewport) : null;
+  const shown = step && viewport ? shownStep(step, viewport, coarsePointer) : null;
   const hole = shown && viewport ? measureHole(shown.target, viewport) : null;
   const box =
     viewport && shown ? placeTourCard(viewport, hole, cardHeight) : placeTourCard({ width: 1280, height: 800 }, null, cardHeight);
@@ -284,17 +286,11 @@ export function TourOverlay() {
                 Skip
               </button>
               <div className="tour-nav-end">
-                <button
-                  type="button"
-                  className="tour-ghost"
-                  aria-disabled={index === 0}
-                  onClick={() => {
-                    if (index === 0) return;
-                    back();
-                  }}
-                >
-                  Back
-                </button>
+                {index > 0 ? (
+                  <button type="button" className="tour-ghost" onClick={back}>
+                    Back
+                  </button>
+                ) : null}
                 <button ref={nextRef} type="button" className="tour-next" onClick={next}>
                   {index >= steps.length - 1 ? "Done" : "Next"}
                 </button>
@@ -310,11 +306,12 @@ export function TourOverlay() {
   );
 }
 
-function shownStep(step: TourStep, viewport: TourViewport) {
+function shownStep(step: TourStep, viewport: TourViewport, coarsePointer: boolean) {
   return presentTourStep(step, {
     primaryVisible: Boolean(step.target && findTourTarget(step.target)),
     mobileVisible: Boolean(step.mobileTarget && findTourTarget(step.mobileTarget)),
     narrow: viewport.width <= TOUR_NARROW_MAX,
+    coarsePointer,
   });
 }
 

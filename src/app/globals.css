@@ -1868,11 +1868,6 @@ body::before {
   color: var(--ink);
 }
 
-.tour-ghost[aria-disabled="true"] {
-  color: var(--ink-soft);
-  cursor: default;
-}
-
 .tour-ghost:focus-visible,
 .tour-next:focus-visible {
   outline: 2px solid var(--ink);

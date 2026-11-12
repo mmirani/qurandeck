@@ -1,7 +1,9 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
+import { EXTRA_LESSONS, WELCOME_TOUR } from "../src/lib/guide/catalog";
 import {
   TOUR_MARGIN,
+  adaptTourPointerCopy,
   clampTourHole,
   placeTourCard,
   presentTourStep,
@@ -142,5 +144,29 @@ describe("tour step adaptation", () => {
     const shown = presentTourStep(step, { primaryVisible: false, mobileVisible: false, narrow: true });
     assert.equal(shown.target, undefined);
     assert.match(shown.body, /action button/);
+  });
+
+  it("says Tap on a coarse pointer and Click for a mouse", () => {
+    const welcome = WELCOME_TOUR[0].body;
+    assert.match(adaptTourPointerCopy(welcome, true), /Tap me later if you only want one feature/);
+    assert.doesNotMatch(adaptTourPointerCopy(welcome, true), /click/i);
+    assert.match(adaptTourPointerCopy(welcome, false), /Click me later if you only want one feature/);
+    assert.equal(adaptTourPointerCopy("Hover the star, then click it.", true), "Tap the star, then tap it.");
+    const shown = presentTourStep(
+      { title: "Hi", body: welcome },
+      { primaryVisible: false, mobileVisible: false, narrow: true, coarsePointer: true },
+    );
+    assert.match(shown.body, /Tap me later/);
+  });
+
+  it("keeps click and hover out of every touch step", () => {
+    for (const step of [...WELCOME_TOUR, ...EXTRA_LESSONS]) {
+      for (const text of [step.body, step.mobileBody]) {
+        if (!text) continue;
+        const touch = adaptTourPointerCopy(text, true);
+        assert.doesNotMatch(touch, /\bclick\b/i, step.id);
+        assert.doesNotMatch(touch, /\bhover\b/i, step.id);
+      }
+    }
   });
 });

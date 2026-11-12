@@ -165,19 +165,31 @@ export type TourStepCopy = {
   mobileBody?: string;
 };
 
+/** Touch screens say Tap. A mouse keeps Click and Hover. */
+export function adaptTourPointerCopy(text: string, coarsePointer: boolean) {
+  if (!coarsePointer) return text;
+  return text
+    .replace(/\bClick\b/g, "Tap")
+    .replace(/\bclick\b/g, "tap")
+    .replace(/\bHover\b/g, "Tap")
+    .replace(/\bhover\b/g, "tap");
+}
+
 /** Use the on-screen control. When the desktop target is hidden, switch to the mobile one. */
 export function presentTourStep(
   step: TourStepCopy,
-  flags: { primaryVisible: boolean; mobileVisible: boolean; narrow: boolean },
+  flags: { primaryVisible: boolean; mobileVisible: boolean; narrow: boolean; coarsePointer?: boolean },
 ): { target?: string; title: string; body: string } {
+  const coarse = Boolean(flags.coarsePointer);
+  const speak = (body: string) => adaptTourPointerCopy(body, coarse);
   if (!step.target || flags.primaryVisible) {
-    return { target: step.target, title: step.title, body: step.body };
+    return { target: step.target, title: step.title, body: speak(step.body) };
   }
   if (step.mobileTarget && flags.mobileVisible) {
-    return { target: step.mobileTarget, title: step.title, body: step.mobileBody ?? step.body };
+    return { target: step.mobileTarget, title: step.title, body: speak(step.mobileBody ?? step.body) };
   }
   if (flags.narrow && step.mobileBody) {
-    return { target: undefined, title: step.title, body: step.mobileBody };
+    return { target: undefined, title: step.title, body: speak(step.mobileBody) };
   }
-  return { target: undefined, title: step.title, body: step.body };
+  return { target: undefined, title: step.title, body: speak(step.body) };
 }
