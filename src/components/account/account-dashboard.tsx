@@ -130,7 +130,7 @@ export function AccountRailCard() {
 }
 
 function AccountDashboard() {
-  const { user, progress, bookmarks, notes, highlights, openModal } = useMushaf();
+  const { user, progress, bookmarks, notes, highlights, openAuth } = useMushaf();
   const minutes = formatReadingMinutes(progress.totalSeconds);
 
   return (
@@ -149,10 +149,10 @@ function AccountDashboard() {
       {user ? null : (
         <button
           type="button"
-          onClick={() => openModal("auth")}
-          className="h-12 w-full cursor-pointer rounded-full bg-gold text-sm font-semibold text-on-gold"
+          onClick={() => openAuth("signup")}
+          className="h-12 min-h-11 w-full cursor-pointer rounded-full border border-line bg-surface text-sm font-medium text-ink"
         >
-          Sync your notes across devices
+          Sign up free
         </button>
       )}
     </div>

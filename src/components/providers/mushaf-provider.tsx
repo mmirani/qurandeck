@@ -12,6 +12,7 @@ import {
 } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { signOut as nextAuthSignOut, useSession } from "next-auth/react";
+import type { AuthEntryMode } from "@/lib/auth-entry";
 import { sessionUserFromAuth } from "@/lib/auth-session";
 import {
   getAudioMap,
@@ -154,6 +155,8 @@ type MushafContextValue = {
   stopAudio: () => void;
   seek: (time: number) => void;
   openModal: (name: Exclude<ModalName, null>) => void;
+  authMode: AuthEntryMode;
+  openAuth: (mode: AuthEntryMode) => void;
   closeModal: () => void;
   setSearchQuery: (value: string) => void;
   setSearchOpen: (value: boolean) => void;
@@ -236,6 +239,7 @@ export function MushafProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [modal, setModal] = useState<ModalName>(null);
+  const [authMode, setAuthMode] = useState<AuthEntryMode>("signin");
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<SearchHit[]>([]);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -827,6 +831,16 @@ export function MushafProvider({ children }: { children: ReactNode }) {
     void runSearch();
   }, [runSearch]);
 
+  const openModal = useCallback((name: Exclude<ModalName, null>) => {
+    if (name === "auth") setAuthMode("signin");
+    setModal(name);
+  }, []);
+
+  const openAuth = useCallback((mode: AuthEntryMode) => {
+    setAuthMode(mode);
+    setModal("auth");
+  }, []);
+
   const jumpToHit = useCallback(
     (hit: SearchHit) => {
       setSearchOpen(false);
@@ -1195,7 +1209,9 @@ export function MushafProvider({ children }: { children: ReactNode }) {
       togglePlay,
       stopAudio,
       seek,
-      openModal: setModal,
+      openModal,
+      authMode,
+      openAuth,
       closeModal: () => setModal(null),
       setSearchQuery,
       setSearchOpen,
@@ -1262,6 +1278,9 @@ export function MushafProvider({ children }: { children: ReactNode }) {
       juzs,
       loading,
       modal,
+      authMode,
+      openAuth,
+      openModal,
       mode,
       notes,
       openJuz,

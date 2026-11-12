@@ -20,12 +20,14 @@ import {
 import { CompletionMap } from "@/components/account/completion-map";
 import { HomeReadingRanks } from "@/components/home/home-reading-ranks";
 import { HomeStats } from "@/components/home/home-stats";
+import { AccountEntryLink, HeaderAccount } from "@/components/auth/header-account";
 import { BrandWordmark } from "@/components/brand/brand-wordmark";
 import { HomeSana } from "@/components/home/home-sana";
 import { AppModals } from "@/components/shell/app-modals";
 import { useMushaf } from "@/components/providers/mushaf-provider";
 import { UserMenu } from "@/components/user/user-menu";
 import { MihrabMark } from "@/components/art/ornaments";
+import { ACCOUNT_BENEFIT } from "@/lib/auth-entry";
 import { PRODUCT_NAME, PROMISE_LINE, PROMISE_STORY, WORK_TITLE } from "@/lib/brand";
 import { QuranCredit } from "@/components/site/quran-credit";
 import { HOME_FEATURES, HOME_MORE, HOME_PROMISES, HOME_STARTS } from "@/lib/home";
@@ -100,15 +102,13 @@ function HomeNav({ signedIn }: { signedIn: boolean }) {
             </>
           ) : (
             <>
-              <Link
-                href="/read"
-                className="inline-flex h-11 min-h-11 shrink-0 cursor-pointer items-center rounded-full bg-gold px-3 text-sm font-semibold text-on-gold sm:px-4 md:hidden"
+              <AccountEntryLink
+                mode="signup"
+                className="hidden h-11 min-h-11 shrink-0 cursor-pointer items-center rounded-full border border-line px-4 text-sm font-medium text-ink hover:bg-highlight md:inline-flex"
               >
-                Start Reading
-              </Link>
-              <div className="hidden md:flex">
-                <GuestAuthButtons size="nav" />
-              </div>
+                Sign up free
+              </AccountEntryLink>
+              <HeaderAccount />
             </>
           )}
         </div>
@@ -118,8 +118,6 @@ function HomeNav({ signedIn }: { signedIn: boolean }) {
 }
 
 function HomeGuestHero() {
-  const { openModal } = useMushaf();
-
   return (
     <section className="qd-gutter qd-section-lg mx-auto max-w-6xl">
       <div className="mx-auto max-w-2xl text-center md:mx-0 md:text-left">
@@ -130,21 +128,7 @@ function HomeGuestHero() {
           QuranDeck is a free, private reading room for the Quran. Search, recitation, notes, and a place that stays
           with you.
         </p>
-        <div className="mx-auto mt-6 flex max-w-md flex-col items-stretch gap-4 md:mx-0 md:max-w-none md:flex-row md:flex-wrap md:items-center">
-          <Link
-            href="/read"
-            className="inline-flex h-[3.25rem] min-h-11 w-full cursor-pointer items-center justify-center rounded-full bg-gold px-6 text-base font-semibold text-on-gold md:w-auto"
-          >
-            Start Reading — Free
-          </Link>
-          <button
-            type="button"
-            onClick={() => openModal("auth")}
-            className="hidden min-h-11 cursor-pointer items-center justify-center text-sm font-medium text-ink-soft underline-offset-4 transition hover:text-ink hover:underline md:inline-flex"
-          >
-            Sync your notes across devices
-          </button>
-        </div>
+        <GuestAccountActions className="mx-auto mt-6 max-w-md md:mx-0 md:max-w-none" showStart />
         <p className="mt-4 text-center text-sm text-muted md:text-left">Free • Private • No ads or tracking</p>
       </div>
     </section>
@@ -349,65 +333,62 @@ function HomeCta() {
           </h2>
           <p className="max-w-xl text-ink-soft">{PROMISE_STORY}</p>
         </div>
-        <div className="flex flex-wrap gap-3">
-          <GuestAuthButtons size="cta" />
-        </div>
+        <GuestAccountActions showStart />
       </div>
     </section>
   );
 }
 
-function GuestAuthButtons({ size }: { size: "nav" | "hero" | "cta" }) {
-  const { openModal } = useMushaf();
-  const compact = size === "nav";
-  const openSync = () => openModal("auth");
-
-  if (compact) {
-    return (
-      <button
-        type="button"
-        onClick={openSync}
-        className="inline-flex h-11 cursor-pointer items-center rounded-full border border-line px-4 text-sm font-medium text-ink hover:bg-highlight"
-      >
-        Sync notes
-      </button>
-    );
-  }
-
+function GuestAccountActions({ showStart = false, className = "" }: { showStart?: boolean; className?: string }) {
   return (
-    <>
-      <Link
-        href="/read"
-        className="inline-flex h-12 cursor-pointer items-center rounded-full bg-gold px-6 text-base font-semibold text-on-gold"
-      >
-        Start reading
-      </Link>
-      <button
-        type="button"
-        onClick={openSync}
-        className="inline-flex h-12 cursor-pointer items-center rounded-full border border-line px-6 text-base font-medium text-ink hover:bg-highlight"
-      >
-        Sync your notes across devices
-      </button>
-    </>
+    <div className={`qd-stack ${className}`}>
+      <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+        {showStart ? (
+          <Link
+            href="/read"
+            className="inline-flex h-[3.25rem] min-h-11 w-full cursor-pointer items-center justify-center rounded-full bg-gold px-6 text-base font-semibold text-on-gold sm:w-auto"
+          >
+            Start reading
+          </Link>
+        ) : null}
+        <AccountEntryLink
+          mode="signup"
+          className="inline-flex h-[3.25rem] min-h-11 w-full cursor-pointer items-center justify-center rounded-full border border-line bg-surface px-6 text-base font-medium text-ink hover:bg-highlight sm:w-auto"
+        >
+          Sign up free
+        </AccountEntryLink>
+      </div>
+      <p className="text-sm leading-6 text-ink-soft">
+        Already have an account?{" "}
+        <AccountEntryLink mode="signin" className="inline-flex min-h-11 items-center font-medium text-ink underline-offset-4 hover:underline">
+          Sign in
+        </AccountEntryLink>
+      </p>
+      <p className="text-sm leading-6 text-ink-soft">{ACCOUNT_BENEFIT}</p>
+    </div>
   );
 }
 
 function HomeFooter() {
-  const { user, hydrated, openModal } = useMushaf();
+  const { user, hydrated } = useMushaf();
   const showGuestLinks = hydrated && !user;
 
   return (
     <footer className="border-t border-line/70">
       {showGuestLinks ? (
-        <div className="qd-gutter border-b border-line/60 bg-canvas/80 py-4 text-center md:hidden">
-          <button
-            type="button"
-            onClick={() => openModal("auth")}
-            className="min-h-11 cursor-pointer text-sm font-medium text-gold-deep underline-offset-4 hover:underline"
-          >
-            Sync your notes across devices
-          </button>
+        <div className="qd-gutter qd-pad-sm border-b border-line/60 bg-canvas/80 text-center md:hidden">
+          <p className="text-sm leading-6 text-ink-soft">{ACCOUNT_BENEFIT}</p>
+          <p className="text-sm leading-6">
+            <AccountEntryLink mode="signup" className="inline-flex min-h-11 items-center font-medium text-ink underline-offset-4 hover:underline">
+              Sign up free
+            </AccountEntryLink>
+            <span className="px-2 text-ink-soft" aria-hidden="true">
+              ·
+            </span>
+            <AccountEntryLink mode="signin" className="inline-flex min-h-11 items-center font-medium text-ink underline-offset-4 hover:underline">
+              Sign in
+            </AccountEntryLink>
+          </p>
         </div>
       ) : null}
       <div className="qd-gutter mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 py-8 text-sm text-ink-soft">

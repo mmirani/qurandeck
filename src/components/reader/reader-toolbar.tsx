@@ -7,11 +7,12 @@ import { Maximize2, Menu, Minimize2, Palette, Pause, Play, Share2 } from "lucide
 import { APPEARANCE_THEMES, FONT_SIZE_MAX, FONT_SIZE_MIN } from "@/lib/appearance";
 import { useMushaf } from "@/components/providers/mushaf-provider";
 import { SearchBar } from "@/components/search/search-bar";
-import { UserMenu } from "@/components/user/user-menu";
+import { HeaderAccount } from "@/components/auth/header-account";
 import { LanguagePicker } from "@/components/reader/language-picker";
 import { MobileReaderBar } from "@/components/reader/mobile-reader-bar";
 import { ArabesqueDivider, MihrabMark } from "@/components/art/ornaments";
-import { PRODUCT_DISPLAY, PRODUCT_NAME } from "@/lib/brand";
+import { BrandWordmark } from "@/components/brand/brand-wordmark";
+import { PRODUCT_NAME } from "@/lib/brand";
 import { shareOrCopy } from "@/lib/reading";
 import { useReaderChrome } from "@/components/shell/reader-chrome";
 import { useDisplayedReading } from "@/components/reader/reading-seed";
@@ -69,7 +70,14 @@ export function ReaderToolbar() {
     return (
       <div className="qd-gutter relative shrink-0 border-b border-line/30 bg-canvas/90 py-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h1 className="flex min-w-0 items-baseline gap-2 text-ink">
+          <Link
+            href="/"
+            aria-label="QuranDeck home"
+            className="inline-flex h-11 min-h-11 min-w-11 shrink-0 cursor-pointer items-center justify-center rounded-full hover:bg-highlight"
+          >
+            <MihrabMark className="h-6 w-6" />
+          </Link>
+          <h1 className="flex min-w-0 flex-1 items-baseline gap-2 text-ink">
             <span className="truncate font-display text-base font-semibold tracking-tight md:text-lg">
               {title}
             </span>
@@ -150,16 +158,17 @@ export function ReaderToolbar() {
           </button>
           <Link
             href="/"
-            className="hidden h-12 shrink-0 cursor-pointer items-center gap-2 rounded-full px-1 hover:bg-highlight sm:flex"
-            aria-label={`${PRODUCT_DISPLAY} home`}
+            className="inline-flex h-11 min-h-11 shrink-0 cursor-pointer items-center gap-2 rounded-full px-1 hover:bg-highlight"
+            aria-label="QuranDeck home"
           >
             <MihrabMark className="h-7 w-7" />
+            <BrandWordmark className="hidden text-xl leading-none xl:inline" />
           </Link>
           <div className="min-w-0 flex-1">
             <SearchBar />
           </div>
-          <div className={preferences.focusMode ? "shrink-0" : "shrink-0 xl:hidden"}>
-            <UserMenu />
+          <div className="shrink-0 2xl:hidden">
+            <HeaderAccount />
           </div>
         </div>
         <div className="flex flex-wrap items-center justify-between gap-3">
