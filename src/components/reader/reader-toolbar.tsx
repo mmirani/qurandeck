@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Maximize2, Menu, Minimize2, Palette, Pause, Play, Share2 } from "lucide-react";
+import { Bookmark, Maximize2, Menu, Minimize2, Palette, Pause, Play, Share2 } from "lucide-react";
 import { APPEARANCE_THEMES, FONT_SIZE_MAX, FONT_SIZE_MIN } from "@/lib/appearance";
 import { useMushaf } from "@/components/providers/mushaf-provider";
 import { SearchBar } from "@/components/search/search-bar";
@@ -117,10 +117,19 @@ export function ReaderToolbar() {
             <button
               type="button"
               onClick={() => openModal("themes")}
+              aria-label={`Themes, ${themeName}`}
               className="inline-flex h-11 min-h-11 cursor-pointer items-center gap-2 rounded-full border border-line bg-highlight px-3 text-sm capitalize text-gold-deep"
             >
               <Palette className="h-3.5 w-3.5" />
               {themeName}
+            </button>
+            <button
+              type="button"
+              onClick={() => openModal("saved")}
+              className="inline-flex h-11 min-h-11 shrink-0 cursor-pointer items-center gap-2 rounded-full border border-line bg-surface px-3 text-sm font-medium"
+            >
+              <Bookmark className="h-4 w-4" aria-hidden="true" />
+              Saved
             </button>
             <button
               type="button"
@@ -256,7 +265,7 @@ export function ReaderToolbar() {
               <button
                 type="button"
                 aria-label="Smaller text"
-                className="h-10 w-10 cursor-pointer rounded-full text-lg hover:bg-highlight"
+                className="h-11 w-11 min-h-11 min-w-11 cursor-pointer rounded-full text-lg hover:bg-highlight"
                 onClick={() =>
                   updatePreferences({ fontSize: Math.max(FONT_SIZE_MIN, preferences.fontSize - 2) })
                 }
@@ -267,7 +276,7 @@ export function ReaderToolbar() {
               <button
                 type="button"
                 aria-label="Larger text"
-                className="h-10 w-10 cursor-pointer rounded-full text-lg hover:bg-highlight"
+                className="h-11 w-11 min-h-11 min-w-11 cursor-pointer rounded-full text-lg hover:bg-highlight"
                 onClick={() =>
                   updatePreferences({ fontSize: Math.min(FONT_SIZE_MAX, preferences.fontSize + 2) })
                 }
@@ -278,10 +287,19 @@ export function ReaderToolbar() {
             <button
               type="button"
               onClick={() => openModal("themes")}
+              aria-label={`Themes, ${themeName}`}
               className="inline-flex h-11 cursor-pointer items-center gap-2 rounded-full border border-line bg-highlight px-4 text-sm capitalize text-gold-deep"
             >
               <Palette className="h-4 w-4" />
               {themeName}
+            </button>
+            <button
+              type="button"
+              onClick={() => openModal("saved")}
+              className="inline-flex h-11 min-h-11 cursor-pointer items-center gap-2 rounded-full border border-line bg-surface px-4 text-sm font-medium text-ink"
+            >
+              <Bookmark className="h-4 w-4" aria-hidden="true" />
+              Saved
             </button>
           </div>
         </div>

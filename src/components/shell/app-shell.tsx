@@ -75,6 +75,7 @@ function AppShellFrame() {
       <GuideProvider>
         <main
           id="main-content"
+          data-audio={showMobileAudio ? "on" : "off"}
           className={`relative z-[1] flex h-dvh flex-col overflow-hidden bg-canvas text-ink ${
             book ? "p-2 md:p-3" : "p-0 md:p-4"
           }`}

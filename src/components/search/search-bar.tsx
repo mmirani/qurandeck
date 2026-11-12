@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "reac
 import { createPortal } from "react-dom";
 import { Search, SlidersHorizontal } from "lucide-react";
 import { useMushaf } from "@/components/providers/mushaf-provider";
-import { searchStatusMessage } from "@/lib/search-status";
+import { moveSearchIndex, searchStatusMessage } from "@/lib/search-status";
 
 function subscribeMounted() {
   return () => {};
@@ -27,6 +27,7 @@ export function SearchBar() {
   const [local, setLocal] = useState(searchQuery);
   const [seenQuery, setSeenQuery] = useState(searchQuery);
   const [submittedQuery, setSubmittedQuery] = useState<string | null>(null);
+  const [activeIndex, setActiveIndex] = useState(-1);
   const anchor = useRef<HTMLDivElement>(null);
   const [box, setBox] = useState<{ top: number; left: number; width: number } | null>(null);
   const mounted = useSyncExternalStore(subscribeMounted, () => true, () => false);
@@ -100,11 +101,47 @@ export function SearchBar() {
           setLocal(next);
           setSearchQuery(next);
           setSearchOpen(true);
+          setActiveIndex(-1);
           if (submittedQuery !== null && next.trim() !== submittedQuery) setSubmittedQuery(null);
         }}
         onFocus={() => setSearchOpen(true)}
+        role="combobox"
+        aria-expanded={searchOpen}
+        aria-controls="quran-search-results"
+        aria-activedescendant={activeIndex >= 0 ? `search-option-${activeIndex}` : undefined}
+        aria-autocomplete="list"
         onKeyDown={(event) => {
+          const count = nameHits.length + searchResults.length;
+          if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+            event.preventDefault();
+            setSearchOpen(true);
+            setActiveIndex((current) =>
+              moveSearchIndex(current, count, event.key === "ArrowDown" ? "next" : "prev"),
+            );
+            return;
+          }
+          if (event.key === "Escape") {
+            setSearchOpen(false);
+            setActiveIndex(-1);
+            return;
+          }
           if (event.key === "Enter") {
+            if (activeIndex >= 0 && activeIndex < nameHits.length) {
+              event.preventDefault();
+              setSearchOpen(false);
+              setActiveIndex(-1);
+              openSurah(nameHits[activeIndex].id);
+              return;
+            }
+            if (activeIndex >= nameHits.length) {
+              const hit = searchResults[activeIndex - nameHits.length];
+              if (hit) {
+                event.preventDefault();
+                setActiveIndex(-1);
+                jumpToHit(hit);
+                return;
+              }
+            }
             const next = local.trim();
             setSubmittedQuery(next);
             void runSearch(local);
@@ -118,7 +155,7 @@ export function SearchBar() {
         <button
           type="button"
           onClick={() => openModal("filters")}
-          className="inline-flex h-9 cursor-pointer items-center gap-1 rounded-full bg-gold px-3 text-xs text-on-gold hover:bg-gold-deep"
+          className="inline-flex h-11 min-h-11 min-w-11 cursor-pointer items-center gap-1 rounded-full bg-gold px-3 text-xs text-on-gold hover:bg-gold-deep"
         >
           <SlidersHorizontal className="h-3.5 w-3.5" aria-hidden="true" />
           Filters
@@ -131,17 +168,28 @@ export function SearchBar() {
               className="ornament-border fixed z-[70] overflow-hidden rounded-3xl bg-surface shadow-[0_16px_40px_rgba(15,23,42,0.16)]"
               style={{ top: box.top, left: box.left, width: box.width }}
             >
-              <div className="max-h-[min(24rem,50vh)] overflow-y-auto p-2">
+              {submittedQuery && !searching ? (
+                <p className="px-5 pt-3 text-sm text-ink-soft">
+                  {searchResults.length} {searchResults.length === 1 ? "ayah" : "ayahs"}
+                </p>
+              ) : null}
+              <div id="quran-search-results" role="listbox" className="max-h-[min(24rem,50vh)] overflow-y-auto p-2">
                 {nameHits.length > 0 ? <p className="kufic-label px-3 py-2 text-gold-deep">Surahs</p> : null}
-                {nameHits.map((chapter) => (
+                {nameHits.map((chapter, index) => (
                   <button
                     key={chapter.id}
+                    id={`search-option-${index}`}
                     type="button"
+                    role="option"
+                    aria-selected={activeIndex === index}
                     onClick={() => {
                       setSearchOpen(false);
+                      setActiveIndex(-1);
                       openSurah(chapter.id);
                     }}
-                    className="flex min-h-11 w-full cursor-pointer items-center justify-between rounded-2xl px-3 py-3 text-left hover:bg-highlight"
+                    className={`flex min-h-11 w-full cursor-pointer items-center justify-between rounded-2xl px-3 py-3 text-left hover:bg-highlight ${
+                      activeIndex === index ? "bg-highlight" : ""
+                    }`}
                   >
                     <span>
                       {chapter.id}. {chapter.nameSimple}
@@ -151,16 +199,25 @@ export function SearchBar() {
                 ))}
                 {searching ? <p className="px-3 py-4 text-sm text-ink-soft">Searching the Quran…</p> : null}
                 {searchStatus ? <p className="px-3 py-4 text-sm text-ink-soft">{searchStatus}</p> : null}
-                {searchResults.map((hit) => {
+                {searchResults.map((hit, index) => {
+                  const optionIndex = nameHits.length + index;
                   const chapter = chapters.find((item) => item.id === hit.chapterId);
                   const name = hit.chapterName || chapter?.nameSimple || `Surah ${hit.chapterId}`;
                   return (
                     <button
                       key={`${hit.source}-${hit.verseKey}`}
+                      id={`search-option-${optionIndex}`}
                       type="button"
-                      onClick={() => jumpToHit(hit)}
+                      role="option"
+                      aria-selected={activeIndex === optionIndex}
+                      onClick={() => {
+                        setActiveIndex(-1);
+                        jumpToHit(hit);
+                      }}
                       translate="no"
-                      className="block min-h-11 w-full cursor-pointer rounded-2xl px-3 py-3 text-left hover:bg-highlight"
+                      className={`block min-h-11 w-full cursor-pointer rounded-2xl px-3 py-3 text-left hover:bg-highlight ${
+                        activeIndex === optionIndex ? "bg-highlight" : ""
+                      }`}
                     >
                       <p className="text-xs font-medium text-gold-deep">
                         {name} · {hit.verseKey}

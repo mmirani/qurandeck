@@ -18,13 +18,13 @@ export async function GET(
   const recitation = Number(request.nextUrl.searchParams.get("recitation") ?? DEFAULT_RECITATION_ID);
 
   try {
-    const [chapter, verses, introduction] = await Promise.all([
+    const [chapter, verses, info] = await Promise.all([
       fetchChapter(chapterId),
       fetchVersesByChapter(chapterId, translation, recitation),
       fetchChapterInfo(chapterId),
     ]);
     return NextResponse.json(
-      { chapter, verses, introduction },
+      { chapter, verses, introduction: info.text, introductionSource: info.source },
       { headers: { "Cache-Control": QURAN_CACHE_CONTROL } },
     );
   } catch (error) {

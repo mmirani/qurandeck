@@ -360,7 +360,7 @@ export function performHelper(match: HelperMatch, host: HelperHost): string {
       return match.reply;
     case "focus":
       host.updatePreferences({ focusMode: !host.focusMode ? true : false });
-      return host.focusMode ? "Leaving focus." : "Focus is on. The side bars step back.";
+      return host.focusMode ? "Leaving focus." : "Focus is on. The extra controls step back.";
     default:
       return match.reply;
   }

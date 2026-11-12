@@ -15,6 +15,35 @@ export function ThemePicker() {
       <p className="mb-5 text-sm text-ink-soft">
         Bright day palettes stay light all the way through — including the reciter. Paper is warmer, with tighter corners. Night puts dark colour on the rails, player, and page together. High Contrast is nearly square.
       </p>
+      <section className="mb-6">
+        <h3 className="kufic-label text-gold-deep">Reading</h3>
+        <div className="mt-3 flex flex-col gap-1 text-sm">
+          <label className="flex min-h-11 cursor-pointer items-center gap-3">
+            <input
+              type="checkbox"
+              checked={preferences.showIntroduction}
+              onChange={(event) => updatePreferences({ showIntroduction: event.target.checked })}
+            />
+            Surah introduction
+          </label>
+          <label className="flex min-h-11 cursor-pointer items-center gap-3">
+            <input
+              type="checkbox"
+              checked={preferences.showWordByWord}
+              onChange={(event) => updatePreferences({ showWordByWord: event.target.checked })}
+            />
+            Word by word
+          </label>
+          <label className="flex min-h-11 cursor-pointer items-center gap-3">
+            <input
+              type="checkbox"
+              checked={preferences.autoFollow}
+              onChange={(event) => updatePreferences({ autoFollow: event.target.checked })}
+            />
+            Auto-follow the ayah being recited
+          </label>
+        </div>
+      </section>
       {groups.map((group) => (
         <section key={group} className="mb-6">
           <h3 className="kufic-label text-gold-deep">{group}</h3>
@@ -26,7 +55,8 @@ export function ThemePicker() {
                   key={theme.id}
                   type="button"
                   onClick={() => updatePreferences({ theme: theme.id })}
-                  className={`qd-pad cursor-pointer rounded-3xl border text-left ${
+                  aria-pressed={active}
+                  className={`qd-pad min-h-11 cursor-pointer rounded-3xl border text-left ${
                     active ? "border-gold bg-highlight" : "border-line hover:border-gold"
                   }`}
                 >

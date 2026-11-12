@@ -32,6 +32,7 @@ export function useDisplayedReading(): {
   chapter: Chapter | null;
   verses: Verse[];
   introduction: string;
+  introductionSource: string;
   loading: boolean;
   error: string | null;
 } {
@@ -43,6 +44,7 @@ export function useDisplayedReading(): {
       chapter: mushaf.chapter,
       verses: mushaf.verses,
       introduction: mushaf.introduction,
+      introductionSource: mushaf.introductionSource,
       loading: false,
       error: mushaf.error,
     };
@@ -52,6 +54,7 @@ export function useDisplayedReading(): {
       chapter: seed.chapter,
       verses: seed.verses,
       introduction: seed.introduction,
+      introductionSource: seed.introductionSource,
       loading: false,
       error: null,
     };
@@ -60,6 +63,7 @@ export function useDisplayedReading(): {
     chapter: mushaf.chapter,
     verses: mushaf.verses,
     introduction: mushaf.introduction,
+    introductionSource: mushaf.introductionSource,
     loading: mushaf.loading,
     error: mushaf.error,
   };

@@ -7,12 +7,13 @@ export type SurahSeed = {
   chapter: Chapter;
   verses: Verse[];
   introduction: string;
+  introductionSource: string;
   translationKey: string;
 };
 
 export async function loadSurahSeed(id: number): Promise<SurahSeed> {
   const translationIds = [DEFAULT_TRANSLATION_ID];
-  const [chapter, verses, introduction] = await Promise.all([
+  const [chapter, verses, info] = await Promise.all([
     fetchChapter(id),
     fetchVersesByChapter(id, translationIds),
     fetchChapterInfo(id),
@@ -20,7 +21,8 @@ export async function loadSurahSeed(id: number): Promise<SurahSeed> {
   return {
     chapter,
     verses,
-    introduction,
+    introduction: info.text,
+    introductionSource: info.source,
     translationKey: translationQuery(translationIds),
   };
 }

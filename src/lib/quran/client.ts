@@ -47,7 +47,7 @@ export function getJuzs() {
 
 export function getSurah(id: number, translationIds: number[] | number, recitationId: number) {
   const translation = translationQuery(Array.isArray(translationIds) ? translationIds : [translationIds]);
-  return getJson<{ chapter: Chapter; verses: Verse[]; introduction: string }>(
+  return getJson<{ chapter: Chapter; verses: Verse[]; introduction: string; introductionSource?: string }>(
     `/api/quran/surah/${id}?translation=${encodeURIComponent(translation)}&recitation=${recitationId}`,
   );
 }
