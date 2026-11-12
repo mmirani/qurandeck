@@ -54,12 +54,15 @@ export function StudySidebar() {
         ) : (
           <p className="text-xs text-muted">{savedAgo}</p>
         )}
+        <label htmlFor="verse-note" className="text-sm font-medium text-ink">
+          Note on {verse?.verseKey ?? "—"}
+        </label>
         <textarea
           id="verse-note"
           value={draft}
           onChange={(event) => setDraft(event.target.value)}
           placeholder="Write a personal note about this ayah…"
-          className="h-28 w-full resize-none rounded-2xl border border-gold/20 bg-transparent p-3 text-sm"
+          className="h-28 w-full resize-none rounded-2xl border border-gold/20 bg-transparent p-[var(--space-3)] text-base text-ink"
         />
         <button
           type="button"

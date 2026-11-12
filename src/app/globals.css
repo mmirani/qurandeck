@@ -904,6 +904,7 @@ body::before {
 .reader-ayah-stage {
   min-height: 0;
   flex: 1;
+  overflow: hidden;
 }
 
 .reader-ayah-body {
@@ -976,6 +977,7 @@ body::before {
 }
 
 .reader-ayah-footer {
+  flex-shrink: 0;
   padding: var(--space-4);
   padding-bottom: max(var(--space-4), env(safe-area-inset-bottom, 0px));
 }

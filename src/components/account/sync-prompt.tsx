@@ -11,7 +11,7 @@ export function SyncPrompt() {
   if (user || hidden || saved === 0) return null;
 
   return (
-    <div className="qd-gutter flex items-center justify-between gap-3 border-b border-line/70 bg-highlight py-3 text-sm">
+    <div className="qd-gutter flex shrink-0 items-center justify-between gap-[var(--space-3)] border-b border-line/70 bg-highlight py-[var(--space-3)] text-sm">
       <p className="min-w-0 text-ink">
         {ACCOUNT_BENEFIT}
         <span className="text-ink-soft"> Reading on this device stays here until you sign in.</span>

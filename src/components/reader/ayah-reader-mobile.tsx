@@ -1,14 +1,17 @@
 "use client";
 
 import { useCallback, useEffect } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, NotebookPen, Play, Star } from "lucide-react";
 import { useMushaf } from "@/components/providers/mushaf-provider";
 import { VerseCard } from "@/components/reader/verse-card";
 import { QuranCredit } from "@/components/site/quran-credit";
+import { shouldStepAyahOnArrow } from "@/lib/keyboard-target";
+import { focusOpenNote } from "@/lib/note-composer";
 import type { Verse } from "@/lib/quran/types";
 
 export function AyahReaderMobile({ verses, mode }: { verses: Verse[]; mode: string }) {
-  const { selectedVerseKey, selectVerse, chapters, playingVerseKey, preferences } = useMushaf();
+  const { selectedVerseKey, selectVerse, chapters, playingVerseKey, preferences, bookmarks, notes, playVerse, toggleBookmarkVerse } =
+    useMushaf();
 
   const index = Math.max(
     0,
@@ -42,6 +45,7 @@ export function AyahReaderMobile({ verses, mode }: { verses: Verse[]; mode: stri
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
+      if (!shouldStepAyahOnArrow(event.target)) return;
       if (event.key === "ArrowRight") {
         event.preventDefault();
         if (index < verses.length - 1) go(index + 1);
@@ -59,6 +63,8 @@ export function AyahReaderMobile({ verses, mode }: { verses: Verse[]; mode: stri
   }
 
   const chapterName = chapters.find((item) => item.id === verse.chapterId)?.nameSimple;
+  const favorited = bookmarks.some((item) => item.type === "verse" && item.verseKey === verse.verseKey);
+  const hasNote = notes.some((item) => item.verseKey === verse.verseKey && item.body.trim());
 
   return (
     <div className="reader-ayah-stage flex min-h-0 flex-1 flex-col">
@@ -78,14 +84,35 @@ export function AyahReaderMobile({ verses, mode }: { verses: Verse[]; mode: stri
       </div>
 
       <footer className="reader-ayah-footer shrink-0 border-t border-line/60 bg-canvas/95">
-        <QuranCredit compact className="mb-2 text-center" />
-        <div className="flex gap-2">
+        <QuranCredit compact className="mb-[var(--space-2)] text-center" />
+        <div className="flex gap-[var(--space-2)]" role="group" aria-label="Ayah actions">
+          <AyahBarButton
+            label="Play"
+            onClick={() => void playVerse(verse.verseKey)}
+          >
+            <Play className="h-4 w-4" />
+          </AyahBarButton>
+          <AyahBarButton
+            label={favorited ? "Bookmarked" : "Bookmark"}
+            pressed={favorited}
+            onClick={() => toggleBookmarkVerse(verse)}
+          >
+            <Star className={`h-4 w-4 ${favorited ? "fill-gold text-gold" : ""}`} />
+          </AyahBarButton>
+          <AyahBarButton
+            label={hasNote ? "Edit note" : "Add note"}
+            onClick={() => focusOpenNote(verse.verseKey)}
+          >
+            <NotebookPen className={`h-4 w-4 ${hasNote ? "text-gold" : ""}`} />
+          </AyahBarButton>
+        </div>
+        <div className="mt-[var(--space-2)] flex gap-[var(--space-2)]">
           <button
             type="button"
             disabled={index <= 0}
             onClick={() => go(index - 1)}
             aria-label="Previous ayah"
-            className="inline-flex h-12 min-h-11 flex-1 cursor-pointer items-center justify-center gap-1 rounded-full border border-line bg-surface text-sm font-medium text-ink disabled:cursor-not-allowed disabled:opacity-35"
+            className="inline-flex h-11 min-h-11 min-w-11 flex-1 cursor-pointer items-center justify-center gap-[var(--space-2)] rounded-full border border-line bg-surface text-sm font-medium text-ink disabled:cursor-not-allowed disabled:opacity-35"
           >
             <ChevronLeft className="h-5 w-5" />
             Previous
@@ -95,7 +122,7 @@ export function AyahReaderMobile({ verses, mode }: { verses: Verse[]; mode: stri
             disabled={index >= verses.length - 1}
             onClick={() => go(index + 1)}
             aria-label="Next ayah"
-            className="inline-flex h-12 min-h-11 flex-1 cursor-pointer items-center justify-center gap-1 rounded-full bg-gold text-sm font-semibold text-on-gold disabled:cursor-not-allowed disabled:opacity-35"
+            className="inline-flex h-11 min-h-11 min-w-11 flex-1 cursor-pointer items-center justify-center gap-[var(--space-2)] rounded-full bg-gold text-sm font-semibold text-on-gold disabled:cursor-not-allowed disabled:opacity-35"
           >
             Next
             <ChevronRight className="h-5 w-5" />
@@ -103,5 +130,29 @@ export function AyahReaderMobile({ verses, mode }: { verses: Verse[]; mode: stri
         </div>
       </footer>
     </div>
+  );
+}
+
+function AyahBarButton({
+  label,
+  pressed,
+  onClick,
+  children,
+}: {
+  label: string;
+  pressed?: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      aria-pressed={pressed}
+      onClick={onClick}
+      className="inline-flex h-11 min-h-11 min-w-11 flex-1 cursor-pointer items-center justify-center gap-[var(--space-2)] rounded-full border border-line bg-surface text-sm font-medium text-ink"
+    >
+      {children}
+      {label}
+    </button>
   );
 }

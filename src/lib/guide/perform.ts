@@ -3,6 +3,7 @@ import { canonicalLanguage, groupLanguages, readingDefaults, toggleLanguage } fr
 import type { AppearanceThemeId, Verse, Word } from "@/lib/quran/types";
 import type { HelperMatch } from "./commands";
 import { matchReciter } from "./commands";
+import { noteComposerReply } from "@/lib/note-composer";
 import { surahById } from "./surahs";
 
 export type PendingKind =
@@ -70,7 +71,7 @@ export type HelperHost = {
   saveNote: (verseKey: string, body: string) => void;
   runSearch: (query: string) => void;
   focusSearch: () => void;
-  focusNote: (verseKey: string) => void;
+  focusNote: (verseKey: string) => boolean;
   openStudy: () => void;
   startWelcome: () => void;
   startLesson: (id: "welcome" | "search" | "languages" | "ayah" | "audio" | "size" | "study" | "account") => void;
@@ -233,9 +234,10 @@ export function performHelper(match: HelperMatch, host: HelperHost): string {
       }
       if (verse) {
         host.selectVerse(verse.verseKey);
-        host.focusNote(verse.verseKey);
+        const focused = host.focusNote(verse.verseKey);
+        return noteComposerReply(key, focused);
       }
-      return `The note box for ${key} is ready.`;
+      return noteComposerReply(key, false);
     }
     case "find-notes": {
       host.openModal("notes");

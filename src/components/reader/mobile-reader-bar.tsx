@@ -7,7 +7,9 @@ import { MihrabMark } from "@/components/art/ornaments";
 import { APPEARANCE_THEMES, FONT_SIZE_MAX, FONT_SIZE_MIN } from "@/lib/appearance";
 import { useMushaf } from "@/components/providers/mushaf-provider";
 import { useDisplayedReading } from "@/components/reader/reading-seed";
+import { SearchBar } from "@/components/search/search-bar";
 import { useReaderChrome } from "@/components/shell/reader-chrome";
+import { useMediaQuery } from "@/lib/use-media-query";
 
 export function MobileReaderBar() {
   const { openNav } = useReaderChrome();
@@ -18,6 +20,7 @@ export function MobileReaderBar() {
   const title =
     mode === "juz" ? `Juz ${currentJuz ?? "—"}` : (chapter?.nameSimple ?? "Surah");
   const themeName = APPEARANCE_THEMES.find((item) => item.id === preferences.theme)?.name ?? preferences.theme;
+  const desktopSearch = useMediaQuery("(min-width: 1024px)");
 
   return (
     <div className="sticky top-0 z-30 shrink-0 border-b border-line/60 bg-canvas/95 backdrop-blur-md lg:hidden">
@@ -51,6 +54,11 @@ export function MobileReaderBar() {
         </h1>
         <HeaderAccount />
       </div>
+      {desktopSearch ? null : (
+        <div className="qd-gutter pb-[var(--space-2)]">
+          <SearchBar />
+        </div>
+      )}
       <div className="qd-gutter flex flex-wrap items-center gap-[var(--space-2)] border-t border-line/50 py-[var(--space-2)]" role="group" aria-label="Reading controls">
         <LayoutChip
           active={!ayahMode}
