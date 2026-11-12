@@ -129,7 +129,13 @@ function HomeGuestHero() {
           with you.
         </p>
         <GuestAccountActions className="mx-auto mt-6 max-w-md md:mx-0 md:max-w-none" showStart />
-        <p className="mt-4 text-center text-sm text-muted md:text-left">Free • Private • No ads or tracking</p>
+        <p className="mt-4 text-center text-sm text-muted md:text-left">
+          Free •{" "}
+          <Link href="/privacy" className="underline underline-offset-4 hover:text-ink">
+            Private
+          </Link>{" "}
+          • No ads or personal tracking
+        </p>
       </div>
     </section>
   );

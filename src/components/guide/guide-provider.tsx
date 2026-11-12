@@ -17,6 +17,7 @@ import {
 import { defaultCorner, loadCompanionPose, saveCompanionPose } from "@/lib/companion";
 import { downloadLibraryJson, downloadStatsCsv } from "@/lib/export-library";
 import { sanaCommandName } from "@/lib/usage-catalog";
+import { focusOpenNote } from "@/lib/note-composer";
 import { trackUsage } from "@/lib/usage-client";
 
 type GuideKind = "welcome" | "lesson" | null;
@@ -194,9 +195,7 @@ export function GuideProvider({ children }: { children: ReactNode }) {
       },
       focusNote: (verseKey) => {
         selectVerse(verseKey);
-        updatePreferences({ showStudyRail: true, focusMode: false });
-        openStudy();
-        window.setTimeout(() => document.getElementById("verse-note")?.focus(), 180);
+        return focusOpenNote(verseKey);
       },
       openStudy: () => {
         updatePreferences({ showStudyRail: true, focusMode: false });

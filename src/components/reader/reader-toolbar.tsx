@@ -15,6 +15,7 @@ import { BrandWordmark } from "@/components/brand/brand-wordmark";
 import { PRODUCT_NAME } from "@/lib/brand";
 import { shareOrCopy } from "@/lib/reading";
 import { useReaderChrome } from "@/components/shell/reader-chrome";
+import { useMediaQuery } from "@/lib/use-media-query";
 import { useDisplayedReading } from "@/components/reader/reading-seed";
 import { surahArtSrc } from "@/lib/surah-art";
 
@@ -53,6 +54,7 @@ export function ReaderToolbar() {
       1 && preferences.showArabic;
   const title =
     mode === "juz" ? `Juz ${currentJuz}` : (chapter?.nameSimple ?? "Surah");
+  const desktopSearch = useMediaQuery("(min-width: 1024px)");
 
   useEffect(() => {
     if (!preferences.focusMode) return;
@@ -165,7 +167,7 @@ export function ReaderToolbar() {
             <BrandWordmark className="hidden text-xl leading-none xl:inline" />
           </Link>
           <div className="min-w-0 flex-1">
-            <SearchBar />
+            {desktopSearch ? <SearchBar /> : null}
           </div>
           <div className="shrink-0 2xl:hidden">
             <HeaderAccount />

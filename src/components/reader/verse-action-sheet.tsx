@@ -5,6 +5,7 @@ import { BottomSheet } from "@/components/shell/bottom-sheet";
 import { useMushaf } from "@/components/providers/mushaf-provider";
 import { ayahHighlight, verseHighlights } from "@/lib/highlights";
 import { PRODUCT_NAME } from "@/lib/brand";
+import { focusOpenNote } from "@/lib/note-composer";
 import { shareOrCopy, verseShareText } from "@/lib/reading";
 import type { Verse } from "@/lib/quran/types";
 
@@ -21,7 +22,6 @@ export function VerseActionSheet({
     bookmarks,
     notes,
     highlights,
-    swatches,
     mode,
     playVerse,
     playFrom,
@@ -58,16 +58,20 @@ export function VerseActionSheet({
         />
         <SheetAction
           icon={<NotebookPen className="h-5 w-5" />}
-          label={preferences.showTafsir ? "Hide tafsir" : "Show tafsir & notes"}
+          label={note ? "Edit note" : "Add note"}
+          onClick={() => {
+            selectVerse(verse.verseKey);
+            onClose();
+            window.setTimeout(() => focusOpenNote(verse.verseKey), 0);
+          }}
+        />
+        <SheetAction
+          icon={<NotebookPen className="h-5 w-5" />}
+          label={preferences.showTafsir ? "Hide tafsir" : "Show tafsir"}
           onClick={() =>
             run(() => {
               selectVerse(verse.verseKey);
-              if (preferences.showTafsir) {
-                updatePreferences({ showTafsir: false });
-                return;
-              }
-              updatePreferences({ showTafsir: true });
-              window.setTimeout(() => document.getElementById("verse-note")?.focus(), 120);
+              updatePreferences({ showTafsir: !preferences.showTafsir });
             })
           }
         />

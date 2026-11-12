@@ -17,6 +17,7 @@ import {
 import type { Highlight, HighlightLayer, HighlightSwatch, Preferences, Verse, Word } from "@/lib/quran/types";
 import { groupForId, htmlLang, isRtlLanguage, scriptClass } from "@/lib/quran/languages";
 import { PRODUCT_NAME } from "@/lib/brand";
+import { focusOpenNote } from "@/lib/note-composer";
 import { shareOrCopy, toArabicIndicDigits, verseShareText } from "@/lib/reading";
 import { useAyahFitScale } from "@/lib/use-ayah-fit-scale";
 
@@ -196,7 +197,7 @@ export function VerseCard({
               tour={tourAnchor ? "study-mobile" : undefined}
               onClick={() => {
                 selectVerse(verse.verseKey);
-                document.getElementById("verse-note")?.focus();
+                focusOpenNote(verse.verseKey);
               }}
             >
               <NotebookPen className={`h-4 w-4 ${note ? "text-gold" : ""}`} />

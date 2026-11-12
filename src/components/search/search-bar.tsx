@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "reac
 import { createPortal } from "react-dom";
 import { Search, SlidersHorizontal } from "lucide-react";
 import { useMushaf } from "@/components/providers/mushaf-provider";
+import { searchStatusMessage } from "@/lib/search-status";
 
 function subscribeMounted() {
   return () => {};
@@ -25,6 +26,7 @@ export function SearchBar() {
   } = useMushaf();
   const [local, setLocal] = useState(searchQuery);
   const [seenQuery, setSeenQuery] = useState(searchQuery);
+  const [submittedQuery, setSubmittedQuery] = useState<string | null>(null);
   const anchor = useRef<HTMLDivElement>(null);
   const [box, setBox] = useState<{ top: number; left: number; width: number } | null>(null);
   const mounted = useSyncExternalStore(subscribeMounted, () => true, () => false);
@@ -76,6 +78,14 @@ export function SearchBar() {
       .slice(0, 6);
   }, [chapters, local]);
 
+  const searchStatus = searchStatusMessage({
+    query: local,
+    submittedQuery,
+    searching,
+    resultCount: searchResults.length,
+    nameHitCount: nameHits.length,
+  });
+
   return (
     <div className="relative" data-tour="search" ref={anchor}>
       <label className="sr-only" htmlFor="quran-search">
@@ -86,13 +96,19 @@ export function SearchBar() {
         id="quran-search"
         value={local}
         onChange={(event) => {
-          setLocal(event.target.value);
-          setSearchQuery(event.target.value);
+          const next = event.target.value;
+          setLocal(next);
+          setSearchQuery(next);
           setSearchOpen(true);
+          if (submittedQuery !== null && next.trim() !== submittedQuery) setSubmittedQuery(null);
         }}
         onFocus={() => setSearchOpen(true)}
         onKeyDown={(event) => {
-          if (event.key === "Enter") void runSearch(local);
+          if (event.key === "Enter") {
+            const next = local.trim();
+            setSubmittedQuery(next);
+            void runSearch(local);
+          }
         }}
         placeholder="Search by word, theme, or verse (e.g. 2:255)"
         className="h-12 w-full rounded-full border border-line bg-surface/90 pl-11 pr-36 text-sm text-ink shadow-sm outline-none placeholder:text-muted"
@@ -134,11 +150,7 @@ export function SearchBar() {
                   </button>
                 ))}
                 {searching ? <p className="px-3 py-4 text-sm text-ink-soft">Searching the Quran…</p> : null}
-                {!searching && searchResults.length === 0 && local.length > 1 ? (
-                  <p className="px-3 py-4 text-sm text-ink-soft">
-                    Press Enter to search the full Quran text, or open Filters to browse themes such as Mercy or Prayer.
-                  </p>
-                ) : null}
+                {searchStatus ? <p className="px-3 py-4 text-sm text-ink-soft">{searchStatus}</p> : null}
                 {searchResults.map((hit) => {
                   const chapter = chapters.find((item) => item.id === hit.chapterId);
                   const name = hit.chapterName || chapter?.nameSimple || `Surah ${hit.chapterId}`;
