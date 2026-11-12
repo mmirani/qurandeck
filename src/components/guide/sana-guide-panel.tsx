@@ -5,21 +5,22 @@ import { Mic, Minus, X } from "lucide-react";
 import { useGuide } from "@/components/guide/guide-provider";
 import { useMushaf } from "@/components/providers/mushaf-provider";
 import { COMPANION_NAME, COMPANION_NAME_AR } from "@/lib/brand";
+import {
+  createVoiceSession,
+  idleVoiceSnapshot,
+  isStandaloneDisplay,
+  VOICE_UNAVAILABLE,
+  type SpeechRecognitionLike,
+  type VoiceSession,
+  type VoiceSnapshot,
+} from "@/lib/guide/voice";
 
-type SpeechCtor = new () => {
-  lang: string;
-  interimResults: boolean;
-  continuous: boolean;
-  onresult: ((event: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void) | null;
-  onerror: ((event: { error: string }) => void) | null;
-  onend: (() => void) | null;
-  start: () => void;
-  stop: () => void;
-};
-
-function speechCtor(): SpeechCtor | null {
+function speechCtor(): (new () => SpeechRecognitionLike) | null {
   if (typeof window === "undefined") return null;
-  const host = window as Window & { SpeechRecognition?: SpeechCtor; webkitSpeechRecognition?: SpeechCtor };
+  const host = window as Window & {
+    SpeechRecognition?: new () => SpeechRecognitionLike;
+    webkitSpeechRecognition?: new () => SpeechRecognitionLike;
+  };
   return host.SpeechRecognition ?? host.webkitSpeechRecognition ?? null;
 }
 
@@ -31,13 +32,18 @@ export function SanaGuidePanel({ onClose, onRest }: { onClose: () => void; onRes
   const { ask, reply, suggestions, startWelcome } = useGuide();
   const { selectedVerseKey, isPlaying } = useMushaf();
   const [q, setQ] = useState("");
-  const [listening, setListening] = useState(false);
-  const [voiceNote, setVoiceNote] = useState<string | null>(null);
+  const [voice, setVoice] = useState<VoiceSnapshot>(() => idleVoiceSnapshot());
   const rootRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const heard = useRef("");
-  const recognitionRef = useRef<{ stop: () => void } | null>(null);
+  const sessionRef = useRef<VoiceSession | null>(null);
+  const askRef = useRef(ask);
   const speech = useSyncExternalStore(subscribeNever, () => speechCtor() !== null, () => false);
+
+  useEffect(() => {
+    askRef.current = ask;
+  }, [ask]);
+
+  useEffect(() => () => sessionRef.current?.dispose(), []);
 
   useEffect(() => {
     const node = rootRef.current;
@@ -67,59 +73,38 @@ export function SanaGuidePanel({ onClose, onRest }: { onClose: () => void; onRes
   }, []);
 
   const submit = (value: string) => {
+    sessionRef.current?.cancel();
     const text = value.trim();
     if (!text) return;
     ask(text);
     setQ("");
-    setVoiceNote(null);
   };
 
   const toggleMic = () => {
-    const Ctor = speechCtor();
-    if (!Ctor) return;
-    if (listening) {
-      recognitionRef.current?.stop();
-      recognitionRef.current = null;
-      setListening(false);
-      return;
-    }
-    const recognition = new Ctor();
-    recognitionRef.current = recognition;
-    recognition.lang = "en-US";
-    recognition.interimResults = false;
-    recognition.continuous = false;
-    heard.current = "";
-    recognition.onresult = (event) => {
-      const transcript = event.results[0]?.[0]?.transcript ?? "";
-      heard.current = transcript;
-      setQ(transcript);
-    };
-    recognition.onerror = (event) => {
-      setListening(false);
-      if (event.error === "not-allowed" || event.error === "service-not-allowed") {
-        setVoiceNote("Microphone permission is blocked in this browser.");
+    if (!sessionRef.current) {
+      const Ctor = speechCtor();
+      if (!Ctor) {
+        setVoice({ ...idleVoiceSnapshot(), message: VOICE_UNAVAILABLE });
         return;
       }
-      if (event.error === "no-speech") {
-        setVoiceNote("I didn't hear anything. You can type instead.");
-        return;
-      }
-      setVoiceNote("Voice input stopped. You can type instead.");
-    };
-    recognition.onend = () => {
-      recognitionRef.current = null;
-      setListening(false);
-      const transcript = heard.current.trim();
-      if (transcript) submit(transcript);
-    };
-    try {
-      recognition.start();
-      setListening(true);
-      setVoiceNote("Listening…");
-    } catch {
-      setListening(false);
-      setVoiceNote("Voice input isn't available right now. You can type instead.");
+      sessionRef.current = createVoiceSession({
+        createRecognition: () => new Ctor(),
+        language: navigator.language,
+        standalone: isStandaloneDisplay(),
+        onChange: (next) => {
+          setVoice(next);
+          if (next.active && next.transcript) setQ(next.transcript);
+        },
+        onCommand: (transcript) => {
+          const text = transcript.trim();
+          if (!text) return;
+          askRef.current(text);
+          setQ("");
+        },
+      });
     }
+    // start() has to run in this tap. Do not await anything above it.
+    sessionRef.current.toggle();
   };
 
   const quick = selectedVerseKey
@@ -169,6 +154,7 @@ export function SanaGuidePanel({ onClose, onRest }: { onClose: () => void; onRes
           placeholder={`Ask ${COMPANION_NAME}…`}
           autoComplete="off"
           enterKeyHint="send"
+          aria-describedby={voice.message ? "sana-voice-note" : undefined}
         />
         <button type="submit" className="sr-only">
           Ask
@@ -176,17 +162,21 @@ export function SanaGuidePanel({ onClose, onRest }: { onClose: () => void; onRes
         {speech ? (
           <button
             type="button"
-            className={`nur-mic ${listening ? "is-on" : ""}`}
-            aria-pressed={listening}
-            aria-label={listening ? "Stop voice input" : "Speak a command"}
-            title={listening ? "Stop" : "Speak a command"}
+            className={`nur-mic ${voice.listening ? "is-on" : ""}`}
+            aria-pressed={voice.active}
+            aria-label={voice.active ? "Stop voice input" : "Speak a command"}
+            title={voice.active ? "Stop" : "Speak a command"}
             onClick={toggleMic}
           >
             <Mic className="h-4 w-4" />
           </button>
         ) : null}
       </form>
-      {voiceNote ? <p className="nur-hint">{voiceNote}</p> : null}
+      {voice.message ? (
+        <p id="sana-voice-note" className="nur-hint" aria-live="polite">
+          {voice.message}
+        </p>
+      ) : null}
       {reply ? (
         <p className="nur-reply" aria-live="polite">
           {reply}
