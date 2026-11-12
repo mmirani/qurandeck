@@ -32,6 +32,9 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  // fontkit reads its own data files from node_modules. Bundling it into the
+  // Open Graph route turns those paths into URL objects and the build fails.
+  serverExternalPackages: ["fontkit"],
   // `npm run build` uses webpack. Vercel's Turbopack font rewriter rejects
   // Source Serif 4 (`next/font/google queries have exactly one entry`).
   async headers() {

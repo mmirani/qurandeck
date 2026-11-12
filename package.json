@@ -16,6 +16,7 @@
     "@simplewebauthn/server": "^9.0.3",
     "@vercel/analytics": "^2.0.1",
     "@vercel/speed-insights": "^2.1.0",
+    "fontkit": "^3.0.0",
     "lucide-react": "^1.47.0",
     "motion": "^13.4.0",
     "next": "^16.4.6",
