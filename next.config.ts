@@ -27,7 +27,9 @@ const securityHeaders = [
   { key: "Referrer-Policy", value: "strict-origin" },
   {
     key: "Permissions-Policy",
-    value: "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()",
+    // microphone=(self) lets Sana's speech recognition use the mic on this
+    // origin. microphone=() blocks it for the whole site, including iOS Safari.
+    value: "camera=(), microphone=(self), geolocation=(), payment=(), usb=(), interest-cohort=()",
   },
 ];
 
