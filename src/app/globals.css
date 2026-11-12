@@ -1793,15 +1793,14 @@ body::before {
   position: fixed;
   z-index: 71;
   pointer-events: auto;
-  max-height: calc(100dvh - 1.5rem - env(safe-area-inset-bottom));
+  max-height: calc(100dvh - 2 * max(16px, env(safe-area-inset-top, 0px)) - max(16px, env(safe-area-inset-bottom, 0px)));
   overflow: auto;
-  padding: var(--card-pad);
   border-radius: calc(var(--radius) + 10px);
-  background: color-mix(in srgb, var(--surface) 94%, transparent);
-  border: 1px solid color-mix(in srgb, var(--line) 80%, transparent);
+  background: var(--surface);
+  color: var(--ink);
+  border: 1px solid var(--line);
   box-shadow: var(--shadow);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  touch-action: pan-y;
 }
 
 .tour-card-head {
@@ -1822,7 +1821,8 @@ body::before {
 }
 
 .tour-title {
-  margin: var(--space-3) 0 0;
+  margin: 0;
+  color: var(--ink);
   font-family: var(--font-jakarta), system-ui, sans-serif;
   font-size: 1.15rem;
   font-weight: 700;
@@ -1830,7 +1830,7 @@ body::before {
 }
 
 .tour-body {
-  margin: var(--space-2) 0 0;
+  margin: 0;
   color: var(--ink-soft);
   font-size: 0.92rem;
   line-height: 1.5;
@@ -1838,32 +1838,45 @@ body::before {
 
 .tour-nav {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 0.5rem;
-  margin-top: var(--stack-gap);
+  gap: var(--space-2);
+  margin: 0;
 }
 
 .tour-nav-end {
   display: flex;
-  gap: 0.4rem;
+  flex-wrap: wrap;
+  gap: var(--space-2);
 }
 
 .tour-ghost,
 .tour-next {
-  height: 2.75rem;
   min-height: 2.75rem;
+  min-width: 2.75rem;
   cursor: pointer;
   border-radius: 999px;
-  padding: 0 0.95rem;
+  padding: 0 var(--space-4);
   font-size: 0.85rem;
   font-weight: 650;
 }
 
 .tour-ghost {
   border: 1px solid var(--line);
-  background: transparent;
+  background: var(--surface);
   color: var(--ink);
+}
+
+.tour-ghost[aria-disabled="true"] {
+  color: var(--ink-soft);
+  cursor: default;
+}
+
+.tour-ghost:focus-visible,
+.tour-next:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
 }
 
 .tour-next {
@@ -1873,9 +1886,10 @@ body::before {
 }
 
 .tour-count {
-  margin: 0.45rem 0 0;
-  color: var(--muted);
-  font-size: 0.72rem;
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.8125rem;
+  font-weight: 650;
 }
 
 .surah-art {
