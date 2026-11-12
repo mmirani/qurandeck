@@ -1,13 +1,9 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { clientAddress, limitForPath, rateLimit } from "@/lib/rate-limit";
-import { canonicalRedirectUrl } from "@/lib/seo";
 
 export function proxy(request: NextRequest) {
-  const { pathname, search } = request.nextUrl;
-  const redirectTo = canonicalRedirectUrl(request.headers.get("x-forwarded-host") ?? request.headers.get("host") ?? "", pathname, search);
-  if (redirectTo) return NextResponse.redirect(redirectTo, 301);
-
+  const { pathname } = request.nextUrl;
   const rule = limitForPath(pathname);
   if (!rule) return NextResponse.next();
 
@@ -34,5 +30,5 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|.*\\.(?:png|jpg|jpeg|gif|webp|svg|ico|woff2)$).*)"],
+  matcher: ["/api/:path*"],
 };
