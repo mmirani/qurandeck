@@ -5,10 +5,13 @@ import { Mic, Minus, X } from "lucide-react";
 import { useGuide } from "@/components/guide/guide-provider";
 import { useMushaf } from "@/components/providers/mushaf-provider";
 import { COMPANION_NAME, COMPANION_NAME_AR } from "@/lib/brand";
+import { matchHelper } from "@/lib/guide/commands";
 import {
   createVoiceSession,
   idleVoiceSnapshot,
   isStandaloneDisplay,
+  releasePlayback,
+  voiceHandsOffPlayback,
   VOICE_UNAVAILABLE,
   type SpeechRecognitionLike,
   type VoiceSession,
@@ -30,18 +33,56 @@ function subscribeNever() {
 
 export function SanaGuidePanel({ onClose, onRest }: { onClose: () => void; onRest: () => void }) {
   const { ask, reply, suggestions, startWelcome } = useGuide();
-  const { selectedVerseKey, isPlaying } = useMushaf();
+  const { selectedVerseKey, isPlaying, audioRef } = useMushaf();
   const [q, setQ] = useState("");
   const [voice, setVoice] = useState<VoiceSnapshot>(() => idleVoiceSnapshot());
   const rootRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const sessionRef = useRef<VoiceSession | null>(null);
   const askRef = useRef(ask);
+  const releaseAudioRef = useRef<() => void>(() => {});
+  const resumeAudioRef = useRef<(transcript?: string) => void>(() => {});
+  const scheduleResumeRef = useRef<() => void>(() => {});
   const speech = useSyncExternalStore(subscribeNever, () => speechCtor() !== null, () => false);
 
   useEffect(() => {
     askRef.current = ask;
   }, [ask]);
+
+  useEffect(() => {
+    let held = false;
+    let resumeTimer = 0;
+    const cancelResume = () => {
+      if (resumeTimer) window.clearTimeout(resumeTimer);
+      resumeTimer = 0;
+    };
+    releaseAudioRef.current = () => {
+      cancelResume();
+      const audio = audioRef.current;
+      if (!audio || audio.paused) {
+        held = false;
+        return;
+      }
+      held = true;
+      releasePlayback(audio);
+    };
+    resumeAudioRef.current = (transcript) => {
+      cancelResume();
+      if (!held) return;
+      held = false;
+      const audio = audioRef.current;
+      if (!audio) return;
+      if (transcript && voiceHandsOffPlayback(matchHelper(transcript).action)) return;
+      void audio.play().catch(() => undefined);
+    };
+    // A no-speech error can arrive before the transcript. Wait a turn so a
+    // phrase that shows up in the same stop() can decide whether to resume.
+    scheduleResumeRef.current = () => {
+      cancelResume();
+      resumeTimer = window.setTimeout(() => resumeAudioRef.current(), 0);
+    };
+    return cancelResume;
+  }, [audioRef]);
 
   useEffect(() => () => sessionRef.current?.dispose(), []);
 
@@ -73,8 +114,9 @@ export function SanaGuidePanel({ onClose, onRest }: { onClose: () => void; onRes
   }, []);
 
   const submit = (value: string) => {
-    sessionRef.current?.cancel();
     const text = value.trim();
+    resumeAudioRef.current(text);
+    sessionRef.current?.cancel();
     if (!text) return;
     ask(text);
     setQ("");
@@ -91,15 +133,19 @@ export function SanaGuidePanel({ onClose, onRest }: { onClose: () => void; onRes
         createRecognition: () => new Ctor(),
         language: navigator.language,
         standalone: isStandaloneDisplay(),
+        beforeStart: () => releaseAudioRef.current(),
+        onUnheard: () => scheduleResumeRef.current(),
         onChange: (next) => {
           setVoice(next);
-          if (next.active && next.transcript) setQ(next.transcript);
+          if (next.phase === "starting") setQ(next.transcript);
+          else if (next.active && next.transcript) setQ(next.transcript);
         },
         onCommand: (transcript) => {
           const text = transcript.trim();
           if (!text) return;
           askRef.current(text);
           setQ("");
+          resumeAudioRef.current(text);
         },
       });
     }
