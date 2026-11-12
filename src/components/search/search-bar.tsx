@@ -125,7 +125,7 @@ export function SearchBar() {
                       setSearchOpen(false);
                       openSurah(chapter.id);
                     }}
-                    className="flex w-full cursor-pointer items-center justify-between rounded-2xl px-3 py-2 text-left hover:bg-highlight"
+                    className="flex min-h-11 w-full cursor-pointer items-center justify-between rounded-2xl px-3 py-3 text-left hover:bg-highlight"
                   >
                     <span>
                       {chapter.id}. {chapter.nameSimple}
@@ -148,7 +148,7 @@ export function SearchBar() {
                       type="button"
                       onClick={() => jumpToHit(hit)}
                       translate="no"
-                      className="block w-full cursor-pointer rounded-2xl px-3 py-2 text-left hover:bg-highlight"
+                      className="block min-h-11 w-full cursor-pointer rounded-2xl px-3 py-3 text-left hover:bg-highlight"
                     >
                       <p className="text-xs font-medium text-gold-deep">
                         {name} · {hit.verseKey}

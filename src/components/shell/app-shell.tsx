@@ -76,7 +76,7 @@ function AppShellFrame() {
         <main
           id="main-content"
           className={`relative z-[1] flex h-dvh flex-col overflow-hidden bg-canvas text-ink ${
-            book ? "p-1.5 md:p-3" : "p-0 md:p-4"
+            book ? "p-2 md:p-3" : "p-0 md:p-4"
           }`}
         >
           <div className="flex min-h-0 flex-1 w-full gap-0 md:gap-3">

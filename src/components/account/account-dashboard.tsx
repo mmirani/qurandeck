@@ -45,7 +45,7 @@ export function AccountModal() {
   return (
     <Modal title={greeting} onClose={closeModal} wide stable>
       <div>
-        <div className={`grid gap-1.5 ${user ? "grid-cols-4" : "grid-cols-3"}`} role="tablist" aria-label="Account">
+        <div className={`grid gap-2 ${user ? "grid-cols-4" : "grid-cols-3"}`} role="tablist" aria-label="Account">
           <AccountTabButton active={tab === "progress"} onClick={() => setTab("progress")}>
             Progress
           </AccountTabButton>
@@ -61,15 +61,15 @@ export function AccountModal() {
             </AccountTabButton>
           ) : null}
         </div>
-        <div className="mt-12 border-t border-line/70 pt-10">
+        <div className="mt-8 border-t border-line/70 pt-8">
         {tab === "progress" ? <AccountDashboard /> : null}
         {tab === "saved" ? <SavedLibrary /> : null}
         {tab === "settings" ? <ReadingSettings /> : null}
         {tab === "account" && user ? (
-          <div className="max-w-md space-y-8">
+          <div className="qd-stack max-w-md">
             <AvatarPicker />
             <form
-              className="space-y-2"
+              className="qd-stack"
               onSubmit={(event) => {
                 event.preventDefault();
                 const message = updateDisplayName(name);
@@ -79,7 +79,7 @@ export function AccountModal() {
               <label className="block text-sm">
                 Display name
                 <input
-                  className="mt-1 h-11 w-full rounded-2xl border border-line bg-surface px-3"
+                  className="mt-2 h-11 w-full rounded-2xl border border-line bg-surface px-4"
                   value={name}
                   onChange={(event) => {
                     setName(event.target.value);
@@ -115,18 +115,16 @@ export function AccountModal() {
 export function AccountRailCard() {
   const { user } = useMushaf();
   return (
-    <section className="rail-card rounded-2xl p-4">
+    <section className="rail-card qd-card rounded-2xl">
       <div className="flex items-center justify-between gap-2">
         <h2 className="section-heading text-gold">Account</h2>
         <div className="hidden xl:block">
           <RailToggle side="study" compact />
         </div>
       </div>
-      <p className="kufic-label mt-1 text-gold">{PROMISE_LINE}</p>
-      <p className="mt-2 text-sm text-ink-soft">{user ? `${user.displayName}. ${PROMISE_WHY}` : PROMISE_WHY}</p>
-      <div className="mt-3">
-        <UserMenu fill />
-      </div>
+      <p className="kufic-label text-gold">{PROMISE_LINE}</p>
+      <p className="text-sm leading-6 text-ink-soft">{user ? `${user.displayName}. ${PROMISE_WHY}` : PROMISE_WHY}</p>
+      <UserMenu fill />
     </section>
   );
 }
@@ -136,9 +134,9 @@ function AccountDashboard() {
   const minutes = formatReadingMinutes(progress.totalSeconds);
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-6">
       <ContinueCard />
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <StatCard label="Verses read" value={`${progress.versesRead.length}`} hint={`of ${TOTAL_AYAHS}`} />
         <StatCard label="Surahs finished" value={`${progress.surahsRead.length}`} hint={`of ${TOTAL_SURAHS}`} />
         <StatCard label="Streak" value={`${progress.streak} day${progress.streak === 1 ? "" : "s"}`} hint={progress.lastReadDay ? `Last ${progress.lastReadDay}` : "Stay on an ayah to begin"} />
@@ -170,7 +168,7 @@ function DeleteAccountPanel() {
 
   return (
     <form
-      className="space-y-2 rounded-2xl border border-danger/30 p-4"
+      className="qd-pad-sm qd-stack rounded-2xl border border-danger/30"
       onSubmit={async (event) => {
         event.preventDefault();
         if (!ready) return;
@@ -203,7 +201,7 @@ function DeleteAccountPanel() {
       <label className="block text-sm">
         Type delete to confirm
         <input
-          className="mt-1 h-11 w-full rounded-2xl border border-line bg-surface px-3"
+          className="mt-2 h-11 w-full rounded-2xl border border-line bg-surface px-4"
           value={confirm}
           onChange={(event) => setConfirm(event.target.value)}
           autoComplete="off"
@@ -244,7 +242,7 @@ function DataExportPanel({ compact = false }: { compact?: boolean }) {
     <section
       className={
         compact
-          ? "rounded-2xl border border-line bg-surface px-4 py-4"
+          ? "qd-pad-sm rounded-2xl border border-line bg-surface"
           : "border-t border-line/70 pt-8"
       }
     >
@@ -252,7 +250,7 @@ function DataExportPanel({ compact = false }: { compact?: boolean }) {
         <Download className="mt-0.5 h-4 w-4 shrink-0 text-gold-deep" aria-hidden="true" />
         <div className="min-w-0">
           <h3 className="text-sm font-semibold text-ink">Download your data</h3>
-          <p className="mt-1 text-sm text-ink-soft">
+          <p className="mt-2 text-sm leading-6 text-ink-soft">
             Stats as a spreadsheet, or a full library backup you can keep offline. Profile photos are left out to keep
             the file small.
           </p>
@@ -316,7 +314,7 @@ function SavedLibrary() {
                 <button
                   type="button"
                   onClick={() => openVerse(item.verseKey, item.label)}
-                  className="w-full cursor-pointer rounded-2xl border border-line px-4 py-3 text-left hover:bg-highlight"
+                  className="qd-pad-sm w-full cursor-pointer rounded-2xl border border-line text-left hover:bg-highlight"
                 >
                   <p className="text-xs capitalize text-gold-deep">{item.type === "verse" ? "Ayah" : item.type}</p>
                   <p className="text-sm text-ink">{item.label}</p>
@@ -333,7 +331,7 @@ function SavedLibrary() {
         ) : (
           <ul className="mt-2 space-y-2">
             {notes.map((note) => (
-              <li key={note.id} className="rounded-2xl border border-line p-4">
+              <li key={note.id} className="qd-pad-sm qd-cluster rounded-2xl border border-line">
                 <button
                   type="button"
                   className="cursor-pointer text-xs text-gold-deep"
@@ -341,7 +339,7 @@ function SavedLibrary() {
                 >
                   {note.verseKey}
                 </button>
-                <p className="mt-1 whitespace-pre-wrap text-sm text-ink">{note.body}</p>
+                <p className="whitespace-pre-wrap text-sm leading-6 text-ink">{note.body}</p>
               </li>
             ))}
           </ul>
@@ -366,7 +364,7 @@ function AccountTabButton({
       role="tab"
       aria-selected={active}
       onClick={onClick}
-      className={`h-10 cursor-pointer whitespace-nowrap rounded-full px-1 text-xs font-medium sm:text-sm ${
+      className={`h-11 min-h-11 cursor-pointer whitespace-nowrap rounded-full px-2 text-xs font-medium sm:text-sm ${
         active ? "bg-gold text-on-gold" : "border border-line bg-surface text-ink-soft"
       }`}
     >
@@ -415,30 +413,30 @@ export function ContinueCard({ compact = false }: { compact?: boolean }) {
     <div
       className={
         compact
-          ? "rounded-2xl border-2 border-gold bg-highlight p-3"
-          : "mt-3 rounded-2xl border-2 border-gold bg-highlight p-4"
+          ? "qd-card-tight rounded-2xl border-2 border-gold bg-highlight"
+          : "qd-card mt-4 rounded-2xl border-2 border-gold bg-highlight"
       }
     >
-      <p className="kufic-label flex items-center gap-1.5 text-gold-deep">
+      <p className="kufic-label flex items-center gap-2 text-gold-deep">
         <Bookmark className="h-3.5 w-3.5 shrink-0" aria-hidden="true" strokeWidth={2.25} />
         Auto Bookmark
       </p>
-      <p className={`mt-1 font-display font-semibold tracking-tight text-ink ${compact ? "text-xl" : "text-2xl"}`}>
+      <p className={`font-display font-semibold leading-tight tracking-tight text-ink ${compact ? "text-xl" : "text-2xl"}`}>
         {title}
       </p>
-      <p className="mt-0.5 text-sm text-ink">Ayah {ayah}</p>
+      <p className="text-sm leading-6 text-ink">Ayah {ayah}</p>
       {showResume ? (
         <button
           type="button"
           onClick={resume}
-          className={`mt-3 w-full cursor-pointer rounded-full bg-gold text-sm font-semibold text-on-gold ${
+          className={`w-full cursor-pointer rounded-full bg-gold text-sm font-semibold text-on-gold ${
             compact ? "h-11" : "h-12"
           }`}
         >
           Resume reading
         </button>
       ) : (
-        <p className="mt-3 flex h-11 items-center justify-center rounded-full bg-gold/20 text-sm font-medium text-gold-deep">
+        <p className="flex h-11 items-center justify-center rounded-full bg-gold/20 text-sm font-medium text-gold-deep">
           Saved here
         </p>
       )}
@@ -448,10 +446,10 @@ export function ContinueCard({ compact = false }: { compact?: boolean }) {
 
 export function StatCard({ label, value, hint }: { label: string; value: string; hint: string }) {
   return (
-    <div className="rounded-2xl border border-line bg-surface px-4 py-3">
+    <div className="qd-card rounded-2xl border border-line bg-surface">
       <p className="kufic-label text-gold-deep">{label}</p>
-      <p className="mt-1 font-display text-3xl text-ink">{value}</p>
-      <p className="mt-1 text-xs text-ink-soft">{hint}</p>
+      <p className="font-display text-3xl leading-none text-ink">{value}</p>
+      <p className="text-xs leading-5 text-ink-soft">{hint}</p>
     </div>
   );
 }

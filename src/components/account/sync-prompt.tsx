@@ -10,7 +10,7 @@ export function SyncPrompt() {
   if (user || hidden || saved === 0) return null;
 
   return (
-    <div className="flex items-center justify-between gap-3 border-b border-line/70 bg-highlight px-3 py-2 text-sm">
+    <div className="qd-gutter flex items-center justify-between gap-3 border-b border-line/70 bg-highlight py-3 text-sm">
       <p className="min-w-0 text-ink">
         Sync your notes across devices
         <span className="text-ink-soft"> — reading stays on this device until you sign in.</span>
@@ -19,14 +19,14 @@ export function SyncPrompt() {
         <button
           type="button"
           onClick={() => openModal("auth")}
-          className="h-9 cursor-pointer rounded-full bg-gold px-3 text-xs font-semibold text-on-gold"
+          className="h-11 min-h-11 cursor-pointer rounded-full bg-gold px-4 text-xs font-semibold text-on-gold"
         >
           Sign in
         </button>
         <button
           type="button"
           onClick={() => setHidden(true)}
-          className="h-9 cursor-pointer rounded-full px-2 text-xs text-ink-soft"
+          className="h-11 min-h-11 cursor-pointer rounded-full px-3 text-xs text-ink-soft"
         >
           Not now
         </button>

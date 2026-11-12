@@ -19,7 +19,7 @@ export function MobileReaderBar() {
 
   return (
     <div className="sticky top-0 z-30 shrink-0 border-b border-line/60 bg-canvas/95 backdrop-blur-md lg:hidden">
-      <div className="flex h-[3.25rem] min-h-[3.25rem] items-center gap-2 px-3">
+      <div className="qd-gutter flex h-14 min-h-14 items-center gap-2">
         <Link
           href="/"
           className="inline-flex h-11 min-h-11 min-w-11 shrink-0 cursor-pointer items-center justify-center rounded-full hover:bg-highlight"
@@ -86,7 +86,7 @@ export function MobileReaderBar() {
           </>
         ) : null}
       </div>
-      <div className="flex gap-1.5 border-t border-line/50 px-3 py-2" role="group" aria-label="Reading layout">
+      <div className="qd-gutter flex gap-2 border-t border-line/50 py-2" role="group" aria-label="Reading layout">
         <LayoutChip
           active={!ayahMode}
           onClick={() => updatePreferences({ mobileReadingMode: "scroll" })}
@@ -122,7 +122,7 @@ function LayoutChip({
     <button
       type="button"
       onClick={onClick}
-      className={`inline-flex h-10 min-h-10 flex-1 cursor-pointer items-center justify-center rounded-full text-sm font-medium ${
+      className={`inline-flex h-11 min-h-11 flex-1 cursor-pointer items-center justify-center rounded-full text-sm font-medium ${
         active ? "bg-gold text-on-gold" : "border border-line bg-surface text-ink-soft"
       }`}
     >

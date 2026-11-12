@@ -50,7 +50,7 @@ export function SurahSidebar() {
 
   return (
     <aside className="mushaf-rail flex h-full min-h-0 flex-col overflow-hidden">
-      <div className="shrink-0 px-5 pb-3 pt-5">
+      <div className="qd-pad shrink-0">
         <div className="flex items-start justify-between gap-2">
           <Link
             href="/"
@@ -58,7 +58,7 @@ export function SurahSidebar() {
             aria-label={`${PRODUCT_DISPLAY} home`}
           >
             <MihrabMark className="h-11 w-11 shrink-0" />
-            <BrandWordmark className="truncate text-2xl leading-none" />
+            <BrandWordmark className="shrink-0 text-xl leading-none xl:text-2xl" />
           </Link>
           <div className="hidden lg:block">
             <RailToggle side="nav" />
@@ -106,7 +106,7 @@ export function SurahSidebar() {
                 href={`/juz/${juz.juzNumber}`}
                 prefetch={false}
                 onClick={() => closeNav()}
-                className={`mb-2 flex min-h-16 w-full cursor-pointer items-center gap-3 rounded-2xl px-3 py-3 text-left ${
+                className={`qd-pad-sm mb-2 flex min-h-16 w-full cursor-pointer items-center gap-3 rounded-2xl text-left ${
                   active ? "bg-highlight ring-1 ring-gold/30" : "hover:bg-canvas"
                 }`}
               >
@@ -140,11 +140,11 @@ export function SurahSidebar() {
                 prefetch={false}
                 onClick={() => closeNav()}
                 aria-current={active ? "page" : undefined}
-                className={`mb-1 flex min-h-14 w-full cursor-pointer items-center gap-3 rounded-2xl px-3 py-2.5 text-left ${
+                className={`qd-pad-sm mb-2 flex min-h-14 w-full cursor-pointer items-center gap-3 rounded-2xl text-left ${
                   active ? "bg-highlight ring-1 ring-gold/25" : "hover:bg-canvas"
                 }`}
               >
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-canvas text-sm font-semibold text-ink-soft">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-canvas text-sm font-semibold text-ink-soft">
                   {item.id}
                 </span>
                 <span className="min-w-0">
@@ -158,7 +158,7 @@ export function SurahSidebar() {
           })}
         </nav>
       )}
-      <div className="shrink-0 border-t-2 border-gold/40 bg-highlight/40 px-3 py-3">
+      <div className="qd-pad-sm shrink-0 border-t-2 border-gold/40 bg-highlight/40">
         <ContinueCard compact />
         <QuranCredit compact className="mt-3" />
         <nav aria-label="Site" className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-ink-soft">

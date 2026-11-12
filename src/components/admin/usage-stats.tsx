@@ -37,24 +37,26 @@ export function UsageStatsView({ stats, notice }: { stats: UsageStats | null; no
   return (
     <div className="min-h-dvh bg-canvas text-ink">
       <header className="border-b border-line/70">
-        <div className="mx-auto flex h-16 max-w-5xl items-center px-4 sm:px-6">
+        <div className="qd-gutter mx-auto flex h-16 max-w-5xl items-center">
           <Link href="/" className="flex items-center gap-2">
             <MihrabMark className="h-7 w-7" />
             <BrandWordmark className="text-2xl leading-none" />
           </Link>
         </div>
       </header>
-      <main id="main-content" className="mx-auto max-w-5xl px-4 py-10 sm:px-6 sm:py-14">
+      <main id="main-content" className="qd-gutter qd-section mx-auto flex max-w-5xl flex-col gap-8">
+        <div className="qd-stack">
         <p className="kufic-label text-gold-deep">Private</p>
-        <h1 className="mt-2 font-display text-4xl font-semibold tracking-tight text-ink">Usage</h1>
-        <p className="mt-2 max-w-2xl text-sm leading-6 text-ink-soft">
+        <h1 className="font-display text-4xl font-semibold tracking-tight text-ink">Usage</h1>
+        <p className="max-w-2xl text-sm leading-6 text-ink-soft">
           Cookieless counts. No emails, names, notes, search text, or which ayah was opened. Event rows older than{" "}
           {USAGE_RETENTION_MONTHS} months are deleted.
         </p>
+        </div>
         {notice ? (
-          <p className="mt-4 rounded-2xl border border-gold/40 bg-highlight px-4 py-3 text-sm text-ink">{notice}</p>
+          <p className="qd-pad-sm rounded-2xl border border-gold/40 bg-highlight text-sm leading-6 text-ink">{notice}</p>
         ) : null}
-        {stats ? <StatsBody stats={stats} /> : <p className="mt-8 text-base text-ink-soft">Usage counts are unavailable right now.</p>}
+        {stats ? <StatsBody stats={stats} /> : <p className="text-base text-ink-soft">Usage counts are unavailable right now.</p>}
       </main>
     </div>
   );
@@ -63,7 +65,7 @@ export function UsageStatsView({ stats, notice }: { stats: UsageStats | null; no
 function StatsBody({ stats }: { stats: UsageStats }) {
   return (
     <>
-      <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <MetricCard label="Guest sessions" counts={stats.guests} />
         <MetricCard label="Sign-ups" counts={stats.signUps} />
         <MetricCard label="Merges" counts={stats.merges} />
@@ -72,8 +74,8 @@ function StatsBody({ stats }: { stats: UsageStats }) {
 
       <Activity stats={stats} />
 
-      <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
-        <section className="rounded-3xl border border-line bg-surface px-5 py-5 sm:px-6">
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
+        <section className="qd-pad rounded-3xl border border-line bg-surface">
           <h2 className="font-display text-xl font-semibold text-ink">Sign-ins</h2>
           <CountTable
             caption="Sign-ins by method, with all-time, 30-day, and 7-day totals"
@@ -94,7 +96,7 @@ function StatsBody({ stats }: { stats: UsageStats }) {
           />
         </section>
 
-        <section className="rounded-3xl border border-line bg-surface px-5 py-5 sm:px-6">
+        <section className="qd-pad rounded-3xl border border-line bg-surface">
           <h2 className="font-display text-xl font-semibold text-ink">Guest to account</h2>
           <p className="mt-4 font-display text-4xl font-semibold tabular-nums text-ink">{formatRate(stats.conversion.all.rate)}</p>
           <p className="mt-2 text-sm leading-6 text-ink-soft">
@@ -128,8 +130,8 @@ function StatsBody({ stats }: { stats: UsageStats }) {
 
 function Activity({ stats }: { stats: UsageStats }) {
   return (
-    <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
-      <section className="rounded-3xl border border-line bg-surface px-5 py-5 sm:px-6">
+    <div className="grid gap-4 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
+      <section className="qd-pad rounded-3xl border border-line bg-surface">
         <h2 className="font-display text-xl font-semibold text-ink">Active readers</h2>
         <p className="mt-1 text-sm text-ink-soft">Distinct hashed readers with any event in the window.</p>
         <dl className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
@@ -139,7 +141,7 @@ function Activity({ stats }: { stats: UsageStats }) {
           <ActivityFigure label="All time" value={stats.activity.all} />
         </dl>
       </section>
-      <section className="rounded-3xl border border-line bg-surface px-5 py-5 sm:px-6">
+      <section className="qd-pad rounded-3xl border border-line bg-surface">
         <h2 className="font-display text-xl font-semibold text-ink">Week-1 return</h2>
         <p className="mt-4 font-display text-4xl font-semibold tabular-nums text-ink">{formatRate(stats.retention.rate)}</p>
         <p className="mt-2 text-sm leading-6 text-ink-soft">
@@ -168,7 +170,7 @@ function ActivityFigure({ label, value }: { label: string; value: number }) {
 
 function AuthHealth({ rows, failures }: { rows: AuthHealthRow[]; failures: AuthFailureStat[] }) {
   return (
-    <section className="mt-4 rounded-3xl border border-line bg-surface px-5 py-5 sm:px-6">
+    <section className="qd-pad rounded-3xl border border-line bg-surface">
       <h2 className="font-display text-xl font-semibold text-ink">Sign-in health</h2>
         <p className="mt-1 text-sm text-ink-soft">
         Email codes requested versus used. Passkey, Google, and Apple started versus a finished session. Each line is
@@ -176,7 +178,7 @@ function AuthHealth({ rows, failures }: { rows: AuthHealthRow[]; failures: AuthF
       </p>
       <ul className="mt-4 grid gap-3 sm:grid-cols-2">
         {rows.map((row) => (
-          <li key={row.method} className="rounded-2xl border border-line/70 px-3 py-3">
+          <li key={row.method} className="qd-pad-sm rounded-2xl border border-line/70">
             <p className="font-medium text-ink">{METHOD_LABELS[row.method]}</p>
             <dl className="mt-2 space-y-1.5 text-sm">
               <HealthLine label="Started" counts={row.requested} />
@@ -211,7 +213,7 @@ function AuthHealth({ rows, failures }: { rows: AuthHealthRow[]; failures: AuthF
 function Features({ features }: { features: FeatureStat[] }) {
   const byId = new Map(features.map((feature) => [feature.id, feature]));
   return (
-    <section className="mt-4 rounded-3xl border border-line bg-surface px-5 py-5 sm:px-6">
+    <section className="qd-pad rounded-3xl border border-line bg-surface">
       <h2 className="font-display text-xl font-semibold text-ink">Features</h2>
       <p className="mt-1 text-sm text-ink-soft">Counts, and distinct readers. No ayah, note, or query is stored.</p>
       <CountTable
@@ -234,7 +236,7 @@ function Features({ features }: { features: FeatureStat[] }) {
 
 function Sana({ stats }: { stats: UsageStats }) {
   return (
-    <section className="mt-4 rounded-3xl border border-line bg-surface px-5 py-5 sm:px-6">
+    <section className="qd-pad rounded-3xl border border-line bg-surface">
       <h2 className="font-display text-xl font-semibold text-ink">{COMPANION_NAME}</h2>
       <p className="mt-1 text-sm text-ink-soft">Command names only. Typed text is not stored. Unknown commands are a count.</p>
       <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
@@ -278,7 +280,7 @@ function Themes({ themes }: { themes: ThemeStat[] }) {
   }));
   const max = Math.max(1, ...rows.map((row) => row.readers.all));
   return (
-    <section className="mt-4 rounded-3xl border border-line bg-surface px-5 py-5 sm:px-6">
+    <section className="qd-pad rounded-3xl border border-line bg-surface">
       <h2 className="font-display text-xl font-semibold text-ink">Themes in use</h2>
       <p className="mt-1 text-sm text-ink-soft">Each reader counts once, as the latest theme name recorded for them.</p>
       <ul className="mt-4 space-y-3">
@@ -309,7 +311,7 @@ function Themes({ themes }: { themes: ThemeStat[] }) {
 
 function Settings({ settings }: { settings: UsageStats["settings"] }) {
   return (
-    <section className="mt-4 rounded-3xl border border-line bg-surface px-5 py-5 sm:px-6">
+    <section className="qd-pad rounded-3xl border border-line bg-surface">
       <h2 className="font-display text-xl font-semibold text-ink">Display settings</h2>
       <p className="mt-1 text-sm text-ink-soft">Chosen values only. Theme names are in the chart above.</p>
       {settings.length === 0 ? (
@@ -334,7 +336,7 @@ function Devices({ devices }: { devices: DeviceStat[] }) {
   const rows = DEVICES.map((device) => ({ device, readers: byId.get(device) ?? { all: 0, d30: 0, d7: 0 } }));
   const max = Math.max(1, ...rows.map((row) => row.readers.all));
   return (
-    <section className="mt-4 rounded-3xl border border-line bg-surface px-5 py-5 sm:px-6">
+    <section className="qd-pad rounded-3xl border border-line bg-surface">
       <h2 className="font-display text-xl font-semibold text-ink">Devices</h2>
       <p className="mt-1 text-sm text-ink-soft">
         Phone, tablet, or desktop, and installed or browser. Latest bucket per reader. No user agent or screen size.
@@ -362,7 +364,7 @@ function Devices({ devices }: { devices: DeviceStat[] }) {
 
 function MiniCount({ label, counts }: { label: string; counts: UsageCounts }) {
   return (
-    <div className="rounded-2xl border border-line/70 px-3 py-3">
+    <div className="qd-pad-sm rounded-2xl border border-line/70">
       <p className="text-sm text-ink-soft">{label}</p>
       <p className="mt-1 font-display text-2xl font-semibold tabular-nums text-ink">{formatCount(counts.all)}</p>
       <p className="mt-1 text-xs text-ink-soft">
@@ -388,7 +390,7 @@ function CountTable({ caption, head, rows }: { caption: string; head: string[]; 
     <>
       <ul className="mt-4 space-y-3 sm:hidden">
         {rows.map((row) => (
-          <li key={row.key} className="rounded-2xl border border-line/70 px-3 py-3">
+          <li key={row.key} className="qd-pad-sm rounded-2xl border border-line/70">
             <p className={`font-medium text-ink ${row.strong ? "font-semibold" : ""}`}>{row.label}</p>
             {row.detail ? <p className="text-sm text-ink-soft">{row.detail}</p> : null}
             <dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-2 text-sm">
@@ -449,10 +451,10 @@ function HealthLine({ label, counts }: { label: string; counts: UsageCounts }) {
 
 function MetricCard({ label, counts }: { label: string; counts: UsageCounts }) {
   return (
-    <section className="rounded-3xl border border-line bg-surface px-5 py-5">
-      <h2 className="text-sm font-medium text-ink-soft">{label}</h2>
-      <p className="mt-3 font-display text-4xl font-semibold tabular-nums leading-none text-ink">{formatCount(counts.all)}</p>
-      <p className="mt-3 text-sm text-ink-soft">
+    <section className="qd-card rounded-3xl border border-line bg-surface">
+      <h2 className="text-sm font-medium leading-5 text-ink-soft">{label}</h2>
+      <p className="font-display text-4xl font-semibold tabular-nums leading-none text-ink">{formatCount(counts.all)}</p>
+      <p className="text-sm leading-6 text-ink-soft">
         <span className="tabular-nums text-ink">{formatCount(counts.d30)}</span> in 30 days
         <span className="px-1.5 text-muted" aria-hidden="true">·</span>
         <span className="tabular-nums text-ink">{formatCount(counts.d7)}</span> in 7 days
@@ -467,7 +469,7 @@ function DailyChart({ days }: { days: UsageDay[] }) {
   const last = days[days.length - 1];
 
   return (
-    <section className="mt-4 rounded-3xl border border-line bg-surface px-5 py-5 sm:px-6" aria-labelledby="usage-daily">
+    <section className="qd-pad rounded-3xl border border-line bg-surface" aria-labelledby="usage-daily">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <h2 id="usage-daily" className="font-display text-xl font-semibold text-ink">Daily events</h2>
         <p className="text-sm text-ink-soft">
@@ -535,7 +537,7 @@ function ActiveChart({ days }: { days: { day: string; readers: number }[] }) {
   const first = days[0];
   const last = days[days.length - 1];
   return (
-    <section className="mt-4 rounded-3xl border border-line bg-surface px-5 py-5 sm:px-6" aria-labelledby="usage-active">
+    <section className="qd-pad rounded-3xl border border-line bg-surface" aria-labelledby="usage-active">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <h2 id="usage-active" className="font-display text-xl font-semibold text-ink">Daily active readers</h2>
         <p className="text-sm text-ink-soft">

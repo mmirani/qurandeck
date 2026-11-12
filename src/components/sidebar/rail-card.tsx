@@ -17,7 +17,7 @@ export function StudyCardControls() {
         type="button"
         disabled={noneOpen}
         onClick={() => updatePreferences({ studyCards: allStudyCards(false) })}
-        className="h-10 flex-1 cursor-pointer rounded-full border border-gold/40 text-sm text-gold-deep disabled:cursor-not-allowed disabled:opacity-40"
+        className="h-11 min-h-11 flex-1 cursor-pointer rounded-full border border-gold/40 text-sm text-gold-deep disabled:cursor-not-allowed disabled:opacity-40"
       >
         Collapse all
       </button>
@@ -25,7 +25,7 @@ export function StudyCardControls() {
         type="button"
         disabled={allOpen}
         onClick={() => updatePreferences({ studyCards: allStudyCards(true) })}
-        className="h-10 flex-1 cursor-pointer rounded-full border border-gold/40 text-sm text-gold-deep disabled:cursor-not-allowed disabled:opacity-40"
+        className="h-11 min-h-11 flex-1 cursor-pointer rounded-full border border-gold/40 text-sm text-gold-deep disabled:cursor-not-allowed disabled:opacity-40"
       >
         Expand all
       </button>
@@ -48,7 +48,7 @@ export function RailCard({
   const open = preferences.studyCards[id];
 
   return (
-    <section className="rail-card rounded-2xl p-4">
+    <section className="rail-card qd-card rounded-2xl">
       <div className="flex items-center gap-2">
         <button
           type="button"
@@ -57,7 +57,7 @@ export function RailCard({
           onClick={() =>
             updatePreferences({ studyCards: { ...preferences.studyCards, [id]: !open } })
           }
-          className="flex min-w-0 flex-1 cursor-pointer items-center justify-between gap-2 text-left"
+          className="flex min-h-11 min-w-0 flex-1 cursor-pointer items-center justify-between gap-2 text-left"
         >
           <h2 className="section-heading text-gold">{title}</h2>
           <ChevronDown

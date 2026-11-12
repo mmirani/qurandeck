@@ -210,7 +210,7 @@ function PhotoCropper({
   };
 
   return (
-    <div className="mt-4 rounded-3xl border border-line bg-surface p-4">
+    <div className="qd-pad mt-4 rounded-3xl border border-line bg-surface">
       <p className="text-sm text-ink">Drag the photo, then use the slider until it feels right.</p>
       <div className="mx-auto mt-3 h-56 w-56 overflow-hidden rounded-full border border-gold/50">
         <canvas

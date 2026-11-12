@@ -22,7 +22,7 @@ export function HomeStats({
   const mushafPercent = Math.min(100, Math.round((versesRead / TOTAL_AYAHS) * 1000) / 10);
 
   return (
-    <div className="flex h-full flex-col justify-center rounded-3xl border border-line bg-surface px-6 py-6 sm:px-8 sm:py-7">
+    <div className="qd-pad flex h-full flex-col justify-center rounded-3xl border border-line bg-surface">
       <dl className="grid grid-cols-2 gap-x-6 gap-y-6 sm:grid-cols-4 sm:gap-x-8">
         <Stat icon={BookMarked} label="Ayahs read" value={versesRead} hint={`of ${formatCount(TOTAL_AYAHS)}`} />
         <Stat icon={BookOpen} label="Surahs finished" value={surahsFinished} hint={`of ${TOTAL_SURAHS}`} />
@@ -61,8 +61,8 @@ function Stat({
         <Icon className={`h-6 w-6 shrink-0 ${iconClassName}`} aria-hidden="true" strokeWidth={1.75} />
         <span className="font-display text-[1.75rem] font-semibold leading-none text-ink tabular-nums">{count}</span>
       </div>
-      <dt className="mt-2 text-sm font-medium text-ink sm:text-[0.9375rem]">{label}</dt>
-      <dd className={`mt-0.5 min-h-4 text-xs leading-4 ${hint ? "text-ink-soft" : "sr-only"}`}>
+      <dt className="mt-2 text-sm font-medium leading-5 text-ink sm:text-[0.9375rem]">{label}</dt>
+      <dd className={`mt-2 min-h-4 text-xs leading-4 ${hint ? "text-ink-soft" : "sr-only"}`}>
         {hint ?? label}
       </dd>
     </div>
