@@ -63,12 +63,22 @@ export function SanaVisual({
           aria-label={`Preview ${COMPANION_NAME}. Tap for a quick hello.`}
           onClick={onDemoTap}
         >
-          <Image src={NUR_SRC} alt={alt} width={140} height={140} draggable={false} className="nur-face" style={{ filter }} />
+          <Image
+            src={NUR_SRC}
+            alt={alt}
+            width={140}
+            height={140}
+            sizes="140px"
+            priority
+            draggable={false}
+            className="nur-face"
+            style={{ filter }}
+          />
           <span className="nur-gloss" />
         </button>
       ) : (
         <span className={`nur-orb ${bob} ${tapped ? "is-tapped" : ""}`}>
-          <Image src={NUR_SRC} alt={alt} width={140} height={140} draggable={false} className="nur-face" style={{ filter }} />
+          <Image src={NUR_SRC} alt={alt} width={140} height={140} sizes="140px" draggable={false} className="nur-face" style={{ filter }} />
           <span className="nur-gloss" />
         </span>
       )}

@@ -127,8 +127,8 @@ function HomeGuestHero() {
           A personal mushaf for {WORK_TITLE}
         </h1>
         <p className="mx-auto mt-3 max-w-lg text-base leading-7 text-ink-soft sm:mt-4 sm:text-lg md:mx-0">
-          Search, recitation, notes, and a reading place that stays with you. Sleek enough for daily use. Free, private,
-          forever.
+          QuranDeck is a free, private reading room for the Quran. Search, recitation, notes, and a place that stays
+          with you.
         </p>
         <div className="mx-auto mt-6 flex max-w-md flex-col items-stretch gap-3 sm:mt-7 md:mx-0 md:max-w-none md:flex-row md:flex-wrap md:items-center md:gap-x-5">
           <Link

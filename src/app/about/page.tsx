@@ -1,14 +1,14 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import { LegalPage, LegalSection } from "@/components/legal/legal-page";
 import { COMPANION_NAME, PRODUCT_NAME, PROMISE_LINE, WORK_TITLE } from "@/lib/brand";
 import { QF_ATTRIBUTION } from "@/components/site/quran-credit";
+import { pageMeta } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata = pageMeta({
   title: "About",
-  description: "QuranDeck is a free, private, personal mushaf for The Noble Quran.",
-  alternates: { canonical: "/about" },
-};
+  description: "QuranDeck is a free, private reading room for The Noble Quran. Arabic, translation, recitation, and notes.",
+  path: "/about",
+});
 
 export default function AboutPage() {
   return (

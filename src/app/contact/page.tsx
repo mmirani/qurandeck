@@ -1,12 +1,12 @@
-import type { Metadata } from "next";
 import { ContactForm } from "@/app/contact/contact-form";
 import { LegalPage, LegalSection } from "@/components/legal/legal-page";
+import { pageMeta } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata = pageMeta({
   title: "Contact",
   description: "Send QuranDeck a note about a reading issue, a translation, or an idea.",
-  alternates: { canonical: "/contact" },
-};
+  path: "/contact",
+});
 
 export default function ContactPage() {
   return (

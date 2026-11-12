@@ -14,7 +14,7 @@ import { ContinueCard } from "@/components/account/account-dashboard";
 import { QuranCredit } from "@/components/site/quran-credit";
 
 export function SurahSidebar() {
-  const { chapters, chapter, openSurah, openJuz, currentJuz, juzs, mode } = useMushaf();
+  const { chapters, chapter, currentJuz, juzs, mode } = useMushaf();
   const { closeNav } = useReaderChrome();
   const [query, setQuery] = useState("");
   const [browse, setBrowse] = useState<"surah" | "popular" | "juz">(mode === "juz" ? "juz" : "surah");
@@ -101,13 +101,11 @@ export function SurahSidebar() {
           {parts.map((juz) => {
             const active = currentJuz === juz.juzNumber;
             return (
-              <button
+              <Link
                 key={juz.juzNumber}
-                type="button"
-                onClick={() => {
-                  openJuz(juz.juzNumber);
-                  closeNav();
-                }}
+                href={`/juz/${juz.juzNumber}`}
+                prefetch={false}
+                onClick={() => closeNav()}
                 className={`mb-2 flex min-h-16 w-full cursor-pointer items-center gap-3 rounded-2xl px-3 py-3 text-left ${
                   active ? "bg-highlight ring-1 ring-gold/30" : "hover:bg-canvas"
                 }`}
@@ -124,7 +122,7 @@ export function SurahSidebar() {
                       : ""}
                   </span>
                 </span>
-              </button>
+              </Link>
             );
           })}
         </nav>
@@ -136,13 +134,12 @@ export function SurahSidebar() {
           {(browse === "popular" ? popular : visible).map((item) => {
             const active = chapter?.id === item.id && currentJuz === null;
             return (
-              <button
+              <Link
                 key={item.id}
-                type="button"
-                onClick={() => {
-                  openSurah(item.id);
-                  closeNav();
-                }}
+                href={`/surah/${item.id}`}
+                prefetch={false}
+                onClick={() => closeNav()}
+                aria-current={active ? "page" : undefined}
                 className={`mb-1 flex min-h-14 w-full cursor-pointer items-center gap-3 rounded-2xl px-3 py-2.5 text-left ${
                   active ? "bg-highlight ring-1 ring-gold/25" : "hover:bg-canvas"
                 }`}
@@ -156,7 +153,7 @@ export function SurahSidebar() {
                     {item.translatedName} · {item.versesCount} ayahs
                   </span>
                 </span>
-              </button>
+              </Link>
             );
           })}
         </nav>

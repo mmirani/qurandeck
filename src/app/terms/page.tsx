@@ -1,11 +1,12 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import { LegalPage, LegalSection } from "@/components/legal/legal-page";
+import { pageMeta } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Terms of use — QuranDeck",
+export const metadata = pageMeta({
+  title: "Terms of use",
   description: "The rules for reading The Noble Quran on QuranDeck.",
-};
+  path: "/terms",
+});
 
 const UPDATED = "November 10, 2026";
 

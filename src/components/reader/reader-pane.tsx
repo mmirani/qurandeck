@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import { MushafPage } from "@/components/art/ornaments";
 import { useMushaf } from "@/components/providers/mushaf-provider";
@@ -16,7 +17,6 @@ import { useMobileReader } from "@/lib/use-media-query";
 
 export function ReaderPane() {
   const {
-    openSurah,
     playingVerseKey,
     isPlaying,
     mode,
@@ -197,22 +197,30 @@ export function ReaderPane() {
             )}
             {chapter && mode === "surah" ? (
               <div className="flex items-center justify-between pt-4">
-                <button
-                  type="button"
-                  disabled={chapter.id <= 1}
-                  onClick={() => openSurah(chapter.id - 1)}
-                  className="inline-flex h-11 cursor-pointer items-center gap-2 rounded-full border border-line px-4 disabled:opacity-40"
-                >
-                  <ChevronLeft className="h-4 w-4" /> Previous
-                </button>
-                <button
-                  type="button"
-                  disabled={chapter.id >= 114}
-                  onClick={() => openSurah(chapter.id + 1)}
-                  className="inline-flex h-11 cursor-pointer items-center gap-2 rounded-full border border-line px-4 disabled:opacity-40"
-                >
-                  Next Surah <ChevronRight className="h-4 w-4" />
-                </button>
+                {chapter.id > 1 ? (
+                  <Link
+                    href={`/surah/${chapter.id - 1}`}
+                    className="inline-flex h-11 cursor-pointer items-center gap-2 rounded-full border border-line px-4"
+                  >
+                    <ChevronLeft className="h-4 w-4" /> Previous surah
+                  </Link>
+                ) : (
+                  <span className="inline-flex h-11 items-center gap-2 rounded-full border border-line px-4 opacity-40">
+                    <ChevronLeft className="h-4 w-4" /> Previous surah
+                  </span>
+                )}
+                {chapter.id < 114 ? (
+                  <Link
+                    href={`/surah/${chapter.id + 1}`}
+                    className="inline-flex h-11 cursor-pointer items-center gap-2 rounded-full border border-line px-4"
+                  >
+                    Next surah <ChevronRight className="h-4 w-4" />
+                  </Link>
+                ) : (
+                  <span className="inline-flex h-11 items-center gap-2 rounded-full border border-line px-4 opacity-40">
+                    Next surah <ChevronRight className="h-4 w-4" />
+                  </span>
+                )}
               </div>
             ) : null}
             <QuranCredit className="px-1 pt-2" />
