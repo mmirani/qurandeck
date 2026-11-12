@@ -8,6 +8,7 @@ import { addPasskey, signInWithPasskey } from "@/components/account/passkey-acti
 import { AppleMark, GoogleMark } from "@/components/auth/provider-marks";
 import { useMushaf } from "@/components/providers/mushaf-provider";
 import { Modal } from "@/components/ui/modal";
+import { ACCOUNT_BENEFIT } from "@/lib/auth-entry";
 import { PROMISE_LINE, PROMISE_STORY } from "@/lib/brand";
 import { rememberAuthMethod, trackUsage } from "@/lib/usage-client";
 
@@ -53,7 +54,7 @@ function AuthChoiceButton({
 }
 
 export function AuthModal() {
-  const { modal, closeModal, signOut, updateDisplayName, user } = useMushaf();
+  const { modal, closeModal, signOut, updateDisplayName, user, authMode, openAuth } = useMushaf();
   const [open, setOpen] = useState(modal === "auth");
   const [email, setEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -94,7 +95,8 @@ export function AuthModal() {
 
   if (modal !== "auth") return null;
 
-  const title = user ? "Your account" : "Sign in";
+  const signingUp = !user && authMode === "signup";
+  const title = user ? "Your account" : signingUp ? "Sign up free" : "Sign in";
 
   const providerLabel = (() => {
     if (user?.provider === "google") return "Google";
@@ -175,11 +177,39 @@ export function AuthModal() {
           </button>
         </div>
       ) : (
-        <div className="space-y-4">
-          <p className="kufic-label text-gold-deep">{PROMISE_LINE}</p>
-          <p className="text-sm text-ink-soft">
-            You can read, bookmark, and take notes without an account. Sign in when you want to sync your notes across
-            devices.
+        <div className="qd-stack">
+          <div role="tablist" aria-label="Account" className="grid grid-cols-2 gap-1 rounded-full border border-line bg-surface p-1">
+            <button
+              type="button"
+              role="tab"
+              id="auth-tab-signup"
+              aria-selected={signingUp}
+              aria-controls="auth-panel"
+              onClick={() => openAuth("signup")}
+              className={`h-11 min-h-11 cursor-pointer rounded-full px-3 text-sm font-medium ${
+                signingUp ? "bg-gold text-on-gold" : "text-ink"
+              }`}
+            >
+              Sign up free
+            </button>
+            <button
+              type="button"
+              role="tab"
+              id="auth-tab-signin"
+              aria-selected={!signingUp}
+              aria-controls="auth-panel"
+              onClick={() => openAuth("signin")}
+              className={`h-11 min-h-11 cursor-pointer rounded-full px-3 text-sm font-medium ${
+                signingUp ? "text-ink" : "bg-gold text-on-gold"
+              }`}
+            >
+              Sign in
+            </button>
+          </div>
+          <p id="auth-panel" role="tabpanel" aria-labelledby={signingUp ? "auth-tab-signup" : "auth-tab-signin"} className="text-sm leading-6 text-ink-soft">
+            {signingUp
+              ? ACCOUNT_BENEFIT
+              : "Welcome back. Your notes, bookmarks and place come with you."}
           </p>
 
           {!config?.hasSecret ? (
@@ -345,7 +375,7 @@ export function AuthModal() {
               <AuthChoiceButton
                 type="submit"
                 disabled={busy || config.emailDelivery === "unavailable"}
-                label={busy ? "Working…" : codeSent ? "Sign in" : "Email me a code"}
+                label={busy ? "Working…" : codeSent ? (signingUp ? "Sign up" : "Sign in") : "Email me a code"}
                 className="h-14 bg-gold text-lg text-on-gold"
                 icon={<Mail className="size-5" aria-hidden="true" strokeWidth={1.75} />}
               />

@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
+import { HeaderAccount } from "@/components/auth/header-account";
 import { MihrabMark } from "@/components/art/ornaments";
 import { BrandWordmark } from "@/components/brand/brand-wordmark";
 import { QuranCredit } from "@/components/site/quran-credit";
@@ -16,11 +17,14 @@ export function LegalPage({
   return (
     <div className="min-h-dvh bg-canvas text-ink">
       <header className="border-b border-line/70">
-        <div className="qd-gutter mx-auto flex h-16 max-w-3xl items-center">
-          <Link href="/" className="flex items-center gap-2">
-            <MihrabMark className="h-7 w-7" />
-            <BrandWordmark className="text-2xl leading-none" />
+        <div className="qd-gutter mx-auto flex h-16 max-w-3xl items-center gap-3">
+          <Link href="/" className="flex min-w-0 items-center gap-2" aria-label="QuranDeck home">
+            <MihrabMark className="h-7 w-7 shrink-0" />
+            <BrandWordmark className="truncate text-2xl leading-none" />
           </Link>
+          <div className="ml-auto">
+            <HeaderAccount />
+          </div>
         </div>
       </header>
       <main id="main-content" className="qd-gutter qd-section mx-auto flex max-w-3xl flex-col gap-8">

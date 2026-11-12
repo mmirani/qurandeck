@@ -1,21 +1,23 @@
 "use client";
 
 import { useEffect } from "react";
-import { useSearchParams } from "next/navigation";
 import { useMushaf } from "@/components/providers/mushaf-provider";
+import { authEntryMode } from "@/lib/auth-entry";
 
+/** Opens the account sheet when a link lands on /?auth=1&mode=signup|signin. */
 export function AuthFromQuery() {
-  const searchParams = useSearchParams();
-  const { openModal } = useMushaf();
-  const auth = searchParams.get("auth");
+  const { openAuth } = useMushaf();
 
   useEffect(() => {
-    if (auth !== "1") return;
-    openModal("auth");
-    const url = new URL(window.location.href);
-    url.searchParams.delete("auth");
-    window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
-  }, [auth, openModal]);
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("auth") !== "1") return;
+    openAuth(authEntryMode(params.get("mode")));
+    params.delete("auth");
+    params.delete("mode");
+    const search = params.toString();
+    const next = `${window.location.pathname}${search ? `?${search}` : ""}${window.location.hash}`;
+    window.history.replaceState(window.history.state, "", next);
+  }, [openAuth]);
 
   return null;
 }

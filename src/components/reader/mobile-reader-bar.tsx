@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronLeft, Menu, Settings2 } from "lucide-react";
+import { Menu, Settings2 } from "lucide-react";
+import { HeaderAccount } from "@/components/auth/header-account";
+import { MihrabMark } from "@/components/art/ornaments";
 import { APPEARANCE_THEMES, FONT_SIZE_MAX, FONT_SIZE_MIN } from "@/lib/appearance";
 import { useMushaf } from "@/components/providers/mushaf-provider";
 import { useDisplayedReading } from "@/components/reader/reading-seed";
@@ -19,13 +21,13 @@ export function MobileReaderBar() {
 
   return (
     <div className="sticky top-0 z-30 shrink-0 border-b border-line/60 bg-canvas/95 backdrop-blur-md lg:hidden">
-      <div className="qd-gutter flex h-14 min-h-14 items-center gap-2">
+      <div className="qd-gutter flex min-h-14 items-center gap-[var(--space-3)] py-[var(--space-2)]">
         <Link
           href="/"
           className="inline-flex h-11 min-h-11 min-w-11 shrink-0 cursor-pointer items-center justify-center rounded-full hover:bg-highlight"
-          aria-label="Back to home"
+          aria-label="QuranDeck home"
         >
-          <ChevronLeft className="h-5 w-5" />
+          <MihrabMark className="h-6 w-6" />
         </Link>
         <button
           type="button"
@@ -47,6 +49,26 @@ export function MobileReaderBar() {
             ) : null}
           </button>
         </h1>
+        <HeaderAccount />
+      </div>
+      <div className="qd-gutter flex flex-wrap items-center gap-[var(--space-2)] border-t border-line/50 py-[var(--space-2)]" role="group" aria-label="Reading controls">
+        <LayoutChip
+          active={!ayahMode}
+          onClick={() => updatePreferences({ mobileReadingMode: "scroll" })}
+        >
+          Scroll
+        </LayoutChip>
+        <LayoutChip
+          active={ayahMode}
+          onClick={() =>
+            updatePreferences({
+              mobileReadingMode: "ayah",
+              traditionalPage: false,
+            })
+          }
+        >
+          Ayah
+        </LayoutChip>
         {tafsirOn ? (
           <button
             type="button"
@@ -60,11 +82,10 @@ export function MobileReaderBar() {
         <button
           type="button"
           onClick={() => openModal("themes")}
-          className="inline-flex h-11 min-h-11 shrink-0 cursor-pointer items-center gap-1 rounded-full border border-line bg-surface px-3 text-xs font-medium text-gold-deep"
+          className="inline-flex h-11 min-h-11 min-w-11 shrink-0 cursor-pointer items-center justify-center rounded-full border border-line bg-surface text-gold-deep"
           aria-label={`Reading settings. Theme ${themeName}`}
         >
-          <Settings2 className="h-4 w-4 shrink-0" />
-          <span className="max-w-[4.5rem] truncate">Aa</span>
+          <Settings2 className="h-4 w-4" />
         </button>
         {!ayahMode ? (
           <>
@@ -87,25 +108,6 @@ export function MobileReaderBar() {
             </button>
           </>
         ) : null}
-      </div>
-      <div className="qd-gutter flex gap-2 border-t border-line/50 py-2" role="group" aria-label="Reading layout">
-        <LayoutChip
-          active={!ayahMode}
-          onClick={() => updatePreferences({ mobileReadingMode: "scroll" })}
-        >
-          Scroll
-        </LayoutChip>
-        <LayoutChip
-          active={ayahMode}
-          onClick={() =>
-            updatePreferences({
-              mobileReadingMode: "ayah",
-              traditionalPage: false,
-            })
-          }
-        >
-          Ayah
-        </LayoutChip>
       </div>
     </div>
   );
