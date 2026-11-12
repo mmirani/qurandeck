@@ -30,6 +30,7 @@ export function MobileReaderBar() {
         <button
           type="button"
           onClick={openNav}
+          data-tour="search-mobile"
           className="inline-flex h-11 min-h-11 min-w-11 shrink-0 cursor-pointer items-center justify-center rounded-full hover:bg-highlight"
           aria-label="Open surah and juz menu"
         >
@@ -77,6 +78,7 @@ export function MobileReaderBar() {
             </button>
             <button
               type="button"
+              data-tour="size-mobile"
               aria-label="Larger text"
               className="inline-flex h-11 min-h-11 min-w-11 cursor-pointer items-center justify-center rounded-full text-lg hover:bg-highlight"
               onClick={() => updatePreferences({ fontSize: Math.min(FONT_SIZE_MAX, preferences.fontSize + 2) })}

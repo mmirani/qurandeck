@@ -104,6 +104,7 @@ export function VerseCard({
     <article
       id={`ayah-${verse.verseNumber}`}
       data-verse-key={verse.verseKey}
+      data-tour={ayahFocus && tourAnchor ? "ayah-mobile audio-mobile study-mobile" : undefined}
       translate="no"
       className={`scroll-mt-4 scroll-mb-28 ${ayahFocus ? "reader-ayah-card" : "cursor-pointer"} ${active || reciting ? "is-live rounded-3xl" : ""}`}
       onClick={ayahFocus ? undefined : onAyahClick}
@@ -152,7 +153,7 @@ export function VerseCard({
               <Star className="absolute -bottom-1 -left-1 h-3.5 w-3.5 fill-gold text-gold" />
             ) : null}
           </div>
-          <div className="flex shrink-0 items-center gap-1 md:hidden" data-tour={tourAnchor ? "ayah" : undefined}>
+          <div className="flex shrink-0 items-center gap-1 md:hidden" data-tour={tourAnchor ? "ayah-mobile" : undefined}>
             <button
               type="button"
               aria-label={favorited ? "Bookmarked" : "Bookmark ayah"}
@@ -166,6 +167,7 @@ export function VerseCard({
             </button>
             <button
               type="button"
+              data-tour={tourAnchor ? "audio-mobile study-mobile" : undefined}
               aria-label="Ayah actions"
               onClick={(event) => {
                 event.stopPropagation();
@@ -178,7 +180,7 @@ export function VerseCard({
             </button>
           </div>
           <div className="verse-actions hidden flex-wrap justify-end gap-1 md:flex" data-tour={tourAnchor ? "ayah" : undefined}>
-            <IconAction label="Play this ayah only, then stop" onClick={() => playVerse(verse.verseKey)}>
+            <IconAction label="Play this ayah only, then stop" tour={tourAnchor ? "audio" : undefined} onClick={() => playVerse(verse.verseKey)}>
               <Play className="h-4 w-4" />
               <span className="pr-1 text-xs font-medium">Ayah</span>
             </IconAction>
@@ -191,6 +193,7 @@ export function VerseCard({
             </IconAction>
             <IconAction
               label="Write a note on this ayah"
+              tour={tourAnchor ? "study-mobile" : undefined}
               onClick={() => {
                 selectVerse(verse.verseKey);
                 document.getElementById("verse-note")?.focus();
@@ -589,14 +592,17 @@ function IconAction({
   children,
   label,
   onClick,
+  tour,
 }: {
   children: React.ReactNode;
   label: string;
   onClick: () => void;
+  tour?: string;
 }) {
   return (
     <button
       type="button"
+      data-tour={tour}
       aria-label={label}
       onClick={(event) => {
         event.stopPropagation();

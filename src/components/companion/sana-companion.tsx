@@ -61,8 +61,22 @@ export function SanaCompanion({
   );
 }
 
+function usePausePanelForTour(open: boolean, setOpen: (next: boolean) => void) {
+  const { active: guiding } = useGuide();
+  const [restore, setRestore] = useState(false);
+  if (guiding && open) {
+    setRestore(true);
+    setOpen(false);
+  } else if (!guiding && restore) {
+    setRestore(false);
+    setOpen(true);
+  }
+  return guiding;
+}
+
 function SanaDock({ audioBarVisible, ayahMode }: { audioBarVisible: boolean; ayahMode: boolean }) {
   const [open, setOpen] = useState(false);
+  const guiding = usePausePanelForTour(open, setOpen);
   const filter = useSyncExternalStore(subscribeTheme, companionFilterFromDocument, () => "none");
   const buttonRef = useRef<HTMLButtonElement>(null);
   const close = useCallback(() => {
@@ -92,7 +106,9 @@ function SanaDock({ audioBarVisible, ayahMode }: { audioBarVisible: boolean; aya
         aria-label={`Open ${COMPANION_NAME}`}
         aria-expanded={open}
         aria-haspopup="dialog"
-        onClick={() => setOpen(true)}
+        onClick={() => {
+          if (!guiding) setOpen(true);
+        }}
       >
         <Image
           src={NUR_SRC}
@@ -127,7 +143,6 @@ function SanaDock({ audioBarVisible, ayahMode }: { audioBarVisible: boolean; aya
 }
 
 function SanaFloatingCompanion() {
-  const { active: guiding } = useGuide();
   const pose = useSyncExternalStore(subscribePose, loadCompanionPose, () => defaultPose);
   const filter = useSyncExternalStore(subscribeTheme, companionFilterFromDocument, () => "none");
   const [open, setOpen] = useState(false);
@@ -139,8 +154,7 @@ function SanaFloatingCompanion() {
   const setPose = useCallback((next: CompanionPose) => {
     writePose(next);
   }, []);
-
-  if (guiding && open) setOpen(false);
+  const guiding = usePausePanelForTour(open, setOpen);
 
   const close = useCallback(() => {
     setOpen(false);
@@ -259,7 +273,7 @@ function SanaFloatingCompanion() {
         onPointerUp={endDrag}
         onPointerCancel={endDrag}
         onClick={() => {
-          if (moved.current) return;
+          if (moved.current || guiding) return;
           setOpen((value) => !value);
         }}
         onKeyDown={(event) => {
