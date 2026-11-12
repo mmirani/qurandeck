@@ -11,9 +11,15 @@
  *
  * start() must run in the same turn as the tap. Do not await getUserMedia
  * first — a separate capture holds the mic and recognition hears silence.
+ *
+ * WebKit will not restart a recognizer that has already ended, and a late
+ * onend from the previous one can land after the next tap. Every listen
+ * builds a new instance, drops the previous handlers, and ignores events
+ * whose session id is no longer current.
  */
 
 export const VOICE_LISTENING = "Listening…";
+export const VOICE_ONE_MOMENT = "One moment…";
 export const VOICE_STOPPED = "Stopped. Type it in yourself.";
 export const VOICE_UNAVAILABLE = "Voice input isn't available right now. You can type instead.";
 export const VOICE_NO_SPEECH = "I didn't hear anything. You can type instead.";
@@ -87,6 +93,13 @@ export type VoiceSessionOptions = {
   language?: string | null;
   /** Home Screen / standalone PWA, where WebKit often refuses recognition. */
   standalone?: boolean;
+  /**
+   * Runs synchronously in the tap, immediately before recognition.start().
+   * Used to pause Quran audio so iOS will hand the microphone back.
+   */
+  beforeStart?: () => void;
+  /** The listen ended without a phrase to run. */
+  onUnheard?: () => void;
   silenceMs?: number;
   maxListenMs?: number;
   clock?: VoiceClock;
@@ -141,6 +154,21 @@ export function readSpeechTranscript(results: SpeechResultListLike | null | unde
   return { finals, live };
 }
 
+/** Play, pause, and resume commands take the audio element themselves. */
+export function voiceHandsOffPlayback(action: string): boolean {
+  return action === "pause" || action === "resume" || action.startsWith("play-");
+}
+
+/** Pause media that would keep the iOS audio session in playback. */
+export function releasePlayback(media: { pause: () => void } | null | undefined) {
+  if (!media) return;
+  try {
+    media.pause();
+  } catch {
+    /* The element was already stopped. */
+  }
+}
+
 export function isStandaloneDisplay(): boolean {
   if (typeof window === "undefined") return false;
   try {
@@ -169,9 +197,11 @@ export function createVoiceSession(options: VoiceSessionOptions): VoiceSession {
   let disposed = false;
   let closed = false;
   let heardEngine = false;
+  let engineOpen = false;
   let silenceTimer: number | null = null;
   let maxTimer: number | null = null;
   let generation = 0;
+  let activeGen = 0;
 
   const textNow = () => (live || finals).trim();
 
@@ -205,9 +235,10 @@ export function createVoiceSession(options: VoiceSessionOptions): VoiceSession {
     clearMax();
   };
 
-  const finish = () => {
-    if (closed) return;
+  const finish = (gen: number) => {
+    if (gen !== generation || closed) return;
     closed = true;
+    engineOpen = false;
     clearTimers();
     const transcript = textNow();
     const stoppedByUser = userStop;
@@ -216,27 +247,31 @@ export function createVoiceSession(options: VoiceSessionOptions): VoiceSession {
     if (!run && !quiet && !disposed) {
       message = errorMessage ?? (stoppedByUser && !transcript ? VOICE_STOPPED : null);
     }
-    recognition = null;
     heardEngine = false;
     userStop = false;
+    live = "";
+    finals = "";
     if (run) submitted = true;
-    publish("idle", message, run ? transcript : "");
+    publish("idle", message, "");
     if (run) options.onCommand(transcript);
+    else options.onUnheard?.();
   };
 
-  const armSilence = () => {
-    if (closed || snapshot.phase === "idle" || snapshot.phase === "stopping") return;
+  const armSilence = (gen: number) => {
+    if (gen !== generation || closed || snapshot.phase === "idle" || snapshot.phase === "stopping") return;
     clearSilence();
     silenceTimer = clock.set(() => {
       silenceTimer = null;
+      if (gen !== generation) return;
       requestStop();
     }, silenceMs);
   };
 
-  const armMax = () => {
-    if (maxTimer != null || closed) return;
+  const armMax = (gen: number) => {
+    if (gen !== generation || maxTimer != null || closed) return;
     maxTimer = clock.set(() => {
       maxTimer = null;
+      if (gen !== generation) return;
       requestStop();
     }, maxListenMs);
   };
@@ -249,7 +284,7 @@ export function createVoiceSession(options: VoiceSessionOptions): VoiceSession {
       const phase = snapshot.phase === "stopping" ? "stopping" : "listening";
       publish(phase, VOICE_LISTENING, textNow());
     }
-    armMax();
+    armMax(activeGen);
   };
 
   const deliverLate = (transcript: string) => {
@@ -274,7 +309,7 @@ export function createVoiceSession(options: VoiceSessionOptions): VoiceSession {
     }
     const phase = snapshot.phase === "starting" ? "listening" : snapshot.phase;
     publish(phase, heardEngine ? VOICE_LISTENING : null, transcript);
-    if (transcript) armSilence();
+    if (transcript) armSilence(activeGen);
   };
 
   const handleError = (event: { error?: string }) => {
@@ -291,7 +326,7 @@ export function createVoiceSession(options: VoiceSessionOptions): VoiceSession {
       code === "audio-capture" ||
       code === "network" ||
       code === "no-speech";
-    if (fatal) finish();
+    if (fatal) finish(activeGen);
   };
 
   function requestStop() {
@@ -300,13 +335,13 @@ export function createVoiceSession(options: VoiceSessionOptions): VoiceSession {
     publish("stopping", heardEngine ? VOICE_LISTENING : null, textNow());
     const rec = recognition;
     if (!rec) {
-      finish();
+      finish(activeGen);
       return;
     }
     try {
       rec.stop();
     } catch {
-      finish();
+      finish(activeGen);
     }
   }
 
@@ -318,8 +353,42 @@ export function createVoiceSession(options: VoiceSessionOptions): VoiceSession {
     requestStop();
   }
 
-  function start() {
-    if (disposed || snapshot.phase !== "idle") return;
+  function retire(rec: SpeechRecognitionLike | null) {
+    if (!rec) return;
+    rec.onstart = null;
+    rec.onaudiostart = null;
+    rec.onspeechstart = null;
+    rec.onspeechend = null;
+    rec.onresult = null;
+    rec.onerror = null;
+    rec.onend = null;
+  }
+
+  /** The engine has confirmed audio, so this tap should finish the phrase. */
+  function hearing() {
+    return heardEngine && (snapshot.phase === "listening" || snapshot.phase === "starting");
+  }
+
+  function begin() {
+    if (disposed || hearing()) return;
+    const hadSession = generation > 0;
+    const previous = recognition;
+    const stopPrevious = engineOpen;
+    const gen = ++generation;
+    engineOpen = false;
+    recognition = null;
+    clearTimers();
+    // Drop the old handlers before stop(), so a synchronous onend cannot
+    // finish the listen we are about to start.
+    retire(previous);
+    if (stopPrevious && previous) {
+      try {
+        previous.stop();
+      } catch {
+        /* WebKit had already released this recognizer. */
+      }
+    }
+
     closed = false;
     submitted = false;
     quiet = false;
@@ -328,17 +397,17 @@ export function createVoiceSession(options: VoiceSessionOptions): VoiceSession {
     live = "";
     finals = "";
     heardEngine = false;
-    clearTimers();
+    activeGen = gen;
 
     let rec: SpeechRecognitionLike;
     try {
       rec = options.createRecognition();
     } catch {
-      publish("idle", VOICE_UNAVAILABLE, "");
+      closed = true;
+      publish("idle", hadSession ? VOICE_ONE_MOMENT : VOICE_UNAVAILABLE, "");
       return;
     }
 
-    const gen = ++generation;
     const current = () => gen === generation && !disposed;
     rec.lang = language;
     rec.continuous = false;
@@ -355,7 +424,7 @@ export function createVoiceSession(options: VoiceSessionOptions): VoiceSession {
       clearSilence();
     };
     rec.onspeechend = () => {
-      if (current()) armSilence();
+      if (current()) armSilence(gen);
     };
     rec.onresult = (event) => {
       if (current()) handleResult(event);
@@ -364,20 +433,29 @@ export function createVoiceSession(options: VoiceSessionOptions): VoiceSession {
       if (current()) handleError(event);
     };
     rec.onend = () => {
-      if (current()) finish();
+      if (current()) finish(gen);
     };
 
     recognition = rec;
+    engineOpen = true;
     publish("starting", null, "");
+    try {
+      options.beforeStart?.();
+    } catch {
+      /* Pausing playback must not block the tap. */
+    }
     try {
       // Synchronous on purpose: iOS drops the user-gesture if this is deferred.
       rec.start();
     } catch {
-      recognition = null;
+      engineOpen = false;
+      closed = true;
+      retire(rec);
+      if (recognition === rec) recognition = null;
       clearTimers();
       heardEngine = false;
-      closed = true;
-      publish("idle", VOICE_UNAVAILABLE, "");
+      publish("idle", hadSession ? VOICE_ONE_MOMENT : VOICE_UNAVAILABLE, "");
+      options.onUnheard?.();
     }
   }
 
@@ -385,26 +463,33 @@ export function createVoiceSession(options: VoiceSessionOptions): VoiceSession {
     disposed = true;
     submitted = true;
     quiet = true;
-    if (!closed && recognition && snapshot.phase !== "idle") {
+    const rec = recognition;
+    const stopIt = engineOpen;
+    engineOpen = false;
+    generation += 1;
+    clearTimers();
+    retire(rec);
+    recognition = null;
+    if (stopIt && rec) {
       try {
-        recognition.stop();
+        rec.stop();
       } catch {
         /* The engine had already ended. */
       }
     }
-    clearTimers();
     closed = true;
-    recognition = null;
     heardEngine = false;
     snapshot = idleVoiceSnapshot();
   }
 
   return {
-    start,
+    start() {
+      begin();
+    },
     stop: requestStop,
     toggle() {
-      if (snapshot.phase === "idle") start();
-      else requestStop();
+      if (hearing()) requestStop();
+      else begin();
     },
     cancel,
     dispose,

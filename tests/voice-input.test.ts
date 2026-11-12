@@ -17,8 +17,11 @@ import {
   VOICE_SERVICE_STANDALONE,
   VOICE_STOPPED,
   VOICE_MAX_LISTEN_MS,
+  VOICE_ONE_MOMENT,
   VOICE_SILENCE_MS,
   VOICE_UNAVAILABLE,
+  releasePlayback,
+  voiceHandsOffPlayback,
   type SpeechRecognitionLike,
   type SpeechResultEventLike,
   type SpeechResultListLike,
@@ -435,6 +438,165 @@ describe("iOS speech session", () => {
     assert.equal(session.snapshot().phase, "idle");
   });
 
+  it("listens three times on a new recognizer each tap", () => {
+    const phrases = ["play this surah", "pause", "next ayah"];
+    const made: IosRecognition[] = [];
+    const commands: string[] = [];
+    const clock = createClock();
+    let prepared = 0;
+    const session = createVoiceSession({
+      createRecognition: () => {
+        const rec = new IosRecognition();
+        rec.pending = phrases[made.length] ?? "again";
+        made.push(rec);
+        return rec;
+      },
+      onCommand: (transcript) => commands.push(transcript),
+      beforeStart: () => {
+        prepared += 1;
+      },
+      clock: clock.clock,
+    });
+    for (let i = 0; i < 3; i += 1) {
+      session.start();
+      assert.ok(made[i]?.seenAtStart);
+      session.stop();
+    }
+    assert.equal(made.length, 3);
+    assert.equal(prepared, 3);
+    assert.deepEqual(commands, phrases);
+    for (const rec of made) {
+      assert.equal(rec.started, 1);
+      assert.equal(rec.abortCalls, 0);
+      assert.deepEqual(rec.seenAtStart, { lang: "en-US", continuous: false, interimResults: true });
+    }
+    assert.equal(made[0].onend, null);
+    assert.equal(made[1].onresult, null);
+  });
+
+  it("ignores a late onend from the first listen after the second has started, then takes a third", () => {
+    const first = new IosRecognition();
+    first.stop = () => {
+      first.stopCalls += 1;
+    };
+    const second = new IosRecognition();
+    second.pending = "pause";
+    const third = new IosRecognition();
+    third.pending = "next ayah";
+    const recs = [first, second, third];
+    let created = 0;
+    const commands: string[] = [];
+    const clock = createClock();
+    const session = createVoiceSession({
+      createRecognition: () => recs[created++] ?? third,
+      onCommand: (transcript) => commands.push(transcript),
+      clock: clock.clock,
+    });
+    session.start();
+    const staleEnd = first.onend;
+    const staleResult = first.onresult;
+    assert.equal(typeof staleEnd, "function");
+    session.stop();
+    assert.equal(session.snapshot().phase, "stopping");
+    assert.deepEqual(commands, []);
+    session.toggle();
+    assert.equal(second.started, 1);
+    assert.equal(second.abortCalls, 0);
+    assert.equal(first.onend, null);
+    assert.equal(first.onresult, null);
+    assert.equal(session.snapshot().phase, "listening");
+    staleResult?.(eventOf([{ text: "play this surah", isFinal: true }]));
+    staleEnd?.();
+    assert.equal(session.snapshot().phase, "listening");
+    assert.equal(session.snapshot().message, VOICE_LISTENING);
+    assert.deepEqual(commands, []);
+    session.stop();
+    assert.deepEqual(commands, ["pause"]);
+    session.toggle();
+    session.toggle();
+    assert.equal(third.started, 1);
+    assert.deepEqual(commands, ["pause", "next ayah"]);
+    assert.equal(created, 3);
+  });
+
+  it("shows one moment when the next start is rejected, then listens on the following tap", () => {
+    const first = new IosRecognition();
+    const second = new IosRecognition();
+    second.start = () => {
+      throw new Error("InvalidStateError");
+    };
+    const third = new IosRecognition();
+    third.pending = "bookmark this ayah";
+    const recs = [first, second, third];
+    let created = 0;
+    const commands: string[] = [];
+    const clock = createClock();
+    const session = createVoiceSession({
+      createRecognition: () => recs[created++] ?? third,
+      onCommand: (transcript) => commands.push(transcript),
+      clock: clock.clock,
+    });
+    session.start();
+    session.stop();
+    assert.deepEqual(commands, ["play this surah"]);
+    session.start();
+    assert.equal(session.snapshot().message, VOICE_ONE_MOMENT);
+    assert.equal(session.snapshot().phase, "idle");
+    assert.equal(session.snapshot().active, false);
+    session.start();
+    session.stop();
+    assert.deepEqual(commands, ["play this surah", "bookmark this ayah"]);
+    assert.equal(created, 3);
+  });
+
+  it("does not let the previous listen's timer stop the next one", () => {
+    const first = new IosRecognition();
+    first.stop = () => {
+      first.stopCalls += 1;
+    };
+    const second = new IosRecognition();
+    second.pending = "pause";
+    const recs = [first, second];
+    let created = 0;
+    const commands: string[] = [];
+    const clock = createClock();
+    const session = createVoiceSession({
+      createRecognition: () => recs[created++] ?? second,
+      onCommand: (transcript) => commands.push(transcript),
+      clock: clock.clock,
+    });
+    session.start();
+    const stale = clock.ids()[0];
+    session.stop();
+    session.toggle();
+    assert.equal(second.started, 1);
+    assert.equal(clock.ids().includes(stale), false);
+    clock.fireLast();
+    assert.equal(second.stopCalls, 1);
+    assert.deepEqual(commands, ["pause"]);
+  });
+
+  it("pauses playback synchronously before recognition.start", () => {
+    const rec = new IosRecognition();
+    const order: string[] = [];
+    rec.start = () => {
+      order.push("start");
+      rec.started += 1;
+      rec.onstart?.();
+    };
+    const { session } = sessionAround(rec);
+    const prepared = createVoiceSession({
+      createRecognition: () => rec,
+      onCommand: () => {},
+      beforeStart: () => order.push("pause"),
+      clock: createClock().clock,
+    });
+    prepared.start();
+    assert.deepEqual(order, ["pause", "start"]);
+    session.dispose();
+    prepared.dispose();
+  });
+
   it("onCommand can cancel without starting another recognition", () => {
     const rec = new IosRecognition();
     const commands: string[] = [];
@@ -452,6 +614,31 @@ describe("iOS speech session", () => {
     assert.deepEqual(commands, ["play this surah"]);
     assert.equal(rec.started, 1);
     assert.equal(rec.abortCalls, 0);
+  });
+});
+
+describe("playback release", () => {
+  it("pauses media that would hold the iOS audio session", () => {
+    let pauses = 0;
+    releasePlayback({ pause: () => { pauses += 1; } });
+    releasePlayback(null);
+    releasePlayback(undefined);
+    assert.equal(pauses, 1);
+    releasePlayback({
+      pause() {
+        throw new Error("already stopped");
+      },
+    });
+    assert.equal(pauses, 1);
+  });
+
+  it("lets play and pause commands take the audio element", () => {
+    assert.equal(voiceHandsOffPlayback("pause"), true);
+    assert.equal(voiceHandsOffPlayback("resume"), true);
+    assert.equal(voiceHandsOffPlayback("play-surah"), true);
+    assert.equal(voiceHandsOffPlayback("play-ayah"), true);
+    assert.equal(voiceHandsOffPlayback("bookmark"), false);
+    assert.equal(voiceHandsOffPlayback("none"), false);
   });
 });
 
