@@ -3,17 +3,21 @@ import { Noto_Naskh_Arabic, Noto_Nastaliq_Urdu, Noto_Sans_Hebrew, Noto_Sans_Thaa
 import { PrivacyAnalytics } from "@/components/analytics/privacy-analytics";
 import { AppProviders } from "@/components/providers/app-providers";
 import { PRODUCT_NAME, SITE_DESCRIPTION, SITE_TITLE, siteUrl } from "@/lib/brand";
+import { googleSiteVerification, isPreviewDeployment } from "@/lib/seo";
 import "./globals.css";
 
 const jakarta = Plus_Jakarta_Sans({
   variable: "--font-jakarta",
   subsets: ["latin"],
+  display: "swap",
 });
 
 const sourceSerif = Source_Serif_4({
   variable: "--font-source-serif",
   subsets: ["latin"],
   weight: ["400", "500", "600"],
+  display: "swap",
+  preload: false,
 });
 
 const naskh = Noto_Naskh_Arabic({
@@ -48,21 +52,24 @@ const thaana = Noto_Sans_Thaana({
   display: "swap",
 });
 
+const googleVerification = googleSiteVerification();
+
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl()),
-  title: { default: SITE_TITLE, template: `%s — ${PRODUCT_NAME}` },
+  title: { default: SITE_TITLE, template: `%s · ${PRODUCT_NAME}` },
   description: SITE_DESCRIPTION,
   applicationName: PRODUCT_NAME,
-  alternates: { canonical: "/" },
+  robots: isPreviewDeployment()
+    ? { index: false, follow: false, nocache: true }
+    : { index: true, follow: true },
   openGraph: {
     title: SITE_TITLE,
     description: SITE_DESCRIPTION,
     siteName: PRODUCT_NAME,
     type: "website",
-    url: "/",
   },
   twitter: {
-    card: "summary",
+    card: "summary_large_image",
     title: SITE_TITLE,
     description: SITE_DESCRIPTION,
   },
@@ -70,10 +77,11 @@ export const metadata: Metadata = {
     icon: [{ url: "/icon.svg", type: "image/svg+xml", sizes: "any" }],
     apple: [{ url: "/apple-icon.png", sizes: "180x180", type: "image/png" }],
   },
+  ...(googleVerification ? { verification: { google: googleVerification } } : {}),
 };
 
 export const viewport: Viewport = {
-  themeColor: "#5b21b6",
+  themeColor: "#0f766e",
   colorScheme: "light",
 };
 

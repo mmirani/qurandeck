@@ -1,11 +1,12 @@
-import type { Metadata } from "next";
 import { LegalPage, LegalSection } from "@/components/legal/legal-page";
 import { COMPANION_NAME } from "@/lib/brand";
+import { pageMeta } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Privacy policy — QuranDeck",
+export const metadata = pageMeta({
+  title: "Privacy policy",
   description: "How QuranDeck handles reading on this device, sign-in, a sealed library, and cookieless usage counts.",
-};
+  path: "/privacy",
+});
 
 const UPDATED = "November 11, 2026";
 

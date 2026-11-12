@@ -35,13 +35,17 @@ export function MobileReaderBar() {
         >
           <Menu className="h-5 w-5" />
         </button>
-        <button
-          type="button"
-          onClick={openNav}
-          className="min-w-0 flex-1 cursor-pointer truncate text-center font-display text-base font-semibold tracking-tight text-ink"
-        >
-          {title}
-        </button>
+        <h1 className="min-w-0 flex-1 text-center font-display text-base font-semibold tracking-tight text-ink">
+          <button type="button" onClick={openNav} className="w-full cursor-pointer truncate">
+            {title}
+            {mode === "surah" && chapter?.nameArabic ? (
+              <span className="sr-only" lang="ar" dir="rtl">
+                {" "}
+                {chapter.nameArabic}
+              </span>
+            ) : null}
+          </button>
+        </h1>
         {tafsirOn ? (
           <button
             type="button"

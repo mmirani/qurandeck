@@ -1,12 +1,12 @@
-import type { Metadata } from "next";
 import { AppShell } from "@/components/shell/app-shell";
 import { loadSurahSeed, type SurahSeed } from "@/lib/quran/surah-seed";
+import { pageMeta } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata = pageMeta({
   title: "Read",
-  description: "Read The Noble Quran on QuranDeck, with search, recitation, notes, and a place that stays with you.",
-  alternates: { canonical: "/read" },
-};
+  description: "Read The Noble Quran on QuranDeck, with Arabic, translation, search, recitation, and notes.",
+  path: "/read",
+});
 
 export const revalidate = 86400;
 

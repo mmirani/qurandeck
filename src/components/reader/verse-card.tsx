@@ -15,7 +15,7 @@ import {
   wordHighlight,
 } from "@/lib/highlights";
 import type { Highlight, HighlightLayer, HighlightSwatch, Preferences, Verse, Word } from "@/lib/quran/types";
-import { groupForId, isRtlLanguage, scriptClass } from "@/lib/quran/languages";
+import { groupForId, htmlLang, isRtlLanguage, scriptClass } from "@/lib/quran/languages";
 import { PRODUCT_NAME } from "@/lib/brand";
 import { shareOrCopy, toArabicIndicDigits, verseShareText } from "@/lib/reading";
 import { useAyahFitScale } from "@/lib/use-ayah-fit-scale";
@@ -138,8 +138,8 @@ export function VerseCard({
                 onAyahClick();
               }}
               className="ayah-num flex h-11 min-w-11 cursor-pointer items-center justify-center gap-1.5 rounded-full bg-accent-soft px-2.5 font-display text-lg font-semibold text-gold-deep"
-              aria-label={`Select verse ${verse.verseKey}`}
             >
+              <span className="sr-only">Select verse {verse.verseKey}. </span>
               <span className="tabular-nums">{verse.verseNumber}</span>
               <span className="tabular-nums" dir="rtl" lang="ar" style={{ fontFamily: "var(--font-arabic), serif" }}>
                 {toArabicIndicDigits(verse.verseNumber)}
@@ -270,9 +270,10 @@ export function VerseCard({
               {translationCols.map((column) => {
                 const group = groupForId(translations, column.id);
                 const rtl = group ? isRtlLanguage(group.key) : false;
+                const lang = group ? htmlLang(group.key) : undefined;
                 const primary = column.id === preferences.translationId;
                 return (
-                  <div key={column.id} dir={rtl ? "rtl" : "ltr"} lang={group?.key} className="order-2 @min-[42rem]:order-none">
+                  <div key={column.id} dir={rtl ? "rtl" : "ltr"} lang={lang} className="order-2 @min-[42rem]:order-none">
                     {translationCols.length > 1 || group ? (
                       <p className="kufic-label mb-2 text-gold-deep">
                         {group?.label ?? "Translation"}

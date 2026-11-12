@@ -36,8 +36,13 @@ const nextConfig: NextConfig = {
   // Source Serif 4 (`next/font/google queries have exactly one entry`).
   async headers() {
     const robots = [{ key: "X-Robots-Tag", value: "noindex, nofollow" }];
+    const preview =
+      process.env.VERCEL_ENV === "preview"
+        ? [{ source: "/:path*", headers: robots }]
+        : [];
     return [
       { source: "/:path*", headers: securityHeaders },
+      ...preview,
       { source: "/admin", headers: robots },
       { source: "/admin/:path*", headers: robots },
     ];

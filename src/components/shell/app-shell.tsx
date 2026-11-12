@@ -73,7 +73,7 @@ function AppShellFrame() {
       closeStudy={() => setStudyOpen(false)}
     >
       <GuideProvider>
-        <div
+        <main
           id="main-content"
           className={`relative z-[1] flex h-dvh flex-col overflow-hidden bg-canvas text-ink ${
             book ? "p-1.5 md:p-3" : "p-0 md:p-4"
@@ -144,7 +144,7 @@ function AppShellFrame() {
 
           <TourOverlay />
           <AppModals />
-        </div>
+        </main>
       </GuideProvider>
     </ReaderChromeProvider>
   );

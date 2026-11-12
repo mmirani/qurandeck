@@ -69,7 +69,7 @@ export function ReaderToolbar() {
     return (
       <div className="relative shrink-0 border-b border-line/30 bg-canvas/90 px-3 py-2 md:px-5">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 className="flex min-w-0 items-baseline gap-2 text-ink">
+          <h1 className="flex min-w-0 items-baseline gap-2 text-ink">
             <span className="truncate font-display text-base font-semibold tracking-tight md:text-lg">
               {title}
             </span>
@@ -78,7 +78,7 @@ export function ReaderToolbar() {
                 {chapter.nameArabic}
               </span>
             ) : null}
-          </h2>
+          </h1>
           <div className="flex shrink-0 items-center gap-2">
             <div className="flex items-center rounded-full border border-line bg-surface px-1" data-tour="size">
               <span className="hidden px-2 text-xs text-muted sm:inline">Size</span>
@@ -169,13 +169,20 @@ export function ReaderToolbar() {
               {chapter ? ` · ${chapter.versesCount} ayahs` : ""}
             </p>
             <div className="mt-1 flex flex-wrap items-center gap-3">
-              <h2 className="font-display text-2xl font-semibold tracking-tight text-ink xl:text-3xl">
-                {mode === "juz"
-                  ? `Juz ${currentJuz}`
-                  : chapter
-                    ? `${chapter.nameSimple} · ${chapter.translatedName}`
-                    : "Surah"}
-              </h2>
+              <h1 className="flex min-w-0 flex-wrap items-baseline gap-x-3 font-display text-2xl font-semibold tracking-tight text-ink xl:text-3xl">
+                <span>
+                  {mode === "juz"
+                    ? `Juz ${currentJuz}`
+                    : chapter
+                      ? `${chapter.nameSimple} · ${chapter.translatedName}`
+                      : "Surah"}
+                </span>
+                {mode === "surah" && chapter?.nameArabic ? (
+                  <span dir="rtl" lang="ar" className="font-arabic text-xl font-normal text-ink-soft">
+                    {chapter.nameArabic}
+                  </span>
+                ) : null}
+              </h1>
               <button
                 type="button"
                 disabled={!first}
