@@ -11,8 +11,18 @@ import { focusOpenNote } from "@/lib/note-composer";
 import type { Verse } from "@/lib/quran/types";
 
 export function AyahReaderMobile({ verses, mode }: { verses: Verse[]; mode: string }) {
-  const { selectedVerseKey, selectVerse, chapters, playingVerseKey, preferences, bookmarks, notes, playVerse, toggleBookmarkVerse } =
-    useMushaf();
+  const {
+    selectedVerseKey,
+    selectVerse,
+    chapters,
+    playingVerseKey,
+    preferences,
+    bookmarks,
+    notes,
+    playVerse,
+    toggleBookmarkVerse,
+    pendingScrollVerseKey,
+  } = useMushaf();
 
   const index = Math.max(
     0,
@@ -35,8 +45,9 @@ export function AyahReaderMobile({ verses, mode }: { verses: Verse[]; mode: stri
   useEffect(() => {
     if (verses.length === 0) return;
     const found = verses.some((item) => item.verseKey === selectedVerseKey);
-    if (!found) selectVerse(verses[0].verseKey);
-  }, [verses, selectedVerseKey, selectVerse]);
+    if (found || pendingScrollVerseKey) return;
+    selectVerse(verses[0].verseKey);
+  }, [pendingScrollVerseKey, verses, selectedVerseKey, selectVerse]);
 
   useEffect(() => {
     if (!playingVerseKey || !preferences.autoFollow) return;

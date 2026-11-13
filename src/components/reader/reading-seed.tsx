@@ -1,9 +1,10 @@
 "use client";
 
-import { createContext, useContext } from "react";
+import { createContext, useContext, useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import { useMushaf } from "@/components/providers/mushaf-provider";
-import type { SurahSeed } from "@/lib/quran/surah-seed";
+import { getSurah } from "@/lib/quran/client";
+import { requestedAyahNumber, seedMatchesReading, type SurahSeed } from "@/lib/quran/surah-seed";
 import type { Chapter, Verse } from "@/lib/quran/types";
 
 const SurahSeedContext = createContext<SurahSeed | null>(null);
@@ -15,7 +16,54 @@ export function SurahSeedProvider({
   seed: SurahSeed | null;
   children: React.ReactNode;
 }) {
-  return <SurahSeedContext.Provider value={seed}>{children}</SurahSeedContext.Provider>;
+  return (
+    <SurahSeedContext.Provider value={seed}>
+      <SurahSeedSync />
+      {children}
+    </SurahSeedContext.Provider>
+  );
+}
+
+function SurahSeedSync() {
+  const seed = useContext(SurahSeedContext);
+  const pathname = usePathname();
+  const { preferences, adoptSurahSeed, appendSurahVerses, loadSurah, reportReadingError } = useMushaf();
+  const restRequested = useRef("");
+
+  useEffect(() => {
+    const chapterId = requestedSurahId(pathname);
+    if (chapterId == null) return;
+    const verse = requestedAyahNumber(window.location.hash, new URLSearchParams(window.location.search).get("ayah"));
+    if (!seedMatchesReading(seed, chapterId, preferences.translationIds)) {
+      restRequested.current = "";
+      void loadSurah(chapterId, verse);
+      return;
+    }
+    adoptSurahSeed(seed, verse);
+    if (!seed.partial) return;
+    const restKey = `${chapterId}:${seed.translationKey}`;
+    if (restRequested.current === restKey) return;
+    restRequested.current = restKey;
+    void getSurah(chapterId, preferences.translationIds, preferences.recitationId)
+      .then((data) => {
+        appendSurahVerses(chapterId, seed.translationKey, data.verses);
+      })
+      .catch(() => {
+        restRequested.current = "";
+        reportReadingError("Could not load the rest of this surah");
+      });
+  }, [
+    adoptSurahSeed,
+    appendSurahVerses,
+    loadSurah,
+    pathname,
+    preferences.recitationId,
+    preferences.translationIds,
+    reportReadingError,
+    seed,
+  ]);
+
+  return null;
 }
 
 function requestedSurahId(pathname: string) {

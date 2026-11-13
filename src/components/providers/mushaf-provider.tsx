@@ -25,7 +25,8 @@ import {
   getTranslations,
   searchQuran,
 } from "@/lib/quran/client";
-import { groupForId, withTranslationIds } from "@/lib/quran/languages";
+import { groupForId, translationQuery, withTranslationIds } from "@/lib/quran/languages";
+import { mergeVerses, type SurahSeed } from "@/lib/quran/surah-seed";
 import { searchGenerationWins, shouldCountSearch, shouldLiveSearch } from "@/lib/search-status";
 import { mergeStudyCards } from "@/lib/study-cards";
 import type {
@@ -145,6 +146,10 @@ type MushafContextValue = {
   audioRef: React.RefObject<HTMLAudioElement | null>;
   openSurah: (id: number, verseNumber?: number) => void;
   openJuz: (n: number) => void;
+  adoptSurahSeed: (seed: SurahSeed, verseNumber?: number) => void;
+  appendSurahVerses: (chapterId: number, translationKey: string, incoming: Verse[]) => void;
+  loadSurah: (id: number, verseNumber?: number) => Promise<void>;
+  reportReadingError: (message: string) => void;
   selectVerse: (key: string) => void;
   selectWord: (word: Word | null) => void;
   cueVerse: (verseKey: string) => void;
@@ -213,6 +218,7 @@ export function MushafProvider({ children }: { children: ReactNode }) {
   const [preferences, setPreferences] = useState<Preferences>(defaultPreferences);
   const [booted, setBooted] = useState(false);
   const prefsRef = useRef(preferences);
+  const loadedTranslationKey = useRef<string | null>(null);
   const [hydrated, setHydrated] = useState(false);
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [juzs, setJuzs] = useState<Juz[]>([]);
@@ -471,35 +477,80 @@ export function MushafProvider({ children }: { children: ReactNode }) {
       });
   }, []);
 
+  const rememberVerse = useCallback((id: number, verseNumber: number | undefined, fallbackKey: string | null) => {
+    const key =
+      verseNumber && Number.isInteger(verseNumber) && verseNumber > 0 ? `${id}:${verseNumber}` : fallbackKey;
+    setSelectedVerseKey(key);
+    setPendingScrollVerseKey(
+      verseNumber && Number.isInteger(verseNumber) && verseNumber > 0 ? `${id}:${verseNumber}` : null,
+    );
+  }, []);
+
   const loadSurah = useCallback(
     async (id: number, verseNumber?: number) => {
+      const translationKey = translationQuery(preferences.translationIds);
+      loadedTranslationKey.current = translationKey;
       setLoading(true);
       setError(null);
       setMode("surah");
       setCurrentJuz(null);
       try {
         const data = await getSurah(id, preferences.translationIds, preferences.recitationId);
+        if (loadedTranslationKey.current !== translationKey) return;
         setChapter(data.chapter);
         setVerses(data.verses);
         setIntroduction(data.introduction ?? "");
         setIntroductionSource(data.introductionSource ?? "");
-        const key =
-          verseNumber && Number.isInteger(verseNumber) && verseNumber > 0
-            ? `${id}:${verseNumber}`
-            : (data.verses[0]?.verseKey ?? null);
-        setSelectedVerseKey(key);
-        setPendingScrollVerseKey(
-          verseNumber && Number.isInteger(verseNumber) && verseNumber > 0 ? `${id}:${verseNumber}` : null,
-        );
+        rememberVerse(id, verseNumber, data.verses[0]?.verseKey ?? null);
         setSelectedWord(null);
       } catch (err: unknown) {
+        if (loadedTranslationKey.current !== translationKey) return;
         setError(err instanceof Error ? err.message : "Could not load surah");
       } finally {
-        setLoading(false);
+        if (loadedTranslationKey.current === translationKey) setLoading(false);
       }
     },
-    [preferences.recitationId, preferences.translationIds],
+    [preferences.recitationId, preferences.translationIds, rememberVerse],
   );
+
+  const adoptSurahSeed = useCallback((seed: SurahSeed, verseNumber?: number) => {
+    setMode("surah");
+    setCurrentJuz(null);
+    setError(null);
+    setLoading(false);
+    setChapter(seed.chapter);
+    setIntroduction(seed.introduction);
+    setIntroductionSource(seed.introductionSource);
+    const previousKey = loadedTranslationKey.current;
+    setVerses((current) => {
+      const sameReading = previousKey === seed.translationKey && current[0]?.chapterId === seed.chapter.id;
+      if (sameReading && current.length >= seed.verses.length) return current;
+      return seed.verses;
+    });
+    loadedTranslationKey.current = seed.translationKey;
+    if (verseNumber && Number.isInteger(verseNumber) && verseNumber > 0) {
+      rememberVerse(seed.chapter.id, verseNumber, null);
+    } else {
+      setSelectedVerseKey((current) => {
+        if (current?.startsWith(`${seed.chapter.id}:`)) return current;
+        return seed.verses[0]?.verseKey ?? null;
+      });
+    }
+    setSelectedWord(null);
+  }, [rememberVerse]);
+
+  const appendSurahVerses = useCallback((chapterId: number, translationKey: string, incoming: Verse[]) => {
+    if (loadedTranslationKey.current !== translationKey) return;
+    setVerses((current) => {
+      if (current[0] && current[0].chapterId !== chapterId) return current;
+      return mergeVerses(current, incoming);
+    });
+    setLoading(false);
+  }, []);
+
+  const reportReadingError = useCallback((message: string) => {
+    setError(message);
+  }, []);
 
   const loadJuzData = useCallback(
     async (n: number) => {
@@ -533,11 +584,13 @@ export function MushafProvider({ children }: { children: ReactNode }) {
           setPendingScrollVerseKey(`${id}:${verseNumber}`);
         }
         router.push(href);
-      } else {
+      } else if (verseNumber && Number.isInteger(verseNumber) && verseNumber > 0) {
+        rememberVerse(id, verseNumber, null);
+      } else if (chapter?.id !== id) {
         void loadSurah(id, verseNumber);
       }
     },
-    [loadSurah, pathname, router],
+    [chapter?.id, loadSurah, pathname, rememberVerse, router],
   );
 
   const clearPendingScrollVerse = useCallback(() => {
@@ -563,22 +616,15 @@ export function MushafProvider({ children }: { children: ReactNode }) {
       if (cancelled) return;
       const surahMatch = pathname.match(/^\/surah\/(\d+)/);
       const juzMatch = pathname.match(/^\/juz\/(\d+)/);
-      if (surahMatch) {
-        const hash = typeof window !== "undefined" ? window.location.hash : "";
-        const verse = hash.startsWith("#ayah-") ? Number(hash.replace("#ayah-", "")) : undefined;
-        void loadSurah(Number(surahMatch[1]), Number.isFinite(verse) ? verse : undefined);
-        return;
-      }
+      if (surahMatch || pathname === "/read") return;
       if (juzMatch) {
         void loadJuzData(Number(juzMatch[1]));
-        return;
       }
-      if (pathname === "/read") void loadSurah(1);
     });
     return () => {
       cancelled = true;
     };
-  }, [loadJuzData, loadSurah, pathname]);
+  }, [loadJuzData, pathname]);
 
   useEffect(() => {
     prefsRef.current = preferences;
@@ -1183,6 +1229,10 @@ export function MushafProvider({ children }: { children: ReactNode }) {
       audioRef,
       openSurah,
       openJuz,
+      adoptSurahSeed,
+      appendSurahVerses,
+      loadSurah,
+      reportReadingError,
       selectVerse: setSelectedVerseKey,
       selectWord: setSelectedWord,
       cueVerse,
@@ -1228,6 +1278,10 @@ export function MushafProvider({ children }: { children: ReactNode }) {
     }),
     [
       addSwatch,
+      adoptSurahSeed,
+      appendSurahVerses,
+      loadSurah,
+      reportReadingError,
       applyLibrary,
       updateDisplayName,
       updateAvatar,
