@@ -1,6 +1,6 @@
 "use client";
 
-import { APPEARANCE_THEMES } from "@/lib/appearance";
+import { APPEARANCE_THEMES, FONT_SIZE_MAX, FONT_SIZE_MIN } from "@/lib/appearance";
 import { useMushaf } from "@/components/providers/mushaf-provider";
 import { Modal } from "@/components/ui/modal";
 
@@ -16,7 +16,27 @@ export function ThemePicker() {
         Bright day palettes stay light all the way through — including the reciter. Paper is warmer, with tighter corners. Night puts dark colour on the rails, player, and page together. High Contrast is nearly square.
       </p>
       <section className="mb-6">
-        <h3 className="kufic-label text-gold-deep">Reading</h3>
+        <h3 className="kufic-label text-gold-deep">Text size</h3>
+        <div className="mt-3 flex items-center gap-2">
+          <button
+            type="button"
+            aria-label="Smaller text"
+            className="inline-flex h-11 min-h-11 min-w-11 cursor-pointer items-center justify-center rounded-full border border-line text-lg"
+            onClick={() => updatePreferences({ fontSize: Math.max(FONT_SIZE_MIN, preferences.fontSize - 2) })}
+          >
+            −
+          </button>
+          <span className="min-w-8 text-center text-base">{preferences.fontSize}</span>
+          <button
+            type="button"
+            aria-label="Larger text"
+            className="inline-flex h-11 min-h-11 min-w-11 cursor-pointer items-center justify-center rounded-full border border-line text-lg"
+            onClick={() => updatePreferences({ fontSize: Math.min(FONT_SIZE_MAX, preferences.fontSize + 2) })}
+          >
+            +
+          </button>
+        </div>
+        <h3 className="kufic-label mt-5 text-gold-deep">Reading</h3>
         <div className="mt-3 flex flex-col gap-1 text-sm">
           <label className="flex min-h-11 cursor-pointer items-center gap-3">
             <input

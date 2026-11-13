@@ -837,6 +837,47 @@ body::before {
   border: 1px solid color-mix(in srgb, var(--gold) 28%, var(--line));
 }
 
+.qd-seek {
+  display: block;
+  width: 100%;
+  height: 2.75rem;
+  margin: 0;
+  cursor: pointer;
+  appearance: none;
+  background: transparent;
+}
+
+.qd-seek::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--gold) 55%, var(--line));
+}
+
+.qd-seek::-webkit-slider-thumb {
+  appearance: none;
+  width: 2.75rem;
+  height: 2.75rem;
+  margin-top: calc((4px - 2.75rem) / 2);
+  border: 0;
+  border-radius: 999px;
+  background: radial-gradient(circle, var(--gold) 0 7px, transparent 8px);
+}
+
+.qd-seek::-moz-range-track {
+  height: 4px;
+  border: 0;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--gold) 55%, var(--line));
+}
+
+.qd-seek::-moz-range-thumb {
+  width: 2.75rem;
+  height: 2.75rem;
+  border: 0;
+  border-radius: 999px;
+  background: radial-gradient(circle, var(--gold) 0 7px, transparent 8px);
+}
+
 .reader-stream {
   width: 100%;
   margin-inline: auto;
@@ -1590,7 +1631,7 @@ body::before {
   background: var(--canvas);
   padding: 0 var(--space-4);
   color: var(--ink);
-  font-size: 0.85rem;
+  font-size: 1rem;
 }
 
 .nur-name {
@@ -1928,6 +1969,15 @@ body::before {
     color-mix(in srgb, var(--canvas) 55%, transparent) 42%,
     color-mix(in srgb, var(--canvas) 18%, transparent) 100%
   );
+}
+
+@media (max-width: 767px) {
+  body input,
+  body textarea,
+  body select,
+  body .nur-ask input {
+    font-size: 16px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
