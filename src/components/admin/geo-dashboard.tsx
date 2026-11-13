@@ -142,7 +142,7 @@ function WorldMap({ summary, summaryText }: { summary: GeoSummary; summaryText: 
           </li>
         ))}
       </ul>
-      <p className="mt-2 text-xs leading-5 text-ink-soft">Darker gold means more unique visitors. Colour is not the only cue: the table has the counts.</p>
+      <p className="mt-2 text-xs leading-5 text-ink-soft">Darker means more unique visitors. Colour is not the only cue: the table has the counts.</p>
     </figure>
   );
 }
