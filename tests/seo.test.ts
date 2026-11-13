@@ -2,14 +2,24 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { CANONICAL_ORIGIN, siteUrl } from "../src/lib/brand";
 import { htmlLang } from "../src/lib/quran/languages";
-import {
-  canonicalRedirectUrl,
-  googleSiteVerification,
-  homeStructuredData,
-  robotRules,
-  surahBreadcrumb,
-} from "../src/lib/seo";
+import { createRequire } from "node:module";
+import { apexAliasRedirects, VERCEL_APP_HOST } from "../src/lib/apex-redirect";
+import { googleSiteVerification, homeStructuredData, robotRules, surahBreadcrumb } from "../src/lib/seo";
 import sitemap from "../src/app/sitemap";
+
+const require = createRequire(import.meta.url);
+const { pathToRegexp, regexpToFunction } = require("next/dist/compiled/path-to-regexp") as {
+  pathToRegexp: (path: string, keys: unknown[], options: { delimiter: string; sensitive: boolean }) => RegExp;
+  regexpToFunction: (re: RegExp, keys: unknown[]) => (pathname: string) => { params: Record<string, string> } | false;
+};
+
+function matchedPath(pathname: string) {
+  const rule = apexAliasRedirects()[0];
+  const keys: unknown[] = [];
+  const re = pathToRegexp(rule.source, keys, { delimiter: "/", sensitive: false });
+  const match = regexpToFunction(re, keys)(pathname);
+  return match ? match.params.path : null;
+}
 
 describe("canonical origin", () => {
   it("stays on the apex even when a preview host is configured", () => {
@@ -20,21 +30,30 @@ describe("canonical origin", () => {
   });
 });
 
-describe("host redirects", () => {
-  it("sends www and the vercel.app alias to the apex", () => {
-    assert.equal(canonicalRedirectUrl("www.qurandeck.com", "/surah/1", ""), "https://qurandeck.com/surah/1");
-    assert.equal(
-      canonicalRedirectUrl("qurandeck.vercel.app", "/read", "?x=1"),
-      "https://qurandeck.com/read?x=1",
-    );
-    assert.equal(canonicalRedirectUrl("WWW.qurandeck.com:443", "/", ""), "https://qurandeck.com/");
+describe("vercel.app host redirect", () => {
+  it("targets only the production alias and stays permanent", () => {
+    const [rule] = apexAliasRedirects();
+    assert.equal(apexAliasRedirects().length, 1);
+    assert.equal(rule.permanent, true);
+    assert.equal(rule.destination, "https://qurandeck.com/:path");
+    assert.deepEqual(rule.has, [{ type: "host", value: VERCEL_APP_HOST }]);
+    assert.equal(VERCEL_APP_HOST, "qurandeck.vercel.app");
+    assert.equal(VERCEL_APP_HOST.includes("*"), false);
   });
 
-  it("leaves the apex, preview hosts, and auth callbacks alone", () => {
-    assert.equal(canonicalRedirectUrl("qurandeck.com", "/", ""), null);
-    assert.equal(canonicalRedirectUrl("qurandeck-git-seo.vercel.app", "/read", ""), null);
-    assert.equal(canonicalRedirectUrl("qurandeck.vercel.app", "/api/auth/callback/google", "?code=1"), null);
-    assert.equal(canonicalRedirectUrl("localhost", "/", ""), null);
+  it("matches public pages, including the homepage, and skips /api", () => {
+    assert.equal(matchedPath("/"), "");
+    assert.equal(matchedPath("/about"), "about");
+    assert.equal(matchedPath("/surah/2"), "surah/2");
+    assert.equal(matchedPath("/api"), null);
+    assert.equal(matchedPath("/api/auth/callback/google"), null);
+  });
+
+  it("does not treat preview vercel hosts as the production alias", () => {
+    const isAlias = (host: string) => host.toLowerCase() === VERCEL_APP_HOST;
+    assert.equal(isAlias("qurandeck.vercel.app"), true);
+    assert.equal(isAlias("qurandeck-git-seo-mmirani-4641s-projects.vercel.app"), false);
+    assert.equal(isAlias("www.qurandeck.vercel.app"), false);
   });
 });
 

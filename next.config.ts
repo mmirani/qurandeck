@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { apexAliasRedirects } from "./src/lib/apex-redirect";
 
 const isDev = process.env.NODE_ENV === "development";
 
@@ -44,6 +45,9 @@ const nextConfig: NextConfig = {
   serverExternalPackages: ["fontkit"],
   // `npm run build` uses webpack. Vercel's Turbopack font rewriter rejects
   // Source Serif 4 (`next/font/google queries have exactly one entry`).
+  async redirects() {
+    return apexAliasRedirects();
+  },
   async headers() {
     const robots = [{ key: "X-Robots-Tag", value: "noindex, nofollow" }];
     const preview =
