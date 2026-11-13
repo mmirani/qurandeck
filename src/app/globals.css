@@ -1378,13 +1378,26 @@ body::before {
     padding-bottom: 0;
   }
 
+  /* The column used to reserve 5.5rem (8.5rem with the audio bar) below the
+     scroller. That padding is outside #main-reader, so overflow:hidden clipped
+     the verses and the column's surface color showed as an empty band, with
+     the fixed Sana dock sitting on it. The scroller now runs to the viewport
+     edge. End padding lives inside the scroller so the last ayah can still
+     clear Sana, the audio bar, and the home indicator. */
   .reader-column {
     background: var(--surface);
-    padding-bottom: calc(5.5rem + env(safe-area-inset-bottom));
   }
 
-  #main-content[data-audio="on"] .reader-column {
-    padding-bottom: calc(8.5rem + env(safe-area-inset-bottom));
+  /* Ayah mode's action dock is in-flow, not a scrolling list. Keep it sitting
+     on the mobile audio bar (4rem) instead of leaving a gap under the column. */
+  #main-content[data-audio="on"] .reader-column:has(.reader-ayah-stage) {
+    padding-bottom: calc(4rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* Scroll mode: 6rem on .reader-stream plus this bottom padding clears Sana
+     (bottom 4.75rem, 2.75rem tall) once the audio bar is up. */
+  #main-content[data-audio="on"] #main-reader:not(:has(.reader-ayah-stage)) {
+    padding-bottom: calc(2.25rem + env(safe-area-inset-bottom, 0px));
   }
 }
 
