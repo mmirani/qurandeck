@@ -36,7 +36,9 @@ export function SearchBar() {
   const anchor = useRef<HTMLDivElement>(null);
   const searchTimer = useRef<number | null>(null);
   const runSearchRef = useRef(runSearch);
-  runSearchRef.current = runSearch;
+  useEffect(() => {
+    runSearchRef.current = runSearch;
+  }, [runSearch]);
   const [box, setBox] = useState<{ top: number; left: number; width: number } | null>(null);
   const mounted = useSyncExternalStore(subscribeMounted, () => true, () => false);
   if (searchQuery !== seenQuery) {
