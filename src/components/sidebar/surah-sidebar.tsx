@@ -14,7 +14,7 @@ import { RailToggle } from "@/components/shell/rail-toggle";
 import { ContinueCard } from "@/components/account/account-dashboard";
 import { QuranCredit } from "@/components/site/quran-credit";
 
-export function SurahSidebar() {
+export function SurahSidebar({ homeLink = true }: { homeLink?: boolean }) {
   const { chapters, chapter, currentJuz, juzs, mode, openModal } = useMushaf();
   const { closeNav } = useReaderChrome();
   const [query, setQuery] = useState("");
@@ -53,14 +53,16 @@ export function SurahSidebar() {
     <aside className="mushaf-rail flex h-full min-h-0 flex-col overflow-hidden">
       <div className="qd-pad shrink-0">
         <div className="flex items-start justify-between gap-2">
-          <Link
-            href="/"
-            className="flex min-w-0 cursor-pointer items-center gap-3 text-ink hover:text-gold-deep"
-            aria-label={`${PRODUCT_DISPLAY} home`}
-          >
-            <MihrabMark className="h-11 w-11 shrink-0" />
-            <BrandWordmark className="shrink-0 text-xl leading-none xl:text-2xl" />
-          </Link>
+          {homeLink ? (
+            <Link
+              href="/"
+              className="flex min-w-0 cursor-pointer items-center gap-3 text-ink hover:text-gold-deep"
+              aria-label={`${PRODUCT_DISPLAY} home`}
+            >
+              <MihrabMark className="h-11 w-11 shrink-0" />
+              <BrandWordmark className="shrink-0 text-xl leading-none xl:text-2xl" />
+            </Link>
+          ) : null}
           <div className="hidden lg:block">
             <RailToggle side="nav" />
           </div>
