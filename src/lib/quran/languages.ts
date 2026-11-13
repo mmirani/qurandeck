@@ -227,6 +227,17 @@ export function setLanguageEdition(ids: number[], group: LanguageGroup, editionI
   return sanitizeTranslationIds([...without, editionId]);
 }
 
+/** How many reading layers are actually on: Arabic, transliteration, and each translation. */
+export function readingLayerCount(prefs: {
+  showArabic: boolean;
+  showTransliteration: boolean;
+  showTranslation: boolean;
+  translationIds: readonly number[];
+}): number {
+  const translations = prefs.showTranslation ? sanitizeTranslationIds(prefs.translationIds).length : 0;
+  return Number(Boolean(prefs.showArabic)) + Number(Boolean(prefs.showTransliteration)) + translations;
+}
+
 export function readingDefaults(): Pick<
   Preferences,
   "showArabic" | "showTranslation" | "showTransliteration" | "showTafsir" | "translationId" | "translationIds"
