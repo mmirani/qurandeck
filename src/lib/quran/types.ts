@@ -94,6 +94,11 @@ export type SearchHit = {
   source: "quran.com" | "alquran.cloud" | "jump";
   chapterName?: string;
   translatedName?: string;
+  /** Edition name for textTranslation. Required whenever that text is a translation. */
+  translationName?: string;
+  translationId?: number;
+  /** Match runs inside textTranslation. `match` is the word the search hit. */
+  translationRuns?: { text: string; match: boolean }[];
 };
 
 export type HighlightLayer = "arabic" | "translation" | "transliteration" | "ayah";

@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { Search } from "lucide-react";
 import { useMushaf } from "@/components/providers/mushaf-provider";
 import { moveSearchIndex, SEARCH_DEBOUNCE_MS, searchStatusMessage, shouldLiveSearch } from "@/lib/search-status";
+import type { SearchHit } from "@/lib/quran/types";
 
 function subscribeMounted() {
   return () => {};
@@ -249,9 +250,11 @@ export function SearchBar() {
                           {hit.textArabic}
                         </p>
                       ) : null}
-                      {hit.textTranslation ? (
+                      {hit.source === "jump" ? (
                         <p className="mt-1 line-clamp-2 text-sm leading-6 text-ink">{hit.textTranslation}</p>
-                      ) : null}
+                      ) : (
+                        <TranslationSnippet hit={hit} />
+                      )}
                     </button>
                   );
                 })}
@@ -260,6 +263,27 @@ export function SearchBar() {
             document.body,
           )
         : null}
+    </div>
+  );
+}
+
+function TranslationSnippet({ hit }: { hit: SearchHit }) {
+  if (!hit.translationName || !hit.textTranslation) return null;
+  const runs = hit.translationRuns?.length ? hit.translationRuns : [{ text: hit.textTranslation, match: false }];
+  return (
+    <div className="mt-1">
+      <p className="text-xs font-medium text-ink-soft">{hit.translationName}</p>
+      <p className="line-clamp-2 text-sm leading-6 text-ink">
+        {runs.map((run, index) =>
+          run.match ? (
+            <mark key={index} className="rounded-sm bg-gold/20 text-inherit">
+              {run.text}
+            </mark>
+          ) : (
+            <span key={index}>{run.text}</span>
+          ),
+        )}
+      </p>
     </div>
   );
 }
