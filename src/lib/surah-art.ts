@@ -1,4 +1,7 @@
-/** Header atmosphere photos. Add `public/surah-art/{id}.jpg` and list the id here. */
+/**
+ * Header atmosphere photos. Add `public/surah-art/{id}.jpg` and list the id here.
+ * Masters are 2880px wide, soft and pale. next/image serves smaller WebP copies.
+ */
 export const SURAH_ART: Partial<Record<number, string>> = {
   1: "/surah-art/1.jpg",
   2: "/surah-art/2.jpg",
@@ -120,3 +123,13 @@ export function surahArtSrc(surahId: number | undefined, mode: "surah" | "juz") 
   if (mode !== "surah" || !surahId) return undefined;
   return SURAH_ART[surahId];
 }
+
+/**
+ * The hero only shows from xl up. Its box is the reader column (viewport minus the
+ * 326px left bar, and minus 718px once the right panel opens at 2xl), and the photo
+ * is drawn 1.22x larger than the box (see .surah-art-photo in globals.css).
+ */
+export const SURAH_ART_SIZES =
+  "(min-width: 1536px) calc((100vw - 718px) * 1.22), calc((100vw - 326px) * 1.22)";
+/** Must be listed in `images.qualities` in next.config.ts. */
+export const SURAH_ART_QUALITY = 80;
