@@ -241,6 +241,23 @@ async function fetchAudioByChapter(recitationId: number, chapterId: number) {
   return map;
 }
 
+const VERSE_QUERY =
+  "language=en&words=true&word_fields=verse_key,text_uthmani,translation,transliteration,audio_url,location&fields=text_uthmani,verse_key,juz_number,page_number,hizb_number";
+
+export async function fetchVersePage(
+  chapterId: number,
+  translationIds: number[] | number,
+  page: number,
+  perPage: number,
+): Promise<Verse[]> {
+  const translations = translationQuery(Array.isArray(translationIds) ? translationIds : [translationIds]);
+  const data = await getJson<Record<string, unknown>>(
+    `${QURAN_COM_API}/verses/by_chapter/${chapterId}?per_page=${perPage}&page=${page}&translations=${translations}&${VERSE_QUERY}`,
+  );
+  const raw = (data.verses as Array<Record<string, unknown>> | undefined) ?? [];
+  return raw.map((item) => mapVerse(item, chapterId));
+}
+
 export async function fetchVersesByChapter(
   chapterId: number,
   translationIds: number[] | number = DEFAULT_TRANSLATION_ID,
