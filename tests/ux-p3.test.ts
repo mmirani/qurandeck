@@ -7,7 +7,6 @@ import { wordTapShouldPlay } from "../src/lib/word-tap";
 const css = readFileSync(new URL("../src/app/globals.css", import.meta.url), "utf8");
 const layout = readFileSync(new URL("../src/app/layout.tsx", import.meta.url), "utf8");
 const search = readFileSync(new URL("../src/components/search/search-bar.tsx", import.meta.url), "utf8");
-const filters = readFileSync(new URL("../src/components/search/filters-modal.tsx", import.meta.url), "utf8");
 const auth = readFileSync(new URL("../src/components/modals/auth-modal.tsx", import.meta.url), "utf8");
 const study = readFileSync(new URL("../src/components/sidebar/study-sidebar.tsx", import.meta.url), "utf8");
 const note = readFileSync(new URL("../src/components/reader/note-composer.tsx", import.meta.url), "utf8");
@@ -61,14 +60,13 @@ describe("P3 mobile field size", () => {
   });
 });
 
-describe("P3 search themes removed", () => {
-  it("keeps juz and revelation and drops the curated theme list", () => {
-    assert.match(filters, /Filter by juz and revelation/);
-    assert.match(filters, /Search looks through Quran text\. Filters narrow those results\./);
-    assert.equal(filters.includes("Themes jump"), false);
-    assert.equal(filters.includes("theme-topics"), false);
-    assert.match(filters, /Makkiyyah/);
-    assert.match(filters, /All 30 juz/);
+describe("P3 search covers the whole Quran", () => {
+  it("drops the filters button, modal, and curated theme list", () => {
+    assert.equal(search.includes(">Filters<"), false);
+    assert.equal(search.includes("filters"), false);
+    assert.match(search, /Search words, surahs, 2:255/);
+    assert.match(search, /h-12 w-full/);
+    assert.equal(search.includes("Themes jump"), false);
     assert.equal(search.includes("blurSearchField()"), true);
   });
 });

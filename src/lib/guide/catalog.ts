@@ -34,7 +34,7 @@ export const WELCOME_TOUR: TourStep[] = [
   {
     id: "search",
     title: "Find an ayah fast",
-    body: "Type a word, a surah name, or a place like 2:255. Filters sit beside the box. ⌘K also works.",
+    body: "Type a word, a surah name, or a place like 2:255. Search covers the whole Quran. ⌘K also works.",
     target: "search",
     mobileTarget: "search-mobile",
     mobileBody: "Open the menu to find a surah or juz by name or number. On a wider screen, the search box also takes a word or a place like 2:255.",

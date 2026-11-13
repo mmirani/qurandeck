@@ -102,6 +102,7 @@ describe("P1 phone search and empty results", () => {
     });
     assert.match(empty ?? "", /No ayahs match/);
     assert.equal(empty?.includes("Press Enter"), false);
+    assert.equal(empty?.includes("Filters"), false);
     assert.equal(
       searchStatusMessage({
         query: "mercy",

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
-import { Search, SlidersHorizontal } from "lucide-react";
+import { Search } from "lucide-react";
 import { useMushaf } from "@/components/providers/mushaf-provider";
 import { moveSearchIndex, SEARCH_DEBOUNCE_MS, searchStatusMessage, shouldLiveSearch } from "@/lib/search-status";
 
@@ -25,7 +25,6 @@ export function SearchBar() {
     setSearchOpen,
     searching,
     jumpToHit,
-    openModal,
     openSurah,
     chapters,
   } = useMushaf();
@@ -176,19 +175,11 @@ export function SearchBar() {
             void runSearch(local);
           }
         }}
-        placeholder="Type to search, or a verse like 2:255"
-        className="h-12 w-full rounded-full border border-line bg-surface/90 pl-11 pr-36 text-sm text-ink shadow-sm outline-none placeholder:text-muted"
+        placeholder="Search words, surahs, 2:255"
+        className="h-12 w-full rounded-full border border-line bg-surface/90 pl-10 pr-3 text-sm text-ink shadow-sm outline-none placeholder:text-muted sm:pr-16"
       />
-      <div className="absolute right-2 top-1/2 flex -translate-y-1/2 items-center gap-1">
-        <kbd className="hidden rounded-full border border-line px-2 py-1 text-xs text-muted sm:inline">⌘ K</kbd>
-        <button
-          type="button"
-          onClick={() => openModal("filters")}
-          className="inline-flex h-11 min-h-11 min-w-11 cursor-pointer items-center gap-1 rounded-full bg-gold px-3 text-xs text-on-gold hover:bg-gold-deep"
-        >
-          <SlidersHorizontal className="h-3.5 w-3.5" aria-hidden="true" />
-          Filters
-        </button>
+      <div className="absolute right-2 top-1/2 hidden -translate-y-1/2 items-center sm:flex">
+        <kbd className="rounded-full border border-line px-2 py-1 text-xs text-muted">⌘ K</kbd>
       </div>
       {mounted && searchOpen && box && (local || searchResults.length > 0)
         ? createPortal(

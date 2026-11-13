@@ -8,10 +8,13 @@ import {
   shouldCountSearch,
   shouldLiveSearch,
 } from "../src/lib/search-status";
-import { headerSlots, nextSurahAction } from "../src/lib/next-surah";
+import { headerSlots, nextSurahAction, searchPlaceholderRoom, showPreviousSurah } from "../src/lib/next-surah";
 import { rowFits } from "../src/lib/toolbar-fit";
 
 const pane = readFileSync(new URL("../src/components/reader/reader-pane.tsx", import.meta.url), "utf8");
+const pager = readFileSync(new URL("../src/components/reader/next-surah-link.tsx", import.meta.url), "utf8");
+const search = readFileSync(new URL("../src/components/search/search-bar.tsx", import.meta.url), "utf8");
+const catalog = readFileSync(new URL("../src/lib/guide/catalog.ts", import.meta.url), "utf8");
 const sidebar = readFileSync(new URL("../src/components/sidebar/surah-sidebar.tsx", import.meta.url), "utf8");
 const mobile = readFileSync(new URL("../src/components/reader/mobile-reader-bar.tsx", import.meta.url), "utf8");
 const toolbar = readFileSync(new URL("../src/components/reader/reader-toolbar.tsx", import.meta.url), "utf8");
@@ -70,16 +73,34 @@ describe("reader chrome fit", () => {
     assert.match(toolbar, /min-w-0 flex-1/);
     assert.equal(mobile.includes(">Saved<"), false);
     assert.equal(mobile.includes(">Focus<"), false);
-    assert.match(mobile, /grid-cols-\[minmax\(6\.5rem,1fr\)_minmax\(0,auto\)_minmax\(6\.5rem,1fr\)\]/);
+    assert.match(mobile, /grid-cols-\[6\.5rem_minmax\(0,1fr\)_6\.5rem\]/);
+    assert.match(mobile, /<HeaderAccount \/>/);
     for (const viewport of [320, 390, 430]) {
       for (const name of ["Al-Mumtahanah", "Al-Muddaththir", "Juz 30"]) {
-        const slots = headerSlots(viewport, 16, 104, name.length * 10);
-        assert.equal(slots.side > 0 && slots.title >= 0, true);
-        assert.equal(slots.side * 2 + slots.title, viewport - 32);
+        const slots = headerSlots(viewport, 16, name.length * 10);
+        assert.equal(slots.controlsFit, true, name);
+        assert.equal(slots.side * 2 + slots.titleRoom, viewport - 32);
+        assert.ok(slots.title <= slots.titleRoom);
       }
     }
     assert.equal(nextSurahAction(1, () => "Al-Baqarah").label, "Next: Al-Baqarah");
     assert.equal(nextSurahAction(114, () => "Al-Fatihah").label, "Back to Al-Fatihah");
+    assert.equal(showPreviousSurah(1), false);
+    assert.equal(showPreviousSurah(2), true);
+    assert.match(pane, /<SurahPager /);
+    assert.equal(pane.includes(">Next surah<"), false);
+    assert.equal(pane.includes("Previous surah"), false);
+    assert.match(pager, /flex-wrap/);
+    assert.match(pager, /showPreviousSurah/);
+    assert.match(pager, /min-h-11 min-w-max flex-1/);
+    assert.equal(search.includes(">Filters<"), false);
+    assert.equal(search.includes("pr-36"), false);
+    assert.match(search, /Search words, surahs, 2:255/);
+    assert.ok(searchPlaceholderRoom(320) >= 220);
+    assert.ok(searchPlaceholderRoom(390) > searchPlaceholderRoom(320));
+    assert.equal(catalog.includes("Filters"), false);
+    assert.equal(provider.includes("setFilters"), false);
+    assert.equal(provider.includes("applyFilters"), false);
   });
 
   it("puts Saved in the menu and points Sana there", () => {

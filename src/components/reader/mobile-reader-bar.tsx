@@ -24,8 +24,8 @@ export function MobileReaderBar() {
 
   return (
     <div className="sticky top-0 z-30 shrink-0 border-b border-line/60 bg-canvas/95 backdrop-blur-md lg:hidden">
-      <div className="qd-gutter grid min-h-14 grid-cols-[minmax(6.5rem,1fr)_minmax(0,auto)_minmax(6.5rem,1fr)] items-center py-[var(--space-2)]">
-        <div className="flex min-w-0 items-center justify-start gap-[var(--space-2)]">
+      <div className="qd-gutter grid min-h-14 grid-cols-[6.5rem_minmax(0,1fr)_6.5rem] items-center py-[var(--space-2)]">
+        <div className="flex items-center justify-start gap-[var(--space-2)]">
           <Link
             href="/"
             className="inline-flex h-11 min-h-11 min-w-11 shrink-0 cursor-pointer items-center justify-center rounded-full hover:bg-highlight"
@@ -54,7 +54,7 @@ export function MobileReaderBar() {
             ) : null}
           </button>
         </h1>
-        <div className="flex min-w-0 items-center justify-end">
+        <div className="flex items-center justify-end">
           <HeaderAccount />
         </div>
       </div>

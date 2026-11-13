@@ -32,7 +32,7 @@ export function searchStatusMessage(input: {
   const nothingListed = input.resultCount === 0 && input.nameHitCount === 0;
   if (!nothingListed) return null;
   if (input.submittedQuery === query && shouldLiveSearch(query)) {
-    return `No ayahs match “${query}”. Try another word, or narrow it with Filters.`;
+    return `No ayahs match “${query}”. Try another word.`;
   }
   return null;
 }

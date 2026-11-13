@@ -35,13 +35,9 @@ export function AccountEntryLink({
   );
 }
 
-/** Persistent account control. Guests get a 44px Sign in target; a signed-in person keeps the avatar chip. */
+/** Persistent account control. Guests get a Sign in pill, including before the session resolves. A signed-in person keeps the avatar chip. */
 export function HeaderAccount() {
-  const { user, hydrated } = useMushaf();
-
-  if (!hydrated) {
-    return <span className="inline-flex h-11 w-11 shrink-0" aria-hidden="true" />;
-  }
+  const { user } = useMushaf();
 
   if (user) return <UserMenu compact />;
 
