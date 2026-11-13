@@ -3,6 +3,7 @@ import { Noto_Naskh_Arabic, Noto_Nastaliq_Urdu, Noto_Sans_Hebrew, Noto_Sans_Thaa
 import { PrivacyAnalytics } from "@/components/analytics/privacy-analytics";
 import { AppProviders } from "@/components/providers/app-providers";
 import { PRODUCT_NAME, SITE_DESCRIPTION, SITE_TITLE, siteUrl } from "@/lib/brand";
+import { bootBodyScript, bootHeadScript } from "@/lib/boot-appearance";
 import { googleSiteVerification, isPreviewDeployment } from "@/lib/seo";
 import "./globals.css";
 
@@ -85,7 +86,7 @@ export const viewport: Viewport = {
   colorScheme: "light",
 };
 
-const themeScript = `try{var p=JSON.parse(localStorage.getItem('al-mushaf-preferences')||'{}');var t=p.theme||'iris';document.documentElement.dataset.theme=t;var size=Number(p.fontSize);if(size>=14&&size<=36)document.documentElement.style.setProperty('--reading-size',size+'px');}catch(e){document.documentElement.dataset.theme='iris'}document.documentElement.dataset.scroll=/^\\/(read$|surah\\/|juz\\/)/.test(location.pathname)?'lock':'page';`;
+const themeScript = bootHeadScript();
 
 export default function RootLayout({
   children,
@@ -108,6 +109,7 @@ export default function RootLayout({
         </a>
         <AppProviders>{children}</AppProviders>
         <PrivacyAnalytics />
+        <script dangerouslySetInnerHTML={{ __html: bootBodyScript() }} />
       </body>
     </html>
   );

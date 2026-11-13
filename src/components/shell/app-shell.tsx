@@ -39,11 +39,11 @@ function AppShellFrame() {
     setTrackedPlaying(isPlaying);
     if (isPlaying) setAudioDismissed(false);
   }
-  const focus = preferences.focusMode;
   const showNavBp = useMediaQuery("(min-width: 1280px)");
   const showStudyBp = useMediaQuery("(min-width: 1536px)");
   const wide = useMediaQuery("(min-width: 1536px)");
   const mobile = useMobileReader();
+  const focus = preferences.focusMode && !mobile;
   const reduce = useReducedMotion();
   const transition = reduce ? { duration: 0 } : CALM;
 
@@ -176,6 +176,7 @@ function RailColumn({
       initial={false}
       animate={{ width: shown }}
       transition={transition}
+      data-shell-rail=""
       className="min-h-0 shrink-0 overflow-hidden rounded-3xl shadow-[0_8px_28px_rgba(15,23,42,0.08)] will-change-[width] max-md:hidden"
       aria-hidden={!visible}
     >
