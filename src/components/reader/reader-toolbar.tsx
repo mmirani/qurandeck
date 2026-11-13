@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Bookmark, Maximize2, Menu, Minimize2, Palette, Pause, Play, Share2 } from "lucide-react";
+import { Maximize2, Menu, Minimize2, Palette, Pause, Play, Share2 } from "lucide-react";
 import { APPEARANCE_THEMES, FONT_SIZE_MAX, FONT_SIZE_MIN } from "@/lib/appearance";
 import { useMushaf } from "@/components/providers/mushaf-provider";
 import { SearchBar } from "@/components/search/search-bar";
@@ -55,9 +55,15 @@ export function ReaderToolbar() {
   const title =
     mode === "juz" ? `Juz ${currentJuz}` : (chapter?.nameSimple ?? "Surah");
   const desktopSearch = useMediaQuery("(min-width: 1024px)");
+  const phone = useMediaQuery("(max-width: 767px)");
 
   useEffect(() => {
-    if (!preferences.focusMode) return;
+    if (!phone || !preferences.focusMode) return;
+    updatePreferences({ focusMode: false, mobileReadingMode: "scroll" });
+  }, [phone, preferences.focusMode, updatePreferences]);
+
+  useEffect(() => {
+    if (!preferences.focusMode || phone) return;
     const onKey = (event: KeyboardEvent) => {
       if (event.key !== "Escape") return;
       if (modal) return;
@@ -66,16 +72,16 @@ export function ReaderToolbar() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [modal, preferences.focusMode, updatePreferences]);
+  }, [modal, phone, preferences.focusMode, updatePreferences]);
 
   if (preferences.focusMode) {
     return (
-      <div className="qd-gutter relative shrink-0 border-b border-line/30 bg-canvas/90 py-3">
-        <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className="qd-gutter relative shrink-0 overflow-x-hidden border-b border-line/30 bg-canvas/90 py-3" data-focus-bar>
+        <div className="flex min-w-0 max-w-full items-center gap-2">
           <Link
             href="/"
             aria-label="QuranDeck home"
-            className="inline-flex h-11 min-h-11 min-w-11 shrink-0 cursor-pointer items-center justify-center rounded-full hover:bg-highlight"
+            className="hidden h-11 min-h-11 min-w-11 shrink-0 cursor-pointer items-center justify-center rounded-full hover:bg-highlight md:inline-flex"
           >
             <MihrabMark className="h-6 w-6" />
           </Link>
@@ -89,7 +95,7 @@ export function ReaderToolbar() {
               </span>
             ) : null}
           </h1>
-          <div className="flex shrink-0 items-center gap-2">
+          <div className="hidden shrink-0 items-center gap-2 md:flex">
             <div className="flex items-center rounded-full border border-line bg-surface px-1" data-tour="size">
               <span className="hidden px-2 text-xs text-muted sm:inline">Size</span>
               <button
@@ -123,23 +129,15 @@ export function ReaderToolbar() {
               <Palette className="h-3.5 w-3.5" />
               {themeName}
             </button>
-            <button
-              type="button"
-              onClick={() => openModal("saved")}
-              className="inline-flex h-11 min-h-11 shrink-0 cursor-pointer items-center gap-2 rounded-full border border-line bg-surface px-3 text-sm font-medium"
-            >
-              <Bookmark className="h-4 w-4" aria-hidden="true" />
-              Saved
-            </button>
-            <button
-              type="button"
-              onClick={() => updatePreferences({ focusMode: false })}
-              className="inline-flex h-11 min-h-11 shrink-0 cursor-pointer items-center gap-2 rounded-full bg-gold px-4 text-sm font-semibold text-on-gold"
-            >
-              <Minimize2 className="h-4 w-4" />
-              Exit focus
-            </button>
           </div>
+          <button
+            type="button"
+            onClick={() => updatePreferences({ focusMode: false })}
+            className="inline-flex h-11 min-h-11 min-w-11 shrink-0 cursor-pointer items-center gap-2 rounded-full bg-gold px-4 text-sm font-semibold text-on-gold"
+          >
+            <Minimize2 className="h-4 w-4" />
+            Exit focus
+          </button>
         </div>
       </div>
     );
@@ -292,14 +290,6 @@ export function ReaderToolbar() {
             >
               <Palette className="h-4 w-4" />
               {themeName}
-            </button>
-            <button
-              type="button"
-              onClick={() => openModal("saved")}
-              className="inline-flex h-11 min-h-11 cursor-pointer items-center gap-2 rounded-full border border-line bg-surface px-4 text-sm font-medium text-ink"
-            >
-              <Bookmark className="h-4 w-4" aria-hidden="true" />
-              Saved
             </button>
           </div>
         </div>

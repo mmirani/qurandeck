@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
-import { ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { MushafPage } from "@/components/art/ornaments";
 import { useMushaf } from "@/components/providers/mushaf-provider";
 import { useDisplayedReading } from "@/components/reader/reading-seed";
@@ -11,6 +10,7 @@ import { QuranCredit } from "@/components/site/quran-credit";
 import { MushafStream } from "@/components/reader/mushaf-stream";
 import { ReaderToolbar } from "@/components/reader/reader-toolbar";
 import { AyahReaderMobile } from "@/components/reader/ayah-reader-mobile";
+import { SurahPager } from "@/components/reader/next-surah-link";
 import { VerseCard } from "@/components/reader/verse-card";
 import { MobileReadingProgress, PaneReadingProgress } from "@/components/reader/reading-progress";
 import { introductionCredit } from "@/lib/quran/chapter-info";
@@ -200,34 +200,7 @@ export function ReaderPane() {
                 );
               })
             )}
-            {chapter && mode === "surah" ? (
-              <div className="flex items-center justify-between pt-4">
-                {chapter.id > 1 ? (
-                  <Link
-                    href={`/surah/${chapter.id - 1}`}
-                    className="inline-flex h-11 cursor-pointer items-center gap-2 rounded-full border border-line px-4"
-                  >
-                    <ChevronLeft className="h-4 w-4" /> Previous surah
-                  </Link>
-                ) : (
-                  <span className="inline-flex h-11 items-center gap-2 rounded-full border border-line px-4 opacity-40">
-                    <ChevronLeft className="h-4 w-4" /> Previous surah
-                  </span>
-                )}
-                {chapter.id < 114 ? (
-                  <Link
-                    href={`/surah/${chapter.id + 1}`}
-                    className="inline-flex h-11 cursor-pointer items-center gap-2 rounded-full border border-line px-4"
-                  >
-                    Next surah <ChevronRight className="h-4 w-4" />
-                  </Link>
-                ) : (
-                  <span className="inline-flex h-11 items-center gap-2 rounded-full border border-line px-4 opacity-40">
-                    Next surah <ChevronRight className="h-4 w-4" />
-                  </span>
-                )}
-              </div>
-            ) : null}
+            {chapter && mode === "surah" ? <SurahPager chapterId={chapter.id} /> : null}
             <QuranCredit className="px-1 pt-2" />
           </div>
         )}
@@ -268,8 +241,12 @@ function SurahIntroduction({
           aria-hidden
         />
       </button>
-      {open ? <p className="text-base leading-relaxed text-ink">{introduction}</p> : null}
-      {credit ? <p className="text-xs leading-5 text-ink-soft">{credit}</p> : null}
+      {open ? (
+        <>
+          <p className="text-base leading-relaxed text-ink">{introduction}</p>
+          {credit ? <p className="text-xs leading-5 text-ink-soft">{credit}</p> : null}
+        </>
+      ) : null}
     </section>
   );
 }

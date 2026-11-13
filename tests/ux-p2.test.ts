@@ -31,7 +31,7 @@ describe("P2 introduction source", () => {
     assert.equal(info.text, "A preface.");
     assert.equal(
       introductionCredit(info.source),
-      "Source: Sayyid Abul Ala Maududi - Tafhim al-Qur'an - The Meaning of the Quran",
+      "Source: Sayyid Abul Ala Maududi, Tafhim al-Qur'an",
     );
     assert.equal(introductionCredit("  "), null);
     assert.match(pane, /introductionCredit\(source\)/);
@@ -67,10 +67,10 @@ describe("P2 reader chrome", () => {
     assert.match(pane, /aria-expanded=\{open\}/);
     assert.equal(pane.includes("mobile ? ("), false);
     assert.match(mobileBar, /Themes\. \$\{themeName\}/);
-    assert.match(mobileBar, />\s*Focus\s*</);
-    assert.match(mobileBar, />\s*Saved\s*</);
+    assert.equal(mobileBar.includes(">Focus<"), false);
+    assert.equal(mobileBar.includes(">Saved<"), false);
     assert.match(toolbar, /Themes, \$\{themeName\}/);
-    assert.match(toolbar, />\s*Saved\s*</);
+    assert.equal(toolbar.includes(">Saved<"), false);
     assert.match(themes, /aria-pressed=\{active\}/);
     assert.match(themes, /Word by word/);
     assert.match(themes, /Auto-follow the ayah being recited/);

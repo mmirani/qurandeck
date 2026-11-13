@@ -3,6 +3,7 @@
 import { useCallback, useEffect } from "react";
 import { ChevronLeft, ChevronRight, NotebookPen, Play, Star } from "lucide-react";
 import { useMushaf } from "@/components/providers/mushaf-provider";
+import { NextSurahLink } from "@/components/reader/next-surah-link";
 import { VerseCard } from "@/components/reader/verse-card";
 import { QuranCredit } from "@/components/site/quran-credit";
 import { shouldStepAyahOnArrow } from "@/lib/keyboard-target";
@@ -106,6 +107,9 @@ export function AyahReaderMobile({ verses, mode }: { verses: Verse[]; mode: stri
             <NotebookPen className={`h-4 w-4 ${hasNote ? "text-gold" : ""}`} />
           </AyahBarButton>
         </div>
+        {mode === "surah" && index >= verses.length - 1 ? (
+          <NextSurahLink chapterId={verse.chapterId} />
+        ) : null}
         <div className="mt-[var(--space-2)] flex gap-[var(--space-2)]">
           <button
             type="button"

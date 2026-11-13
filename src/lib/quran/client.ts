@@ -10,8 +10,8 @@ import type {
   Verse,
 } from "./types";
 
-async function getJson<T>(url: string): Promise<T> {
-  const res = await fetch(url);
+async function getJson<T>(url: string, signal?: AbortSignal): Promise<T> {
+  const res = await fetch(url, { signal });
   if (!res.ok) {
     const message = await res.text();
     throw new Error(message || `Request failed ${res.status}`);
@@ -59,13 +59,13 @@ export function getJuz(id: number, translationIds: number[] | number) {
   );
 }
 
-export function searchQuran(query: string, translationId: number, language?: string) {
+export function searchQuran(query: string, translationId: number, language?: string, signal?: AbortSignal) {
   const params = new URLSearchParams({
     q: query,
     translation: String(translationId),
   });
   if (language) params.set("language", language);
-  return getJson<{ results: SearchHit[] }>(`/api/quran/search?${params.toString()}`);
+  return getJson<{ results: SearchHit[] }>(`/api/quran/search?${params.toString()}`, signal);
 }
 
 export function getAudioMap(recitationId: number, chapterId: number) {

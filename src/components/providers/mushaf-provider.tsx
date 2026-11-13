@@ -25,6 +25,7 @@ import {
   searchQuran,
 } from "@/lib/quran/client";
 import { groupForId, withTranslationIds } from "@/lib/quran/languages";
+import { searchGenerationWins, shouldCountSearch, shouldLiveSearch } from "@/lib/search-status";
 import { mergeStudyCards } from "@/lib/study-cards";
 import type {
   Bookmark,
@@ -37,7 +38,6 @@ import type {
   Note,
   Preferences,
   RecitationResource,
-  SearchFilters,
   SearchHit,
   SessionUser,
   TranslationResource,
@@ -130,7 +130,6 @@ type MushafContextValue = {
   searchResults: SearchHit[];
   searchOpen: boolean;
   searching: boolean;
-  filters: SearchFilters;
   bookmarks: Bookmark[];
   notes: Note[];
   highlights: Highlight[];
@@ -161,8 +160,6 @@ type MushafContextValue = {
   setSearchQuery: (value: string) => void;
   setSearchOpen: (value: boolean) => void;
   runSearch: (value?: string) => Promise<void>;
-  setFilters: (value: SearchFilters) => void;
-  applyFilters: () => void;
   jumpToHit: (hit: SearchHit) => void;
   toggleBookmarkVerse: (verse: Verse) => void;
   bookmarkWord: (verse: Verse, word: Word) => void;
@@ -200,12 +197,6 @@ type MushafContextValue = {
 
 const MushafContext = createContext<MushafContextValue | null>(null);
 
-const defaultFilters: SearchFilters = {
-  revelation: "all",
-  juz: "all",
-  queryIn: "all",
-};
-
 function verseIndex(verses: Verse[], key: string | null) {
   return verses.findIndex((verse) => verse.verseKey === key);
 }
@@ -215,6 +206,9 @@ export function MushafProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const { data: authSession, status: authStatus } = useSession();
   const audioRef = useRef<HTMLAudioElement>(null);
+  const searchAbortRef = useRef<AbortController | null>(null);
+  const searchGenRef = useRef(0);
+  const lastCountedSearchRef = useRef<string | null>(null);
   const [preferences, setPreferences] = useState<Preferences>(defaultPreferences);
   const prefsRef = useRef(preferences);
   const [hydrated, setHydrated] = useState(false);
@@ -243,7 +237,6 @@ export function MushafProvider({ children }: { children: ReactNode }) {
   const [searchResults, setSearchResults] = useState<SearchHit[]>([]);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searching, setSearching] = useState(false);
-  const [filters, setFilters] = useState<SearchFilters>(defaultFilters);
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
   const [notes, setNotes] = useState<Note[]>([]);
   const [highlights, setHighlights] = useState<Highlight[]>([]);
@@ -790,35 +783,34 @@ export function MushafProvider({ children }: { children: ReactNode }) {
     async (value?: string) => {
       const query = (value ?? searchQuery).trim();
       setSearchQuery(query);
-      if (!query) {
+      searchAbortRef.current?.abort();
+      if (!shouldLiveSearch(query)) {
         setSearchResults([]);
+        setSearching(false);
         return;
       }
-      trackUsage({ name: "feature", feature: "search_performed" });
+      const controller = new AbortController();
+      searchAbortRef.current = controller;
+      const requestId = ++searchGenRef.current;
       setSearching(true);
       try {
         const language = groupForId(translations, preferences.translationId)?.label;
-        let results = (await searchQuran(query, preferences.translationId, language)).results;
-        if (filters.revelation !== "all") {
-          results = results.filter((hit) => chapters.find((item) => item.id === hit.chapterId)?.revelationPlace === filters.revelation);
-        }
-        if (filters.juz !== "all") {
-          const mapping = juzs.find((item) => item.juzNumber === filters.juz)?.verseMapping ?? {};
-          results = results.filter((hit) => mapping[String(hit.chapterId)]);
-        }
+        const results = (await searchQuran(query, preferences.translationId, language, controller.signal)).results;
+        if (!searchGenerationWins(requestId, searchGenRef.current) || controller.signal.aborted) return;
         setSearchResults(results);
         setSearchOpen(true);
+        if (shouldCountSearch(lastCountedSearchRef.current, query)) {
+          trackUsage({ name: "feature", feature: "search_performed" });
+          lastCountedSearchRef.current = query;
+        }
+      } catch (error) {
+        if (controller.signal.aborted || (error instanceof DOMException && error.name === "AbortError")) return;
       } finally {
-        setSearching(false);
+        if (searchGenerationWins(requestId, searchGenRef.current)) setSearching(false);
       }
     },
-    [chapters, filters, juzs, preferences.translationId, searchQuery, translations],
+    [preferences.translationId, searchQuery, translations],
   );
-
-  const applyFilters = useCallback(() => {
-    setModal(null);
-    void runSearch();
-  }, [runSearch]);
 
   const openModal = useCallback((name: Exclude<ModalName, null>) => {
     if (name === "auth") setAuthMode("signin");
@@ -1175,7 +1167,6 @@ export function MushafProvider({ children }: { children: ReactNode }) {
       searchResults,
       searchOpen,
       searching,
-      filters,
       bookmarks,
       notes,
       highlights,
@@ -1206,8 +1197,6 @@ export function MushafProvider({ children }: { children: ReactNode }) {
       setSearchQuery,
       setSearchOpen,
       runSearch,
-      setFilters,
-      applyFilters,
       jumpToHit,
       toggleBookmarkVerse,
       bookmarkWord,
@@ -1240,7 +1229,6 @@ export function MushafProvider({ children }: { children: ReactNode }) {
       applyLibrary,
       updateDisplayName,
       updateAvatar,
-      applyFilters,
       bookmarks,
       chapter,
       chapters,
@@ -1255,7 +1243,6 @@ export function MushafProvider({ children }: { children: ReactNode }) {
       duration,
       declineStillReading,
       error,
-      filters,
       highlightAyah,
       highlightText,
       highlightWords,

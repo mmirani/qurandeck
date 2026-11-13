@@ -19,7 +19,7 @@ import { groupForId, htmlLang, isRtlLanguage, scriptClass } from "@/lib/quran/la
 import { PRODUCT_NAME } from "@/lib/brand";
 import { focusOpenNote } from "@/lib/note-composer";
 import { wordTapShouldPlay } from "@/lib/word-tap";
-import { shareOrCopy, toArabicIndicDigits, verseShareText } from "@/lib/reading";
+import { shareOrCopy, verseShareText } from "@/lib/reading";
 import { useAyahFitScale } from "@/lib/use-ayah-fit-scale";
 
 export function VerseCard({
@@ -144,15 +144,9 @@ export function VerseCard({
             >
               <span className="sr-only">Select verse {verse.verseKey}. </span>
               <span className="tabular-nums">{verse.verseNumber}</span>
-              <span className="tabular-nums" dir="rtl" lang="ar" style={{ fontFamily: "var(--font-arabic), serif" }}>
-                {toArabicIndicDigits(verse.verseNumber)}
-              </span>
             </button>
             {note ? (
-              <span className="absolute -right-1 -top-1 h-3.5 w-3.5 rounded-full bg-gold ring-2 ring-surface" title="Has a note" />
-            ) : null}
-            {favorited ? (
-              <Star className="absolute -bottom-1 -left-1 h-3.5 w-3.5 fill-gold text-gold" />
+              <span className="sr-only">Has a note</span>
             ) : null}
           </div>
           <div className="flex shrink-0 items-center gap-1 md:hidden" data-tour={tourAnchor ? "ayah-mobile" : undefined}>

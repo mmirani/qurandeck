@@ -9,12 +9,10 @@ import { SettingsModal } from "@/components/modals/settings-modal";
 import { StillReadingPrompt } from "@/components/modals/still-reading-prompt";
 import { ThemePicker } from "@/components/modals/theme-picker";
 import { NoteComposerSheet } from "@/components/reader/note-composer";
-import { FiltersModal } from "@/components/search/filters-modal";
 
 export function AppModals() {
   return (
     <>
-      <FiltersModal />
       <ThemePicker />
       <JuzModal />
       <SettingsModal />

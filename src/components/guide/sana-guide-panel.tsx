@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
-import { Mic, Minus, X } from "lucide-react";
+import { Mic, Minus, Send, X } from "lucide-react";
 import { useGuide } from "@/components/guide/guide-provider";
 import { useMushaf } from "@/components/providers/mushaf-provider";
 import { COMPANION_NAME, COMPANION_NAME_AR } from "@/lib/brand";
 import { matchHelper } from "@/lib/guide/commands";
 import {
+  SANA_VOICE_ENABLED,
   createVoiceSession,
   idleVoiceSnapshot,
   isStandaloneDisplay,
@@ -43,7 +44,11 @@ export function SanaGuidePanel({ onClose, onRest }: { onClose: () => void; onRes
   const releaseAudioRef = useRef<() => void>(() => {});
   const resumeAudioRef = useRef<(transcript?: string) => void>(() => {});
   const scheduleResumeRef = useRef<() => void>(() => {});
-  const speech = useSyncExternalStore(subscribeNever, () => speechCtor() !== null, () => false);
+  const speech = useSyncExternalStore(
+    subscribeNever,
+    () => (SANA_VOICE_ENABLED ? speechCtor() !== null : false),
+    () => false,
+  );
 
   useEffect(() => {
     askRef.current = ask;
@@ -123,6 +128,7 @@ export function SanaGuidePanel({ onClose, onRest }: { onClose: () => void; onRes
   };
 
   const toggleMic = () => {
+    if (!SANA_VOICE_ENABLED) return;
     if (!sessionRef.current) {
       const Ctor = speechCtor();
       if (!Ctor) {
@@ -202,10 +208,10 @@ export function SanaGuidePanel({ onClose, onRest }: { onClose: () => void; onRes
           enterKeyHint="send"
           aria-describedby={voice.message ? "sana-voice-note" : undefined}
         />
-        <button type="submit" className="sr-only">
-          Ask
+        <button type="submit" className="nur-icon shrink-0" aria-label={`Send to ${COMPANION_NAME}`}>
+          <Send className="h-4 w-4" aria-hidden="true" />
         </button>
-        {speech ? (
+        {SANA_VOICE_ENABLED && speech ? (
           <button
             type="button"
             className={`nur-mic ${voice.listening ? "is-on" : ""}`}

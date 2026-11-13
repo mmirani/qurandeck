@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Bookmark, Menu, Palette } from "lucide-react";
+import { Menu, Palette } from "lucide-react";
 import { HeaderAccount } from "@/components/auth/header-account";
 import { MihrabMark } from "@/components/art/ornaments";
 import { APPEARANCE_THEMES } from "@/lib/appearance";
@@ -24,25 +24,27 @@ export function MobileReaderBar() {
 
   return (
     <div className="sticky top-0 z-30 shrink-0 border-b border-line/60 bg-canvas/95 backdrop-blur-md lg:hidden">
-      <div className="qd-gutter flex min-h-14 items-center gap-[var(--space-3)] py-[var(--space-2)]">
-        <Link
-          href="/"
-          className="inline-flex h-11 min-h-11 min-w-11 shrink-0 cursor-pointer items-center justify-center rounded-full hover:bg-highlight"
-          aria-label="QuranDeck home"
-        >
-          <MihrabMark className="h-6 w-6" />
-        </Link>
-        <button
-          type="button"
-          onClick={openNav}
-          data-tour="search-mobile"
-          className="inline-flex h-11 min-h-11 min-w-11 shrink-0 cursor-pointer items-center justify-center rounded-full hover:bg-highlight"
-          aria-label="Open surah and juz menu"
-        >
-          <Menu className="h-5 w-5" />
-        </button>
-        <h1 className="min-w-0 flex-1 text-center font-display text-base font-semibold tracking-tight text-ink">
-          <button type="button" onClick={openNav} className="w-full cursor-pointer truncate">
+      <div className="qd-gutter grid min-h-14 grid-cols-[6.5rem_minmax(0,1fr)_6.5rem] items-center py-[var(--space-2)]">
+        <div className="flex items-center justify-start gap-[var(--space-2)]">
+          <Link
+            href="/"
+            className="inline-flex h-11 min-h-11 min-w-11 shrink-0 cursor-pointer items-center justify-center rounded-full hover:bg-highlight"
+            aria-label="QuranDeck home"
+          >
+            <MihrabMark className="h-6 w-6" />
+          </Link>
+          <button
+            type="button"
+            onClick={openNav}
+            data-tour="search-mobile"
+            className="inline-flex h-11 min-h-11 min-w-11 shrink-0 cursor-pointer items-center justify-center rounded-full hover:bg-highlight"
+            aria-label="Open surah and juz menu"
+          >
+            <Menu className="h-5 w-5" />
+          </button>
+        </div>
+        <h1 className="min-w-0 truncate text-center font-display text-base font-semibold tracking-tight text-ink">
+          <button type="button" onClick={openNav} className="block w-full cursor-pointer truncate">
             {title}
             {mode === "surah" && chapter?.nameArabic ? (
               <span className="sr-only" lang="ar" dir="rtl">
@@ -52,7 +54,9 @@ export function MobileReaderBar() {
             ) : null}
           </button>
         </h1>
-        <HeaderAccount />
+        <div className="flex items-center justify-end">
+          <HeaderAccount />
+        </div>
       </div>
       {desktopSearch ? null : (
         <div className="qd-gutter pb-[var(--space-2)]">
@@ -77,12 +81,6 @@ export function MobileReaderBar() {
         >
           Ayah
         </LayoutChip>
-        <LayoutChip
-          active={preferences.focusMode}
-          onClick={() => updatePreferences({ focusMode: !preferences.focusMode })}
-        >
-          Focus
-        </LayoutChip>
         {tafsirOn ? (
           <button
             type="button"
@@ -101,14 +99,6 @@ export function MobileReaderBar() {
           data-tour="size-mobile"
         >
           <Palette className="h-4 w-4" />
-        </button>
-        <button
-          type="button"
-          onClick={() => openModal("saved")}
-          className="inline-flex h-11 min-h-11 shrink-0 cursor-pointer items-center gap-1 rounded-full border border-line bg-surface px-3 text-xs font-medium text-ink"
-        >
-          <Bookmark className="h-4 w-4" aria-hidden="true" />
-          Saved
         </button>
       </div>
     </div>

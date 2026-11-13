@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { Bookmark } from "lucide-react";
 import { useMushaf } from "@/components/providers/mushaf-provider";
 import { ArabesqueDivider, MihrabMark } from "@/components/art/ornaments";
 import { BrandWordmark } from "@/components/brand/brand-wordmark";
@@ -14,7 +15,7 @@ import { ContinueCard } from "@/components/account/account-dashboard";
 import { QuranCredit } from "@/components/site/quran-credit";
 
 export function SurahSidebar() {
-  const { chapters, chapter, currentJuz, juzs, mode } = useMushaf();
+  const { chapters, chapter, currentJuz, juzs, mode, openModal } = useMushaf();
   const { closeNav } = useReaderChrome();
   const [query, setQuery] = useState("");
   const [browse, setBrowse] = useState<"surah" | "popular" | "juz">(mode === "juz" ? "juz" : "surah");
@@ -65,6 +66,20 @@ export function SurahSidebar() {
           </div>
         </div>
         <ArabesqueDivider className="mt-4 text-gold/80" />
+        <button
+          type="button"
+          onClick={() => {
+            openModal("saved");
+            closeNav();
+          }}
+          className="mt-3 flex min-h-11 w-full cursor-pointer items-center gap-3 rounded-2xl px-3 text-left hover:bg-highlight"
+        >
+          <Bookmark className="h-5 w-5 shrink-0 text-gold-deep" aria-hidden="true" />
+          <span className="min-w-0">
+            <span className="block text-base font-medium text-ink">Saved</span>
+            <span className="block truncate text-sm text-ink-soft">Bookmarks, notes, and highlights</span>
+          </span>
+        </button>
         <div className="mt-4 grid grid-cols-3 gap-1.5">
           <BrowseTab active={browse === "surah"} onClick={() => setBrowse("surah")}>
             Surahs

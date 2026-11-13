@@ -179,7 +179,6 @@ export type AppearanceThemeId =
 export type ReaderMode = "surah" | "juz";
 
 export type ModalName =
-  | "filters"
   | "themes"
   | "juz"
   | "settings"
@@ -190,12 +189,6 @@ export type ModalName =
   | "highlights"
   | "saved"
   | null;
-
-export type SearchFilters = {
-  revelation: RevelationPlace | "all";
-  juz: number | "all";
-  queryIn: "all" | "arabic" | "translation";
-};
 
 export type Preferences = {
   theme: AppearanceThemeId;

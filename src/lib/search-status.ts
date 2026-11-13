@@ -1,3 +1,25 @@
+export const SEARCH_DEBOUNCE_MS = 300;
+
+const ARABIC = /[\u0600-\u06FF]/;
+const VERSE_KEY = /^\d{1,3}:\d{1,3}$/;
+
+/** Latin words wait for 2 characters. Arabic and a verse key such as 2:255 start at 1. */
+export function shouldLiveSearch(query: string): boolean {
+  const text = query.trim();
+  if (!text) return false;
+  if (ARABIC.test(text) || VERSE_KEY.test(text)) return true;
+  return text.length >= 2;
+}
+
+export function searchGenerationWins(requestId: number, latestId: number): boolean {
+  return requestId === latestId;
+}
+
+/** One analytics event per settled query string, never once per keystroke. */
+export function shouldCountSearch(lastCounted: string | null, query: string): boolean {
+  return lastCounted !== query;
+}
+
 export function searchStatusMessage(input: {
   query: string;
   submittedQuery: string | null;
@@ -9,11 +31,8 @@ export function searchStatusMessage(input: {
   if (input.searching || !query) return null;
   const nothingListed = input.resultCount === 0 && input.nameHitCount === 0;
   if (!nothingListed) return null;
-  if (input.submittedQuery === query) {
-    return `No ayahs match “${query}”. Try another word, or open Filters for themes such as Mercy or Prayer.`;
-  }
-  if (query.length > 1) {
-    return "Press Enter to search the full Quran text, or open Filters to browse themes such as Mercy or Prayer.";
+  if (input.submittedQuery === query && shouldLiveSearch(query)) {
+    return `No ayahs match “${query}”. Try another word.`;
   }
   return null;
 }
