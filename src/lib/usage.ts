@@ -1,5 +1,6 @@
 import { createHash, createHmac } from "node:crypto";
 import { canonicalAnonId } from "@/lib/anon-id";
+import { assertGeoEvent, countryFromHeader, geoVisitorHash, type GeoEvent } from "@/lib/geo";
 import { rateLimitKey, type RateLimiter } from "@/lib/rate-limit";
 import {
   AUTH_REASONS,
@@ -267,6 +268,11 @@ export function isAdminEmail(email: string | null | undefined, raw = process.env
   return adminEmails(raw).includes(normalized);
 }
 
+/** /admin/stats, including the country map. Anyone else is a 404. */
+export function adminStatsStatus(email: string | null | undefined, raw = process.env.ADMIN_EMAILS ?? ""): 200 | 404 {
+  return isAdminEmail(email, raw) ? 200 : 404;
+}
+
 export function signInMethod(provider: string | null | undefined): SignInMethod | null {
   const id = provider?.trim().toLowerCase();
   if (id === "magic-link" || id === "email-code" || id === "email") return "email_code";
@@ -474,6 +480,8 @@ export function clientEventInsert(event: ClientUsageEvent, subjectHash: string):
       return { eventType: "setting", method: null, subjectHash, detail: event.setting };
     case "session_open":
       return { eventType: "session_open", method: null, subjectHash, detail: event.device };
+    case "page_view":
+      throw new Error("Page views are not stored as usage events");
     case "auth_requested":
       return { eventType: "auth_requested", method: event.method, subjectHash, detail: null };
     case "auth_failed":
@@ -542,6 +550,8 @@ export async function acceptUsagePost(input: {
   store: UsageInserter;
   now?: number;
   secret?: string;
+  countryHeader?: string | null;
+  recordGeo?: (event: GeoEvent) => Promise<void>;
 }): Promise<UsagePostResult> {
   const parsed = parseUsageRequest(input.body);
   if (!parsed.ok) return { status: 400, body: { ok: false, error: parsed.error } };
@@ -613,12 +623,38 @@ export async function acceptUsagePost(input: {
 
   try {
     for (const event of parsed.events) {
+      if (event.name === "page_view") {
+        await emitGeo(input, "page_view", parsed.anonId);
+        continue;
+      }
       await input.store.insert(clientEventInsert(event, subjectHash));
+      if (event.name === "session_open") await emitGeo(input, "visit", parsed.anonId);
     }
   } catch {
     return unavailable();
   }
   return { status: 200, body: { ok: true } };
+}
+
+async function emitGeo(
+  input: { now?: number; secret?: string; countryHeader?: string | null; recordGeo?: (event: GeoEvent) => Promise<void> },
+  kind: GeoEvent["kind"],
+  anonId: string | null,
+) {
+  if (!input.recordGeo || !anonId) return;
+  try {
+    const day = new Date(input.now ?? Date.now()).toISOString().slice(0, 10);
+    const event: GeoEvent = {
+      day,
+      country: countryFromHeader(input.countryHeader),
+      visitorHash: geoVisitorHash(anonId, day, input.secret),
+      kind,
+    };
+    assertGeoEvent(event);
+    await input.recordGeo(event);
+  } catch {
+    // A country total must not fail the product event, and it never stores the address.
+  }
 }
 
 function limited(retryAfterSec: number): UsagePostResult {

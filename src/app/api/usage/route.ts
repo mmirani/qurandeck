@@ -1,4 +1,5 @@
 import { auth } from "@/auth";
+import { recordGeo } from "@/lib/geo-store";
 import { clientAddress, getRateLimiter } from "@/lib/rate-limit";
 import { USAGE_BODY_LIMIT, acceptUsagePost, parseUsageRequest } from "@/lib/usage";
 import { getUsageInserter } from "@/lib/usage-store";
@@ -39,6 +40,8 @@ export async function POST(request: Request) {
     ip: clientAddress(request.headers.get("x-forwarded-for"), request.headers.get("x-real-ip") ?? "local"),
     limiter: getRateLimiter(),
     store: getUsageInserter(),
+    countryHeader: request.headers.get("x-vercel-ip-country"),
+    recordGeo,
   });
 
   return Response.json(result.body, {

@@ -1,4 +1,5 @@
 import { getSql } from "@/lib/db";
+import { geoSchemaStatements } from "@/lib/geo";
 import {
   USAGE_RETENTION_MONTHS,
   accountUsageSubject,
@@ -78,10 +79,21 @@ async function run() {
   for (const statement of usageSchemaStatements()) {
     await sql.query(statement);
   }
+  for (const statement of geoSchemaStatements()) {
+    await sql.query(statement);
+  }
   // Raw rows are kept for about 13 months, then removed on the next cold start.
   await sql`
     DELETE FROM usage_events
     WHERE created_at < now() - make_interval(months => ${USAGE_RETENTION_MONTHS}::int)
+  `;
+  await sql`
+    DELETE FROM usage_geo_visitors
+    WHERE day < (timezone('UTC', now()))::date - make_interval(months => ${USAGE_RETENTION_MONTHS}::int)
+  `;
+  await sql`
+    DELETE FROM usage_geo_daily
+    WHERE day < (timezone('UTC', now()))::date - make_interval(months => ${USAGE_RETENTION_MONTHS}::int)
   `;
 }
 

@@ -239,6 +239,7 @@ export type ClientUsageEvent =
   | { name: "sana_refusal" }
   | { name: "setting"; setting: SettingValue }
   | { name: "session_open"; device: DeviceBucket }
+  | { name: "page_view" }
   | { name: "auth_requested"; method: SignInMethod }
   | { name: "auth_failed"; method: SignInMethod | null; reason: AuthReason };
 
@@ -252,6 +253,7 @@ const CLIENT_KEYS: Record<ClientUsageEvent["name"], readonly string[]> = {
   sana_refusal: ["name"],
   setting: ["name", "setting"],
   session_open: ["name", "device"],
+  page_view: ["name"],
   auth_requested: ["name", "method"],
   auth_failed: ["name", "reason", "method"],
 };
@@ -307,6 +309,7 @@ export function parseClientEvent(value: unknown): ClientUsageEvent | null {
     case "tour_started":
     case "tour_completed":
     case "sana_refusal":
+    case "page_view":
       return { name };
     default:
       return null;

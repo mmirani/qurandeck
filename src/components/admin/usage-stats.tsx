@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { GeoDashboard } from "@/components/admin/geo-dashboard";
 import { MihrabMark } from "@/components/art/ornaments";
 import { BrandWordmark } from "@/components/brand/brand-wordmark";
 import { APPEARANCE_THEMES } from "@/lib/appearance";
@@ -25,6 +26,7 @@ import {
   type UsageDay,
   type UsageStats,
 } from "@/lib/usage";
+import type { GeoSummary } from "@/lib/geo";
 
 const METHODS: { id: SignInMethod; label: string }[] = [
   { id: "email_code", label: "Email code" },
@@ -33,7 +35,15 @@ const METHODS: { id: SignInMethod; label: string }[] = [
   { id: "apple", label: "Apple" },
 ];
 
-export function UsageStatsView({ stats, notice }: { stats: UsageStats | null; notice?: string }) {
+export function UsageStatsView({
+  stats,
+  notice,
+  geo,
+}: {
+  stats: UsageStats | null;
+  notice?: string;
+  geo?: GeoSummary | null;
+}) {
   return (
     <div className="min-h-dvh bg-canvas text-ink">
       <header className="border-b border-line/70">
@@ -56,13 +66,20 @@ export function UsageStatsView({ stats, notice }: { stats: UsageStats | null; no
         {notice ? (
           <p className="qd-pad-sm rounded-2xl border border-gold/40 bg-highlight text-sm leading-6 text-ink">{notice}</p>
         ) : null}
-        {stats ? <StatsBody stats={stats} /> : <p className="text-base text-ink-soft">Usage counts are unavailable right now.</p>}
+        {stats ? (
+          <StatsBody stats={stats} geo={geo ?? null} />
+        ) : (
+          <>
+            <p className="text-base text-ink-soft">Usage counts are unavailable right now.</p>
+            <GeoDashboard summary={geo ?? null} />
+          </>
+        )}
       </main>
     </div>
   );
 }
 
-function StatsBody({ stats }: { stats: UsageStats }) {
+function StatsBody({ stats, geo }: { stats: UsageStats; geo: GeoSummary | null }) {
   return (
     <>
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -73,6 +90,7 @@ function StatsBody({ stats }: { stats: UsageStats }) {
       </div>
 
       <Activity stats={stats} />
+      <GeoDashboard summary={geo ?? null} />
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
         <section className="qd-pad rounded-3xl border border-line bg-surface">

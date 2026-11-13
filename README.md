@@ -49,7 +49,11 @@ After sign-in, `LibrarySync` merges that device library with `GET/PUT /api/libra
 
 On each successful library put, QuranDeck compares the previous sealed visit map with the new one and may add one anonymous opening per ayah per account per day to `reading_ranks` (`verse_key`, `visits`), capped at 40 new ayahs a day. That table has no account id. It is a usage counter, not a spiritual score. Public read: `GET /api/ranks`. Before launch, set `RANK_RESET_TOKEN` and `POST /api/ranks/reset` with `Authorization: Bearer <token>` to clear test totals.
 
-Anonymous product events live in `usage_events` (`event_type`, `method`, `subject_hash`, `created_at`). The subject is an HMAC of a random guest id or the account email, keyed from `AUTH_SECRET` separately from `account_id`. The table does not store emails, names, IP addresses, user agents, or reading content. A guest session starts from a random id in `localStorage` (`al-mushaf-anon`), not a cookie. `POST /api/usage` accepts only `guest_started` and, when signed in, `guest_merge`. Sign-up, sign-in, and account deletion are recorded on the server. Rows older than 13 months are deleted when the table is prepared. `/admin/stats` is visible to emails in `ADMIN_EMAILS` and returns 404 for everyone else.
+Anonymous product events live in `usage_events` (`event_type`, `method`, `subject_hash`, `created_at`). The subject is an HMAC of a random guest id or the account email, keyed from `AUTH_SECRET` separately from `account_id`. The table does not store emails, names, IP addresses, user agents, or reading content. A guest session starts from a random id in `localStorage` (`al-mushaf-anon`), not a cookie. `POST /api/usage` accepts only `guest_started` and, when signed in, `guest_merge`, plus an allowlisted batch of product events. Sign-up, sign-in, and account deletion are recorded on the server. Rows older than 13 months are deleted when the table is prepared.
+
+Country totals are separate. On a daily open (`session_open`) or a page view, the server reads Vercel’s `x-vercel-ip-country` header and keeps a two-letter code, or `ZZ` when the header is missing. That total does not read or store the IP address. `usage_geo_daily` holds `day`, `country`, `visits`, and `page_views`. `usage_geo_visitors` holds a daily HMAC of the random id, salted with the UTC day, so the same reader hashes differently tomorrow and the raw id is not stored next to the country. Both tables are removed on the same 13-month schedule. The tables are created on the next cold start (`schema_migrations` id `usage-geo-v1`). No manual SQL step.
+
+`/admin/stats` shows the usage counts and the country map. It is visible to emails in `ADMIN_EMAILS` and returns 404 for everyone else. The page is `noindex`, `/admin` is disallowed in `robots.txt`, and it is not in the sitemap. The map is drawn from a bundled Natural Earth file. It does not call a tile server.
 
 Vercel Web Analytics and Speed Insights load from the root layout. Enable both in the Vercel project or they have nothing to report. Query strings are stripped before a page view is sent, and `/api/auth` is skipped.
 
@@ -66,7 +70,7 @@ Copy `.env.example` to `.env.local`. Required for sign-in and library sync:
 - `AUTH_SECRET` — signs the session and encrypts the library. Use a long random string.
 - `AUTH_URL` — public origin baked into emailed sign-in links, such as `https://qurandeck.vercel.app`. No trailing slash.
 - `DATABASE_URL` — Neon Postgres connection string. Also stores consumed sign-in tokens, rate-limit counters, and anonymous usage events.
-- `ADMIN_EMAILS` — comma-separated owner emails allowed to open `/admin/stats`. Compared with the signed-in session on the server. Unset or empty means nobody.
+- `ADMIN_EMAILS` — comma-separated owner emails allowed to open `/admin/stats`, including the country map. Compared with the signed-in session on the server. Unset or empty means nobody. There is no separate owner variable.
 - `AUTH_RESEND_KEY` — Resend API key. Required for email sign-in in production.
 - `AUTH_EMAIL_FROM` — sender on a domain verified in Resend, such as `QuranDeck <sign-in@example.com>`. Required for email sign-in in production.
 
