@@ -15,7 +15,7 @@ import { BrandWordmark } from "@/components/brand/brand-wordmark";
 import { PRODUCT_NAME } from "@/lib/brand";
 import { shareOrCopy } from "@/lib/reading";
 import { useReaderChrome } from "@/components/shell/reader-chrome";
-import { useMediaQuery } from "@/lib/use-media-query";
+import { headerShowsHomeLogo, NAV_SIDEBAR_QUERY, useMediaQuery } from "@/lib/use-media-query";
 import { useDisplayedReading } from "@/components/reader/reading-seed";
 import { surahArtSrc } from "@/lib/surah-art";
 
@@ -55,6 +55,8 @@ export function ReaderToolbar() {
   const title = mode === "juz" ? `Juz ${currentJuz}` : (chapter?.nameSimple ?? "Surah");
   const desktopSearch = useMediaQuery("(min-width: 1024px)");
   const phone = useMediaQuery("(max-width: 767px)");
+  const sidebarColumn = useMediaQuery(NAV_SIDEBAR_QUERY);
+  const showHeaderHome = headerShowsHomeLogo(sidebarColumn, preferences.showNavRail);
 
   const focus = preferences.focusMode && !phone;
 
@@ -159,14 +161,16 @@ export function ReaderToolbar() {
           >
             <Menu className="h-5 w-5" />
           </button>
-          <Link
-            href="/"
-            className="inline-flex h-11 min-h-11 min-w-11 shrink-0 cursor-pointer items-center gap-[var(--space-2)] rounded-full px-1 hover:bg-highlight"
-            aria-label="QuranDeck home"
-          >
-            <MihrabMark className="h-7 w-7" />
-            <BrandWordmark className="hidden text-xl leading-none xl:inline" />
-          </Link>
+          {showHeaderHome ? (
+            <Link
+              href="/"
+              className="inline-flex h-11 min-h-11 min-w-11 shrink-0 cursor-pointer items-center gap-[var(--space-2)] rounded-full px-1 hover:bg-highlight"
+              aria-label="QuranDeck home"
+            >
+              <MihrabMark className="h-7 w-7" />
+              <BrandWordmark className="hidden text-xl leading-none xl:inline" />
+            </Link>
+          ) : null}
           <div className="min-w-0 flex-1">
             {desktopSearch ? <SearchBar /> : null}
           </div>
