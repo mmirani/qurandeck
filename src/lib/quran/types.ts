@@ -91,7 +91,7 @@ export type SearchHit = {
   verseNumber: number;
   textArabic: string;
   textTranslation: string;
-  source: "quran.com" | "alquran.cloud" | "theme" | "jump";
+  source: "quran.com" | "alquran.cloud" | "jump";
   chapterName?: string;
   translatedName?: string;
 };
@@ -192,7 +192,6 @@ export type ModalName =
   | null;
 
 export type SearchFilters = {
-  themes: string[];
   revelation: RevelationPlace | "all";
   juz: number | "all";
   queryIn: "all" | "arabic" | "translation";

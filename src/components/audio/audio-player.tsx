@@ -96,7 +96,7 @@ export function AudioPlayer({
               max={duration || 0}
               value={currentTime}
               onChange={(event) => seek(Number(event.target.value))}
-              className="h-3 w-full cursor-pointer accent-gold"
+              className="qd-seek"
             />
           </label>
           <div className="mt-0.5 flex justify-between gap-2 text-xs font-medium text-gold">
@@ -184,7 +184,7 @@ export function AudioPlayer({
           max={duration || 0}
           value={currentTime}
           onChange={(event) => seek(Number(event.target.value))}
-          className="w-full accent-gold"
+          className="qd-seek"
         />
       </label>
       <div className="mt-1 flex justify-between text-xs text-gold-deep">

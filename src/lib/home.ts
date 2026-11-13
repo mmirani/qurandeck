@@ -8,7 +8,7 @@ export const HOME_FEATURES = [
   {
     id: "search",
     title: "Find any ayah",
-    body: "Search by word, theme, surah name, or a verse key like 18:10. Jump straight into the page.",
+    body: "Search by word, surah name, or a verse key like 18:10. Jump straight into the page.",
   },
   {
     id: "place",

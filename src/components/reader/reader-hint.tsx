@@ -25,7 +25,7 @@ export function ReaderHint() {
     <aside className="qd-pad mb-4 rounded-3xl border border-gold/30 bg-highlight/80 text-sm leading-6 text-ink">
       <p className="font-display text-base font-semibold text-ink">A quiet start</p>
       <ul className="mt-2 space-y-1 text-ink-soft">
-        <li>Search is the top box: a word, a theme, or 2:255.</li>
+        <li>Search is the top box: a word, a surah, or 2:255.</li>
         <li>Tap an ayah to play it, note it, or highlight it.</li>
         <li>Sana answers plain questions. A full tour lives there if you want one.</li>
       </ul>

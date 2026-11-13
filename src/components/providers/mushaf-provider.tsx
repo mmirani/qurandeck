@@ -26,7 +26,6 @@ import {
 } from "@/lib/quran/client";
 import { groupForId, withTranslationIds } from "@/lib/quran/languages";
 import { mergeStudyCards } from "@/lib/study-cards";
-import { TOPICS } from "@/lib/quran/theme-topics";
 import type {
   Bookmark,
   Chapter,
@@ -202,7 +201,6 @@ type MushafContextValue = {
 const MushafContext = createContext<MushafContextValue | null>(null);
 
 const defaultFilters: SearchFilters = {
-  themes: [],
   revelation: "all",
   juz: "all",
   queryIn: "all",
@@ -792,32 +790,15 @@ export function MushafProvider({ children }: { children: ReactNode }) {
     async (value?: string) => {
       const query = (value ?? searchQuery).trim();
       setSearchQuery(query);
-      if (!query && filters.themes.length === 0) {
+      if (!query) {
         setSearchResults([]);
         return;
       }
       trackUsage({ name: "feature", feature: "search_performed" });
       setSearching(true);
       try {
-        const topicHits: SearchHit[] = filters.themes.flatMap((id) => {
-          const topic = TOPICS.find((item) => item.id === id);
-          return (topic?.verses ?? []).map((verseKey) => {
-            const [chapterId, verseNumber] = verseKey.split(":").map(Number);
-            return {
-              verseKey,
-              chapterId,
-              verseNumber,
-              textArabic: "",
-              textTranslation: topic?.name ?? "Theme",
-              source: "theme" as const,
-            };
-          });
-        });
         const language = groupForId(translations, preferences.translationId)?.label;
-        const remote = query ? (await searchQuran(query, preferences.translationId, language)).results : [];
-        const merged = new Map<string, SearchHit>();
-        for (const hit of [...topicHits, ...remote]) merged.set(hit.verseKey, hit);
-        let results = Array.from(merged.values());
+        let results = (await searchQuran(query, preferences.translationId, language)).results;
         if (filters.revelation !== "all") {
           results = results.filter((hit) => chapters.find((item) => item.id === hit.chapterId)?.revelationPlace === filters.revelation);
         }

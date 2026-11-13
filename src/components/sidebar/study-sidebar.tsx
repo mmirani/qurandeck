@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useMushaf } from "@/components/providers/mushaf-provider";
-import { AudioPlayer } from "@/components/audio/audio-player";
 import { ArabesqueDivider } from "@/components/art/ornaments";
 import { highlightListCopy } from "@/lib/highlights";
 import type { Highlight } from "@/lib/quran/types";
@@ -135,9 +134,6 @@ export function StudySidebar() {
         ) : null}
       </section>
       ) : null}
-      </div>
-      <div className="mt-4 shrink-0">
-        <AudioPlayer />
       </div>
     </aside>
   );

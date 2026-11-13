@@ -259,7 +259,7 @@ export function AuthModal() {
             ) : null}
             {config?.passkey ? (
               <AuthChoiceButton
-                label="Sign in with a passkey"
+                label={signingUp ? "Use a passkey you already saved" : "Sign in with a passkey"}
                 disabled={busy}
                 onClick={() => {
                   setBusy(true);

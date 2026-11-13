@@ -908,7 +908,7 @@ export function matchHelper(raw: string): HelperMatch {
       action: "search",
       locate: true,
       lesson: "search",
-      reply: "Search is the box at the top. Type a word, a theme, or 2:255.",
+      reply: "Search is the box at the top. Type a word, a surah, or 2:255.",
       suggestions: ["Search for mercy", "Go to 2:255"],
     });
   }

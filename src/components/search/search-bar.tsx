@@ -10,6 +10,11 @@ function subscribeMounted() {
   return () => {};
 }
 
+function blurSearchField() {
+  const active = document.activeElement;
+  if (active instanceof HTMLElement && active.id === "quran-search") active.blur();
+}
+
 export function SearchBar() {
   const {
     searchQuery,
@@ -90,7 +95,7 @@ export function SearchBar() {
   return (
     <div className="relative" data-tour="search" ref={anchor}>
       <label className="sr-only" htmlFor="quran-search">
-        Search the Quran by word, theme, surah name, or verse such as 2:255
+        Search the Quran by word, surah name, or verse such as 2:255
       </label>
       <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gold-deep" aria-hidden="true" />
       <input
@@ -130,6 +135,7 @@ export function SearchBar() {
               event.preventDefault();
               setSearchOpen(false);
               setActiveIndex(-1);
+              blurSearchField();
               openSurah(nameHits[activeIndex].id);
               return;
             }
@@ -138,6 +144,7 @@ export function SearchBar() {
               if (hit) {
                 event.preventDefault();
                 setActiveIndex(-1);
+                blurSearchField();
                 jumpToHit(hit);
                 return;
               }
@@ -147,7 +154,7 @@ export function SearchBar() {
             void runSearch(local);
           }
         }}
-        placeholder="Search by word, theme, or verse (e.g. 2:255)"
+        placeholder="Search by word, surah, or verse (e.g. 2:255)"
         className="h-12 w-full rounded-full border border-line bg-surface/90 pl-11 pr-36 text-sm text-ink shadow-sm outline-none placeholder:text-muted"
       />
       <div className="absolute right-2 top-1/2 flex -translate-y-1/2 items-center gap-1">
@@ -185,6 +192,7 @@ export function SearchBar() {
                     onClick={() => {
                       setSearchOpen(false);
                       setActiveIndex(-1);
+                      blurSearchField();
                       openSurah(chapter.id);
                     }}
                     className={`flex min-h-11 w-full cursor-pointer items-center justify-between rounded-2xl px-3 py-3 text-left hover:bg-highlight ${
@@ -212,6 +220,7 @@ export function SearchBar() {
                       aria-selected={activeIndex === optionIndex}
                       onClick={() => {
                         setActiveIndex(-1);
+                        blurSearchField();
                         jumpToHit(hit);
                       }}
                       translate="no"

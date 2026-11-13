@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Bookmark, Menu, Palette } from "lucide-react";
 import { HeaderAccount } from "@/components/auth/header-account";
 import { MihrabMark } from "@/components/art/ornaments";
-import { APPEARANCE_THEMES, FONT_SIZE_MAX, FONT_SIZE_MIN } from "@/lib/appearance";
+import { APPEARANCE_THEMES } from "@/lib/appearance";
 import { useMushaf } from "@/components/providers/mushaf-provider";
 import { useDisplayedReading } from "@/components/reader/reading-seed";
 import { SearchBar } from "@/components/search/search-bar";
@@ -59,7 +59,7 @@ export function MobileReaderBar() {
           <SearchBar />
         </div>
       )}
-      <div className="qd-gutter flex flex-wrap items-center gap-[var(--space-2)] border-t border-line/50 py-[var(--space-2)]" role="group" aria-label="Reading controls">
+      <div className="qd-gutter flex flex-nowrap items-center gap-[var(--space-2)] border-t border-line/50 py-[var(--space-2)]" role="group" aria-label="Reading controls">
         <LayoutChip
           active={!ayahMode}
           onClick={() => updatePreferences({ mobileReadingMode: "scroll" })}
@@ -98,6 +98,7 @@ export function MobileReaderBar() {
           onClick={() => openModal("themes")}
           className="inline-flex h-11 min-h-11 min-w-11 shrink-0 cursor-pointer items-center justify-center rounded-full border border-line bg-surface text-gold-deep"
           aria-label={`Themes. ${themeName}`}
+          data-tour="size-mobile"
         >
           <Palette className="h-4 w-4" />
         </button>
@@ -109,27 +110,6 @@ export function MobileReaderBar() {
           <Bookmark className="h-4 w-4" aria-hidden="true" />
           Saved
         </button>
-        {!ayahMode ? (
-          <span className="inline-flex shrink-0 items-center">
-            <button
-              type="button"
-              aria-label="Smaller text"
-              className="inline-flex h-11 min-h-11 min-w-11 cursor-pointer items-center justify-center rounded-full text-lg hover:bg-highlight"
-              onClick={() => updatePreferences({ fontSize: Math.max(FONT_SIZE_MIN, preferences.fontSize - 2) })}
-            >
-              −
-            </button>
-            <button
-              type="button"
-              data-tour="size-mobile"
-              aria-label="Larger text"
-              className="inline-flex h-11 min-h-11 min-w-11 cursor-pointer items-center justify-center rounded-full text-lg hover:bg-highlight"
-              onClick={() => updatePreferences({ fontSize: Math.min(FONT_SIZE_MAX, preferences.fontSize + 2) })}
-            >
-              +
-            </button>
-          </span>
-        ) : null}
       </div>
     </div>
   );
@@ -148,7 +128,7 @@ function LayoutChip({
     <button
       type="button"
       onClick={onClick}
-      className={`inline-flex h-11 min-h-11 shrink-0 cursor-pointer items-center justify-center rounded-full px-4 text-sm font-medium ${
+      className={`inline-flex h-11 min-h-11 shrink-0 cursor-pointer items-center justify-center rounded-full px-3 text-sm font-medium ${
         active ? "bg-gold text-on-gold" : "border border-line bg-surface text-ink-soft"
       }`}
     >

@@ -18,6 +18,7 @@ import type { Highlight, HighlightLayer, HighlightSwatch, Preferences, Verse, Wo
 import { groupForId, htmlLang, isRtlLanguage, scriptClass } from "@/lib/quran/languages";
 import { PRODUCT_NAME } from "@/lib/brand";
 import { focusOpenNote } from "@/lib/note-composer";
+import { wordTapShouldPlay } from "@/lib/word-tap";
 import { shareOrCopy, toArabicIndicDigits, verseShareText } from "@/lib/reading";
 import { useAyahFitScale } from "@/lib/use-ayah-fit-scale";
 
@@ -467,6 +468,7 @@ function AyahFocusBody({
               highlightWords={highlightWords}
               toggleWordHighlight={toggleWordHighlight}
               paint={paint}
+              tapMode="armed"
             />
           </div>
         ) : null}
@@ -502,6 +504,7 @@ function ArabicBlock({
   highlightWords,
   toggleWordHighlight,
   paint,
+  tapMode = "immediate",
 }: {
   verse: Verse;
   marks: Highlight[];
@@ -515,6 +518,7 @@ function ArabicBlock({
   highlightWords: (verse: Verse, start: number, end: number) => void;
   toggleWordHighlight: (verse: Verse, word: Word) => void;
   paint: React.MutableRefObject<{ start: number; last: number } | null>;
+  tapMode?: "immediate" | "armed";
 }) {
   return (
     <div
@@ -561,6 +565,7 @@ function ArabicBlock({
                 }}
                 onPointerUp={(event) => {
                   event.stopPropagation();
+                  const alreadySelected = selectedWord?.location === word.location;
                   selectVerse(verse.verseKey);
                   selectWord(word);
                   if (highlighting && paint.current) {
@@ -570,7 +575,7 @@ function ArabicBlock({
                     else toggleWordHighlight(verse, word);
                     return;
                   }
-                  if (!highlighting) void playWord(word);
+                  if (!highlighting && wordTapShouldPlay(tapMode, alreadySelected)) void playWord(word);
                 }}
                 className={`mx-[2px] inline cursor-pointer rounded-md px-1 leading-[2.25] ${
                   on ? "bg-gold/25" : "hover:bg-gold/10"
