@@ -1425,6 +1425,8 @@ body::before {
   box-shadow: 0 8px 22px color-mix(in srgb, var(--ink) 12%, transparent);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
+  animation: sana-dock-bob 4.6s cubic-bezier(0.37, 0, 0.63, 1) 0.5s both;
+  will-change: transform;
 }
 
 .sana-dock.is-audio {
@@ -1479,7 +1481,8 @@ body::before {
 }
 
 .nur-orb.is-alive {
-  animation: none;
+  animation: nur-hover 4.6s cubic-bezier(0.37, 0, 0.63, 1) 0.5s both;
+  will-change: transform;
 }
 
 .nur.is-dragging .nur-orb,
@@ -1536,6 +1539,11 @@ body::before {
   border-radius: 50%;
   background: radial-gradient(ellipse, color-mix(in srgb, var(--gold) 58%, #0b1220 18%), transparent 72%);
   pointer-events: none;
+}
+
+.nur .nur-floor {
+  animation: nur-floor-float 4.6s cubic-bezier(0.37, 0, 0.63, 1) 0.5s both;
+  will-change: transform, opacity;
 }
 
 .nur.is-dragging .nur-floor,
@@ -1735,6 +1743,66 @@ body::before {
   }
   50% {
     transform: translateY(-7px);
+  }
+}
+
+@keyframes nur-hover {
+  0% {
+    transform: translate3d(0, 0, 0);
+    animation-timing-function: cubic-bezier(0.37, 0, 0.63, 1);
+  }
+  25% {
+    transform: translate3d(0, -6px, 0);
+    animation-timing-function: cubic-bezier(0.37, 0, 0.63, 1);
+  }
+  50% {
+    transform: translate3d(0, 0, 0);
+    animation-timing-function: cubic-bezier(0.37, 0, 0.63, 1);
+  }
+  75% {
+    transform: translate3d(0, -6px, 0);
+    animation-timing-function: cubic-bezier(0.37, 0, 0.63, 1);
+  }
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes sana-dock-bob {
+  0% {
+    transform: translate3d(0, 0, 0);
+    animation-timing-function: cubic-bezier(0.37, 0, 0.63, 1);
+  }
+  25% {
+    transform: translate3d(0, -4px, 0);
+    animation-timing-function: cubic-bezier(0.37, 0, 0.63, 1);
+  }
+  50% {
+    transform: translate3d(0, 0, 0);
+    animation-timing-function: cubic-bezier(0.37, 0, 0.63, 1);
+  }
+  75% {
+    transform: translate3d(0, -4px, 0);
+    animation-timing-function: cubic-bezier(0.37, 0, 0.63, 1);
+  }
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes nur-floor-float {
+  0%,
+  50%,
+  100% {
+    transform: scale3d(1, 1, 1);
+    opacity: var(--companion-ground);
+    animation-timing-function: cubic-bezier(0.37, 0, 0.63, 1);
+  }
+  25%,
+  75% {
+    transform: scale3d(0.72, 1, 1);
+    opacity: calc(var(--companion-ground) * 0.45);
+    animation-timing-function: cubic-bezier(0.37, 0, 0.63, 1);
   }
 }
 
@@ -2004,5 +2072,11 @@ body::before {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+
+  .nur-orb.is-alive,
+  .sana-dock,
+  .nur .nur-floor {
+    animation: none;
   }
 }
