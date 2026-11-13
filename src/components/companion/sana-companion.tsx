@@ -45,14 +45,16 @@ function subscribeTheme(onChange: () => void) {
 export function SanaCompanion({
   audioBarVisible = false,
   ayahMode = false,
+  focusDock = false,
 }: {
   audioBarVisible?: boolean;
   ayahMode?: boolean;
+  focusDock?: boolean;
 }) {
   return (
     <>
       <div className="xl:hidden">
-        <SanaDock audioBarVisible={audioBarVisible} ayahMode={ayahMode} />
+        <SanaDock audioBarVisible={audioBarVisible} ayahMode={ayahMode} focusDock={focusDock} />
       </div>
       <div className="hidden xl:contents">
         <SanaFloatingCompanion />
@@ -74,7 +76,15 @@ function usePausePanelForTour(open: boolean, setOpen: (next: boolean) => void) {
   return guiding;
 }
 
-function SanaDock({ audioBarVisible, ayahMode }: { audioBarVisible: boolean; ayahMode: boolean }) {
+function SanaDock({
+  audioBarVisible,
+  ayahMode,
+  focusDock,
+}: {
+  audioBarVisible: boolean;
+  ayahMode: boolean;
+  focusDock: boolean;
+}) {
   const [open, setOpen] = useState(false);
   const guiding = usePausePanelForTour(open, setOpen);
   const filter = useSyncExternalStore(subscribeTheme, companionFilterFromDocument, () => "none");
@@ -102,7 +112,7 @@ function SanaDock({ audioBarVisible, ayahMode }: { audioBarVisible: boolean; aya
       <button
         ref={buttonRef}
         type="button"
-        className={`sana-dock ${ayahMode ? "is-ayah" : ""} ${audioBarVisible ? "is-audio" : ""}`}
+        className={`sana-dock ${ayahMode ? "is-ayah" : ""} ${audioBarVisible ? "is-audio" : ""} ${focusDock ? "is-focus-dock" : ""}`}
         aria-label={`Open ${COMPANION_NAME}`}
         aria-expanded={open}
         aria-haspopup="dialog"

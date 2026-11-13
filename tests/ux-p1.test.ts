@@ -92,7 +92,7 @@ describe("P1 phone search and empty results", () => {
       resultCount: 0,
       nameHitCount: 0,
     });
-    assert.match(prompt ?? "", /Press Enter/);
+    assert.equal(prompt, null);
     const empty = searchStatusMessage({
       query: "zzzznotaquranword",
       submittedQuery: "zzzznotaquranword",

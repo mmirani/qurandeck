@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "reac
 import { createPortal } from "react-dom";
 import { Search, SlidersHorizontal } from "lucide-react";
 import { useMushaf } from "@/components/providers/mushaf-provider";
-import { moveSearchIndex, searchStatusMessage } from "@/lib/search-status";
+import { moveSearchIndex, SEARCH_DEBOUNCE_MS, searchStatusMessage, shouldLiveSearch } from "@/lib/search-status";
 
 function subscribeMounted() {
   return () => {};
@@ -34,12 +34,31 @@ export function SearchBar() {
   const [submittedQuery, setSubmittedQuery] = useState<string | null>(null);
   const [activeIndex, setActiveIndex] = useState(-1);
   const anchor = useRef<HTMLDivElement>(null);
+  const searchTimer = useRef<number | null>(null);
+  const runSearchRef = useRef(runSearch);
+  runSearchRef.current = runSearch;
   const [box, setBox] = useState<{ top: number; left: number; width: number } | null>(null);
   const mounted = useSyncExternalStore(subscribeMounted, () => true, () => false);
   if (searchQuery !== seenQuery) {
     setSeenQuery(searchQuery);
     setLocal(searchQuery);
   }
+
+  useEffect(() => {
+    if (searchTimer.current) window.clearTimeout(searchTimer.current);
+    const query = local.trim();
+    if (!shouldLiveSearch(query)) {
+      void runSearchRef.current(query);
+      return;
+    }
+    searchTimer.current = window.setTimeout(() => {
+      setSubmittedQuery(query);
+      void runSearchRef.current(query);
+    }, SEARCH_DEBOUNCE_MS);
+    return () => {
+      if (searchTimer.current) window.clearTimeout(searchTimer.current);
+    };
+  }, [local]);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -149,12 +168,13 @@ export function SearchBar() {
                 return;
               }
             }
+            if (searchTimer.current) window.clearTimeout(searchTimer.current);
             const next = local.trim();
             setSubmittedQuery(next);
             void runSearch(local);
           }
         }}
-        placeholder="Search by word, surah, or verse (e.g. 2:255)"
+        placeholder="Type to search, or a verse like 2:255"
         className="h-12 w-full rounded-full border border-line bg-surface/90 pl-11 pr-36 text-sm text-ink shadow-sm outline-none placeholder:text-muted"
       />
       <div className="absolute right-2 top-1/2 flex -translate-y-1/2 items-center gap-1">

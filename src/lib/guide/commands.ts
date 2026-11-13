@@ -1134,7 +1134,7 @@ export function matchHelper(raw: string): HelperMatch {
 
   return base({
     action: "none",
-    reply: `I can take you to a surah, ayah, or juz, play recitation, and open notes, bookmarks, tafsir, search, and settings. I don't explain the Quran's meaning. Try one of these, or say it another way — I'm ${COMPANION_NAME}.`,
+    reply: `I can take you to a surah, ayah, or juz, play recitation, and open notes, bookmarks, tafsir, search, and settings. I don't explain the Quran's meaning. Try one of these, or type it another way — I'm ${COMPANION_NAME}.`,
     suggestions: suggestionsFor(text),
   });
 }

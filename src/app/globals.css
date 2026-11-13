@@ -1421,6 +1421,12 @@ body::before {
   bottom: calc(4.75rem + env(safe-area-inset-bottom));
 }
 
+.sana-dock.is-focus-dock {
+  left: auto;
+  right: max(0.75rem, env(safe-area-inset-right));
+  bottom: calc(6.75rem + env(safe-area-inset-bottom));
+}
+
 .sana-dock.is-ayah {
   bottom: calc(8.75rem + env(safe-area-inset-bottom));
 }

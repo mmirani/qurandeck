@@ -64,7 +64,7 @@ export type HelperHost = {
     mobileReadingMode?: "scroll" | "ayah";
     traditionalPage?: boolean;
   }) => void;
-  openModal: (name: "auth" | "account" | "bookmarks" | "notes" | "highlights" | "themes" | "settings" | "juz") => void;
+  openModal: (name: "auth" | "account" | "bookmarks" | "notes" | "highlights" | "themes" | "settings" | "juz" | "saved") => void;
   toggleBookmark: (verse: Verse) => void;
   highlightAyah: (verse: Verse) => void;
   clearHighlights: (verseKey: string) => void;
@@ -266,8 +266,10 @@ export function performHelper(match: HelperMatch, host: HelperHost): string {
       return had ? `Removed the bookmark on ${verse.verseKey}.` : `Bookmarked ${verse.verseKey}.`;
     }
     case "bookmarks":
-      host.openModal("bookmarks");
-      return host.bookmarks.length === 0 ? "No bookmarks yet. Star an ayah, or ask me to bookmark this one." : "Here are your bookmarks.";
+      host.openModal("saved");
+      return host.bookmarks.length === 0
+        ? "Saved is in the menu. No bookmarks yet. Star an ayah, or ask me to bookmark this one."
+        : "Saved is in the menu. Here are your bookmarks, notes, and highlights.";
     case "highlight": {
       const verse = ensureVerse(host, match, "highlight");
       if (!verse) return match.verseKey ? `I'll highlight ${match.verseKey} once it opens.` : "Open an ayah first, then I can highlight it.";

@@ -18,6 +18,9 @@
  * whose session id is no longer current.
  */
 
+/** Off until iPhone recognition is reliable. Flip to true to show the mic again. */
+export const SANA_VOICE_ENABLED = false;
+
 export const VOICE_LISTENING = "Listening…";
 export const VOICE_ONE_MOMENT = "One moment…";
 export const VOICE_STOPPED = "Stopped. Type it in yourself.";

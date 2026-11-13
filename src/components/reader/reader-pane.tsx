@@ -268,8 +268,12 @@ function SurahIntroduction({
           aria-hidden
         />
       </button>
-      {open ? <p className="text-base leading-relaxed text-ink">{introduction}</p> : null}
-      {credit ? <p className="text-xs leading-5 text-ink-soft">{credit}</p> : null}
+      {open ? (
+        <>
+          <p className="text-base leading-relaxed text-ink">{introduction}</p>
+          {credit ? <p className="text-xs leading-5 text-ink-soft">{credit}</p> : null}
+        </>
+      ) : null}
     </section>
   );
 }

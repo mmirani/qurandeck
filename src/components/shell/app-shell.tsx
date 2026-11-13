@@ -134,7 +134,9 @@ function AppShellFrame() {
             </div>
           ) : null}
 
-          {book ? null : <SanaCompanion audioBarVisible={showMobileAudio} ayahMode={mobileAyahMode} />}
+          {book ? null : (
+            <SanaCompanion audioBarVisible={showMobileAudio} ayahMode={mobileAyahMode} focusDock={focus && !book} />
+          )}
 
           <BottomSheet open={navOpen && !focus} onClose={() => setNavOpen(false)} title="Surahs & Juz">
             <SurahSidebar />

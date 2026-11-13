@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Bookmark, Menu, Palette } from "lucide-react";
+import { Menu, Palette } from "lucide-react";
 import { HeaderAccount } from "@/components/auth/header-account";
 import { MihrabMark } from "@/components/art/ornaments";
 import { APPEARANCE_THEMES } from "@/lib/appearance";
@@ -101,14 +101,6 @@ export function MobileReaderBar() {
           data-tour="size-mobile"
         >
           <Palette className="h-4 w-4" />
-        </button>
-        <button
-          type="button"
-          onClick={() => openModal("saved")}
-          className="inline-flex h-11 min-h-11 shrink-0 cursor-pointer items-center gap-1 rounded-full border border-line bg-surface px-3 text-xs font-medium text-ink"
-        >
-          <Bookmark className="h-4 w-4" aria-hidden="true" />
-          Saved
         </button>
       </div>
     </div>
