@@ -34,6 +34,11 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  images: {
+    // The surah header art is 2880px wide, so 2880 is the largest size served.
+    deviceSizes: [640, 828, 1200, 1600, 1920, 2400, 2880],
+    qualities: [75, 80],
+  },
   // fontkit reads its own data files from node_modules. Bundling it into the
   // Open Graph route turns those paths into URL objects and the build fails.
   serverExternalPackages: ["fontkit"],

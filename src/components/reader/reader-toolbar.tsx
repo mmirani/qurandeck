@@ -17,7 +17,7 @@ import { shareOrCopy } from "@/lib/reading";
 import { useReaderChrome } from "@/components/shell/reader-chrome";
 import { headerShowsHomeLogo, NAV_SIDEBAR_QUERY, useMediaQuery } from "@/lib/use-media-query";
 import { useDisplayedReading } from "@/components/reader/reading-seed";
-import { surahArtSrc } from "@/lib/surah-art";
+import { SURAH_ART_QUALITY, SURAH_ART_SIZES, surahArtSrc } from "@/lib/surah-art";
 
 export function ReaderToolbar() {
   const {
@@ -147,7 +147,14 @@ export function ReaderToolbar() {
       >
       {art ? (
         <div className="surah-art hidden overflow-hidden xl:block" aria-hidden="true">
-          <Image src={art} alt="" fill sizes="80vw" className="surah-art-photo" />
+          <Image
+            src={art}
+            alt=""
+            fill
+            sizes={SURAH_ART_SIZES}
+            quality={SURAH_ART_QUALITY}
+            className="surah-art-photo"
+          />
           <span className="surah-art-wash" />
         </div>
       ) : null}
