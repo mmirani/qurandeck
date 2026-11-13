@@ -1375,10 +1375,15 @@ body::before {
 
 @media (max-width: 1279px) {
   #main-content {
+    padding-bottom: 0;
+  }
+
+  .reader-column {
+    background: var(--surface);
     padding-bottom: calc(5.5rem + env(safe-area-inset-bottom));
   }
 
-  #main-content[data-audio="on"] {
+  #main-content[data-audio="on"] .reader-column {
     padding-bottom: calc(8.5rem + env(safe-area-inset-bottom));
   }
 }
@@ -1390,6 +1395,11 @@ body::before {
 }
 
 #main-content:has([data-focus="on"]) {
+  padding-bottom: 0;
+}
+
+#main-content:has([data-focus="on"]) .reader-column {
+  background: var(--surface);
   padding-bottom: calc(6.5rem + env(safe-area-inset-bottom));
 }
 

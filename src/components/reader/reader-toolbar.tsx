@@ -55,9 +55,15 @@ export function ReaderToolbar() {
   const title =
     mode === "juz" ? `Juz ${currentJuz}` : (chapter?.nameSimple ?? "Surah");
   const desktopSearch = useMediaQuery("(min-width: 1024px)");
+  const phone = useMediaQuery("(max-width: 767px)");
 
   useEffect(() => {
-    if (!preferences.focusMode) return;
+    if (!phone || !preferences.focusMode) return;
+    updatePreferences({ focusMode: false, mobileReadingMode: "scroll" });
+  }, [phone, preferences.focusMode, updatePreferences]);
+
+  useEffect(() => {
+    if (!preferences.focusMode || phone) return;
     const onKey = (event: KeyboardEvent) => {
       if (event.key !== "Escape") return;
       if (modal) return;
@@ -66,7 +72,7 @@ export function ReaderToolbar() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [modal, preferences.focusMode, updatePreferences]);
+  }, [modal, phone, preferences.focusMode, updatePreferences]);
 
   if (preferences.focusMode) {
     return (

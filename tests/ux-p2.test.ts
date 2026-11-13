@@ -67,7 +67,7 @@ describe("P2 reader chrome", () => {
     assert.match(pane, /aria-expanded=\{open\}/);
     assert.equal(pane.includes("mobile ? ("), false);
     assert.match(mobileBar, /Themes\. \$\{themeName\}/);
-    assert.match(mobileBar, />\s*Focus\s*</);
+    assert.equal(mobileBar.includes(">Focus<"), false);
     assert.equal(mobileBar.includes(">Saved<"), false);
     assert.match(toolbar, /Themes, \$\{themeName\}/);
     assert.equal(toolbar.includes(">Saved<"), false);

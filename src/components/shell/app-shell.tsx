@@ -92,7 +92,7 @@ function AppShellFrame() {
               <SurahSidebar />
             </RailColumn>
             <div
-              className={`flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden ${
+              className={`reader-column flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden ${
                 book ? "rounded-md border-0 bg-transparent" : "rounded-none border-0 bg-surface md:rounded-3xl md:border md:border-line"
               }`}
               style={{ ["--measure-boost" as string]: String(boost) }}

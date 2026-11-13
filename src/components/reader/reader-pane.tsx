@@ -11,6 +11,7 @@ import { QuranCredit } from "@/components/site/quran-credit";
 import { MushafStream } from "@/components/reader/mushaf-stream";
 import { ReaderToolbar } from "@/components/reader/reader-toolbar";
 import { AyahReaderMobile } from "@/components/reader/ayah-reader-mobile";
+import { NextSurahLink } from "@/components/reader/next-surah-link";
 import { VerseCard } from "@/components/reader/verse-card";
 import { MobileReadingProgress, PaneReadingProgress } from "@/components/reader/reading-progress";
 import { introductionCredit } from "@/lib/quran/chapter-info";
@@ -228,6 +229,7 @@ export function ReaderPane() {
                 )}
               </div>
             ) : null}
+            {chapter && mode === "surah" ? <NextSurahLink chapterId={chapter.id} /> : null}
             <QuranCredit className="px-1 pt-2" />
           </div>
         )}

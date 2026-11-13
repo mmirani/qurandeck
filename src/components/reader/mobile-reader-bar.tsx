@@ -24,25 +24,27 @@ export function MobileReaderBar() {
 
   return (
     <div className="sticky top-0 z-30 shrink-0 border-b border-line/60 bg-canvas/95 backdrop-blur-md lg:hidden">
-      <div className="qd-gutter flex min-h-14 items-center gap-[var(--space-3)] py-[var(--space-2)]">
-        <Link
-          href="/"
-          className="inline-flex h-11 min-h-11 min-w-11 shrink-0 cursor-pointer items-center justify-center rounded-full hover:bg-highlight"
-          aria-label="QuranDeck home"
-        >
-          <MihrabMark className="h-6 w-6" />
-        </Link>
-        <button
-          type="button"
-          onClick={openNav}
-          data-tour="search-mobile"
-          className="inline-flex h-11 min-h-11 min-w-11 shrink-0 cursor-pointer items-center justify-center rounded-full hover:bg-highlight"
-          aria-label="Open surah and juz menu"
-        >
-          <Menu className="h-5 w-5" />
-        </button>
-        <h1 className="min-w-0 flex-1 text-center font-display text-base font-semibold tracking-tight text-ink">
-          <button type="button" onClick={openNav} className="w-full cursor-pointer truncate">
+      <div className="qd-gutter grid min-h-14 grid-cols-[minmax(6.5rem,1fr)_minmax(0,auto)_minmax(6.5rem,1fr)] items-center py-[var(--space-2)]">
+        <div className="flex min-w-0 items-center justify-start gap-[var(--space-2)]">
+          <Link
+            href="/"
+            className="inline-flex h-11 min-h-11 min-w-11 shrink-0 cursor-pointer items-center justify-center rounded-full hover:bg-highlight"
+            aria-label="QuranDeck home"
+          >
+            <MihrabMark className="h-6 w-6" />
+          </Link>
+          <button
+            type="button"
+            onClick={openNav}
+            data-tour="search-mobile"
+            className="inline-flex h-11 min-h-11 min-w-11 shrink-0 cursor-pointer items-center justify-center rounded-full hover:bg-highlight"
+            aria-label="Open surah and juz menu"
+          >
+            <Menu className="h-5 w-5" />
+          </button>
+        </div>
+        <h1 className="min-w-0 truncate text-center font-display text-base font-semibold tracking-tight text-ink">
+          <button type="button" onClick={openNav} className="block w-full cursor-pointer truncate">
             {title}
             {mode === "surah" && chapter?.nameArabic ? (
               <span className="sr-only" lang="ar" dir="rtl">
@@ -52,7 +54,9 @@ export function MobileReaderBar() {
             ) : null}
           </button>
         </h1>
-        <HeaderAccount />
+        <div className="flex min-w-0 items-center justify-end">
+          <HeaderAccount />
+        </div>
       </div>
       {desktopSearch ? null : (
         <div className="qd-gutter pb-[var(--space-2)]">
@@ -76,12 +80,6 @@ export function MobileReaderBar() {
           }
         >
           Ayah
-        </LayoutChip>
-        <LayoutChip
-          active={preferences.focusMode}
-          onClick={() => updatePreferences({ focusMode: !preferences.focusMode })}
-        >
-          Focus
         </LayoutChip>
         {tafsirOn ? (
           <button

@@ -360,9 +360,12 @@ export function performHelper(match: HelperMatch, host: HelperHost): string {
       host.openStudy();
       if (match.lesson) host.startLesson(match.lesson);
       return match.reply;
-    case "focus":
+    case "focus": {
+      const phone = typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches;
+      if (phone) return "Focus is available on a larger screen.";
       host.updatePreferences({ focusMode: !host.focusMode ? true : false });
       return host.focusMode ? "Leaving focus." : "Focus is on. The extra controls step back.";
+    }
     default:
       return match.reply;
   }

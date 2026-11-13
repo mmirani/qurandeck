@@ -8,6 +8,7 @@ import {
   shouldCountSearch,
   shouldLiveSearch,
 } from "../src/lib/search-status";
+import { headerSlots, nextSurahAction } from "../src/lib/next-surah";
 import { rowFits } from "../src/lib/toolbar-fit";
 
 const pane = readFileSync(new URL("../src/components/reader/reader-pane.tsx", import.meta.url), "utf8");
@@ -58,7 +59,7 @@ describe("reader chrome fit", () => {
   it("keeps phone toolbars inside 320 to 430px", () => {
     const padding = 32;
     const gap = 8;
-    const reading = [64, 56, 60, 44];
+    const reading = [64, 56, 44];
     const focusExit = [148];
     for (const viewport of [320, 360, 390, 430]) {
       assert.equal(rowFits(viewport, reading, gap, padding), true, `reading ${viewport}`);
@@ -68,6 +69,17 @@ describe("reader chrome fit", () => {
     assert.match(toolbar, /overflow-x-hidden/);
     assert.match(toolbar, /min-w-0 flex-1/);
     assert.equal(mobile.includes(">Saved<"), false);
+    assert.equal(mobile.includes(">Focus<"), false);
+    assert.match(mobile, /grid-cols-\[minmax\(6\.5rem,1fr\)_minmax\(0,auto\)_minmax\(6\.5rem,1fr\)\]/);
+    for (const viewport of [320, 390, 430]) {
+      for (const name of ["Al-Mumtahanah", "Al-Muddaththir", "Juz 30"]) {
+        const slots = headerSlots(viewport, 16, 104, name.length * 10);
+        assert.equal(slots.side > 0 && slots.title >= 0, true);
+        assert.equal(slots.side * 2 + slots.title, viewport - 32);
+      }
+    }
+    assert.equal(nextSurahAction(1, () => "Al-Baqarah").label, "Next: Al-Baqarah");
+    assert.equal(nextSurahAction(114, () => "Al-Fatihah").label, "Back to Al-Fatihah");
   });
 
   it("puts Saved in the menu and points Sana there", () => {
