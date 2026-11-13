@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { canonicalLanguage, groupLanguages, scriptClass } from "../src/lib/quran/languages";
+import { canonicalLanguage, groupLanguages, readingLayerCount, scriptClass } from "../src/lib/quran/languages";
 import { parseJuzId, parseSurahId } from "../src/lib/quran/ids";
 import { stripHtml } from "../src/lib/quran/sources";
 import { grantsToApply, isRankVerseKey, RANK_DAY_CAP } from "../src/lib/reading-ranks";
@@ -44,6 +44,36 @@ describe("languages", () => {
     assert.equal(scriptClass("urdu"), "script-nastaliq");
     assert.equal(scriptClass("Divehi"), "script-thaana");
     assert.equal(scriptClass("hebrew"), "script-hebrew");
+  });
+
+  it("counts reading layers and keeps one from being the last to leave", () => {
+    assert.equal(
+      readingLayerCount({
+        showArabic: true,
+        showTranslation: true,
+        showTransliteration: false,
+        translationIds: [20],
+      }),
+      2,
+    );
+    assert.equal(
+      readingLayerCount({
+        showArabic: true,
+        showTranslation: false,
+        showTransliteration: false,
+        translationIds: [],
+      }),
+      1,
+    );
+    assert.equal(
+      readingLayerCount({
+        showArabic: false,
+        showTranslation: true,
+        showTransliteration: true,
+        translationIds: [20, 131],
+      }),
+      3,
+    );
   });
 });
 

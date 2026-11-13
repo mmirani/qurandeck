@@ -34,8 +34,9 @@ export function ReaderPane() {
   const translationCols = preferences.showTranslation ? Math.max(preferences.translationIds.length, 0) : 0;
   const layers = Number(preferences.showArabic) + Number(preferences.showTransliteration) + translationCols;
   const arabicOnly = layers === 1 && preferences.showArabic;
-  const traditional = arabicOnly && (preferences.traditionalPage || preferences.focusMode);
   const mobile = useMobileReader();
+  const focus = preferences.focusMode && !mobile;
+  const traditional = arabicOnly && (preferences.traditionalPage || focus);
   const ayahMode = mobile && preferences.mobileReadingMode === "ayah" && !traditional;
 
   useEffect(() => {
@@ -138,7 +139,7 @@ export function ReaderPane() {
   }, [setSearchOpen]);
 
   return (
-    <div data-focus={preferences.focusMode ? "on" : "off"} className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+    <div data-focus={focus ? "on" : "off"} className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
       <ReaderToolbar />
       <MobileReadingProgress ayahMode={ayahMode} />
       <div
@@ -146,11 +147,11 @@ export function ReaderPane() {
         id="main-reader"
         className={`reader-scroll-surface @container flex min-h-0 flex-1 flex-col ${
           ayahMode ? "overflow-hidden p-0" : "qd-reader-inset overflow-y-auto overscroll-contain"
-        } ${traditional && preferences.focusMode ? "mushaf-desk" : ""} ${
+        } ${traditional && focus ? "mushaf-desk" : ""} ${
           ayahMode ? "pb-0" : isPlaying ? "pb-28 lg:pb-8" : "pb-8"
         }`}
       >
-        {!loading && !preferences.focusMode ? <ReaderHint /> : null}
+        {!loading && !focus ? <ReaderHint /> : null}
         {error ? (
           <p className="qd-pad rounded-3xl border border-danger/40 bg-surface text-danger">{error}</p>
         ) : null}
@@ -170,7 +171,7 @@ export function ReaderPane() {
             data-script={arabicOnly ? "ar" : undefined}
             data-traditional={traditional ? "on" : undefined}
           >
-            {mode === "surah" && !preferences.focusMode && preferences.showIntroduction && introduction ? (
+            {mode === "surah" && !focus && preferences.showIntroduction && introduction ? (
               <SurahIntroduction
                 introduction={introduction}
                 source={introductionSource}
@@ -228,7 +229,7 @@ function SurahIntroduction({
   const credit = introductionCredit(source);
 
   return (
-    <section className="qd-card rounded-3xl border border-line bg-surface">
+    <section data-surah-intro="" className="qd-card rounded-3xl border border-line bg-surface">
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}

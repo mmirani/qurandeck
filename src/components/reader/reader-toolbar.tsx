@@ -15,7 +15,7 @@ import { BrandWordmark } from "@/components/brand/brand-wordmark";
 import { PRODUCT_NAME } from "@/lib/brand";
 import { shareOrCopy } from "@/lib/reading";
 import { useReaderChrome } from "@/components/shell/reader-chrome";
-import { useMediaQuery } from "@/lib/use-media-query";
+import { headerShowsHomeLogo, NAV_SIDEBAR_QUERY, useMediaQuery } from "@/lib/use-media-query";
 import { useDisplayedReading } from "@/components/reader/reading-seed";
 import { surahArtSrc } from "@/lib/surah-art";
 
@@ -52,18 +52,16 @@ export function ReaderToolbar() {
       Number(preferences.showTransliteration) +
       (preferences.showTranslation ? preferences.translationIds.length : 0) ===
       1 && preferences.showArabic;
-  const title =
-    mode === "juz" ? `Juz ${currentJuz}` : (chapter?.nameSimple ?? "Surah");
+  const title = mode === "juz" ? `Juz ${currentJuz}` : (chapter?.nameSimple ?? "Surah");
   const desktopSearch = useMediaQuery("(min-width: 1024px)");
   const phone = useMediaQuery("(max-width: 767px)");
+  const sidebarColumn = useMediaQuery(NAV_SIDEBAR_QUERY);
+  const showHeaderHome = headerShowsHomeLogo(sidebarColumn, preferences.showNavRail);
+
+  const focus = preferences.focusMode && !phone;
 
   useEffect(() => {
-    if (!phone || !preferences.focusMode) return;
-    updatePreferences({ focusMode: false, mobileReadingMode: "scroll" });
-  }, [phone, preferences.focusMode, updatePreferences]);
-
-  useEffect(() => {
-    if (!preferences.focusMode || phone) return;
+    if (!focus) return;
     const onKey = (event: KeyboardEvent) => {
       if (event.key !== "Escape") return;
       if (modal) return;
@@ -72,10 +70,11 @@ export function ReaderToolbar() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [modal, phone, preferences.focusMode, updatePreferences]);
+  }, [focus, modal, updatePreferences]);
 
-  if (preferences.focusMode) {
-    return (
+  return (
+    <>
+      <div data-chrome="focus">
       <div className="qd-gutter relative shrink-0 overflow-x-hidden border-b border-line/30 bg-canvas/90 py-3" data-focus-bar>
         <div className="flex min-w-0 max-w-full items-center gap-2">
           <Link
@@ -127,7 +126,7 @@ export function ReaderToolbar() {
               className="inline-flex h-11 min-h-11 cursor-pointer items-center gap-2 rounded-full border border-line bg-highlight px-3 text-sm capitalize text-gold-deep"
             >
               <Palette className="h-3.5 w-3.5" />
-              {themeName}
+              <span data-theme-name="" />
             </button>
           </div>
           <button
@@ -140,11 +139,8 @@ export function ReaderToolbar() {
           </button>
         </div>
       </div>
-    );
-  }
-
-  return (
-    <>
+      </div>
+      <div data-chrome="reading">
       <MobileReaderBar />
       <div
         className="qd-gutter relative hidden shrink-0 border-b border-line/40 bg-canvas/95 py-4 lg:block"
@@ -165,14 +161,16 @@ export function ReaderToolbar() {
           >
             <Menu className="h-5 w-5" />
           </button>
-          <Link
-            href="/"
-            className="inline-flex h-11 min-h-11 min-w-11 shrink-0 cursor-pointer items-center gap-[var(--space-2)] rounded-full px-1 hover:bg-highlight"
-            aria-label="QuranDeck home"
-          >
-            <MihrabMark className="h-7 w-7" />
-            <BrandWordmark className="hidden text-xl leading-none xl:inline" />
-          </Link>
+          {showHeaderHome ? (
+            <Link
+              href="/"
+              className="inline-flex h-11 min-h-11 min-w-11 shrink-0 cursor-pointer items-center gap-[var(--space-2)] rounded-full px-1 hover:bg-highlight"
+              aria-label="QuranDeck home"
+            >
+              <MihrabMark className="h-7 w-7" />
+              <BrandWordmark className="hidden text-xl leading-none xl:inline" />
+            </Link>
+          ) : null}
           <div className="min-w-0 flex-1">
             {desktopSearch ? <SearchBar /> : null}
           </div>
@@ -289,7 +287,7 @@ export function ReaderToolbar() {
               className="inline-flex h-11 cursor-pointer items-center gap-2 rounded-full border border-line bg-highlight px-4 text-sm capitalize text-gold-deep"
             >
               <Palette className="h-4 w-4" />
-              {themeName}
+              <span data-theme-name="" />
             </button>
           </div>
         </div>
@@ -297,6 +295,7 @@ export function ReaderToolbar() {
         <ArabesqueDivider />
       </div>
     </div>
+      </div>
     </>
   );
 }

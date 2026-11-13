@@ -1497,7 +1497,49 @@ body::before {
   object-fit: contain;
   pointer-events: none;
   user-select: none;
+  filter: var(--companion-filter, none);
   transition: filter 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+[data-theme-name]::before {
+  content: "Noor";
+}
+
+html[data-theme="pastels"] [data-theme-name]::before { content: "Pastels"; }
+html[data-theme="manuscript"] [data-theme-name]::before { content: "Lumen"; }
+html[data-theme="emerald"] [data-theme-name]::before { content: "Mint"; }
+html[data-theme="ivory"] [data-theme-name]::before { content: "Sky"; }
+html[data-theme="blush"] [data-theme-name]::before { content: "Blush"; }
+html[data-theme="ottoman"] [data-theme-name]::before { content: "Ember"; }
+html[data-theme="sepia"] [data-theme-name]::before { content: "Sand"; }
+html[data-theme="contrast"] [data-theme-name]::before { content: "High Contrast"; }
+html[data-theme="aurora"] [data-theme-name]::before { content: "Aurora"; }
+html[data-theme="obsidian"] [data-theme-name]::before { content: "Obsidian"; }
+html[data-theme="midnight"] [data-theme-name]::before { content: "Midnight"; }
+html[data-theme="slate"] [data-theme-name]::before { content: "Slate"; }
+html[data-theme="forest"] [data-theme-name]::before { content: "Forest Night"; }
+html[data-theme="amethyst"] [data-theme-name]::before { content: "Amethyst"; }
+html[data-theme="rose"] [data-theme-name]::before { content: "Rose Night"; }
+html[data-theme="cyan"] [data-theme-name]::before { content: "Cyan Night"; }
+
+[data-chrome="focus"] {
+  display: none;
+}
+
+html[data-focus="on"] [data-chrome="focus"] {
+  display: block;
+}
+
+html[data-focus="on"] [data-chrome="reading"],
+html[data-focus="on"] [data-surah-intro],
+html[data-focus="on"] [data-shell-rail] {
+  display: none !important;
+}
+
+html[data-focus="on"] .sana-dock {
+  left: auto;
+  right: max(0.75rem, env(safe-area-inset-right));
+  bottom: calc(6.75rem + env(safe-area-inset-bottom));
 }
 
 .nur-call .nur-face {

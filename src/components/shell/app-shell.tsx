@@ -15,7 +15,7 @@ import { TourOverlay } from "@/components/guide/tour-overlay";
 import { BottomSheet } from "@/components/shell/bottom-sheet";
 import { SyncPrompt } from "@/components/account/sync-prompt";
 import { ReaderChromeProvider } from "@/components/shell/reader-chrome";
-import { useMediaQuery, useMobileReader } from "@/lib/use-media-query";
+import { NAV_SIDEBAR_QUERY, useMediaQuery, useMobileReader } from "@/lib/use-media-query";
 import { SurahSeedProvider } from "@/components/reader/reading-seed";
 import type { SurahSeed } from "@/lib/quran/surah-seed";
 
@@ -39,11 +39,11 @@ function AppShellFrame() {
     setTrackedPlaying(isPlaying);
     if (isPlaying) setAudioDismissed(false);
   }
-  const focus = preferences.focusMode;
-  const showNavBp = useMediaQuery("(min-width: 1280px)");
+  const showNavBp = useMediaQuery(NAV_SIDEBAR_QUERY);
   const showStudyBp = useMediaQuery("(min-width: 1536px)");
   const wide = useMediaQuery("(min-width: 1536px)");
   const mobile = useMobileReader();
+  const focus = preferences.focusMode && !mobile;
   const reduce = useReducedMotion();
   const transition = reduce ? { duration: 0 } : CALM;
 
@@ -139,7 +139,7 @@ function AppShellFrame() {
           )}
 
           <BottomSheet open={navOpen && !focus} onClose={() => setNavOpen(false)} title="Surahs & Juz">
-            <SurahSidebar />
+            <SurahSidebar homeLink={false} />
           </BottomSheet>
           <BottomSheet open={studyOpen && !focus} onClose={() => setStudyOpen(false)} title="Study">
             <StudySidebar />
@@ -176,6 +176,7 @@ function RailColumn({
       initial={false}
       animate={{ width: shown }}
       transition={transition}
+      data-shell-rail=""
       className="min-h-0 shrink-0 overflow-hidden rounded-3xl shadow-[0_8px_28px_rgba(15,23,42,0.08)] will-change-[width] max-md:hidden"
       aria-hidden={!visible}
     >

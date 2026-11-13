@@ -2,6 +2,7 @@ import { canonicalLanguage, translationQuery } from "./languages";
 import { readChapterInfo } from "./chapter-info";
 import { hasArabicScript } from "@/lib/text";
 import { fetchQuranJson } from "./qf";
+import { namedTranslation, quranSearchPath } from "./search-text";
 import {
   ALQURAN_API,
   DEFAULT_TRANSLATION_ID,
@@ -317,14 +318,24 @@ function editionFor(translationId: number, language?: string) {
   return LANGUAGE_EDITION[key] ?? "en.sahih";
 }
 
-function assignSnippet(hit: SearchHit, raw: string) {
+function assignArabic(hit: SearchHit, raw: string) {
   const text = stripHtml(raw);
-  if (!text) return;
-  if (hasArabicScript(text)) {
-    if (!hit.textArabic) hit.textArabic = text;
+  if (!text || !hasArabicScript(text) || hit.textArabic) return;
+  hit.textArabic = text;
+}
+
+function assignTranslation(hit: SearchHit, raw: string, name: string | undefined, id: number | undefined, query: string) {
+  if (hit.textTranslation) return;
+  const named = namedTranslation(raw, name, id, query);
+  if (!named) return;
+  if (hasArabicScript(named.text)) {
+    assignArabic(hit, named.text);
     return;
   }
-  if (!hit.textTranslation) hit.textTranslation = text;
+  hit.textTranslation = named.text;
+  hit.translationRuns = named.runs;
+  hit.translationName = named.translationName;
+  hit.translationId = named.translationId;
 }
 
 export async function searchQuran(
@@ -356,16 +367,16 @@ export async function searchQuran(
   }
 
   const edition = editionFor(translationId, language);
-  const [foundation, cloud, chapters] = await Promise.allSettled([
+  const [foundation, cloud, chapters, catalog] = await Promise.allSettled([
     getJson<{
       search: {
         results: Array<{
           verse_key: string;
           text: string;
-          translations?: Array<{ text: string }>;
+          translations?: Array<{ text?: string; name?: string; resource_id?: number }>;
         }>;
       };
-    }>(`${QURAN_COM_API}/search?q=${encodeURIComponent(cleaned)}&size=20&page=1`),
+    }>(`${QURAN_COM_API}${quranSearchPath(cleaned, translationId)}`),
     getJson<{
       data: {
         matches: Array<{
@@ -376,11 +387,16 @@ export async function searchQuran(
       };
     }>(`${ALQURAN_API}/search/${encodeURIComponent(cleaned)}/all/${edition}`),
     fetchChapters(),
+    fetchTranslations(),
   ]);
 
   const hits = new Map<string, SearchHit>();
-  const catalog = chapters.status === "fulfilled" ? chapters.value : [];
-  const nameFor = (chapterId: number) => catalog.find((item) => item.id === chapterId);
+  const chapterList = chapters.status === "fulfilled" ? chapters.value : [];
+  const translationList = catalog.status === "fulfilled" ? catalog.value : [];
+  const selectedName =
+    translationList.find((item) => item.id === translationId)?.name ||
+    (translationId === DEFAULT_TRANSLATION_ID ? "Saheeh International" : "");
+  const nameFor = (chapterId: number) => chapterList.find((item) => item.id === chapterId);
 
   if (foundation.status === "fulfilled") {
     for (const item of foundation.value.search?.results ?? []) {
@@ -396,8 +412,10 @@ export async function searchQuran(
         chapterName: chapter?.nameSimple,
         translatedName: chapter?.translatedName,
       };
-      assignSnippet(hit, item.text ?? "");
-      assignSnippet(hit, item.translations?.[0]?.text ?? "");
+      assignArabic(hit, item.text ?? "");
+      const chosen =
+        item.translations?.find((entry) => entry.resource_id === translationId) ?? item.translations?.[0];
+      assignTranslation(hit, chosen?.text ?? "", chosen?.name || selectedName, chosen?.resource_id ?? translationId, cleaned);
       hits.set(item.verse_key, hit);
     }
   }
@@ -408,7 +426,8 @@ export async function searchQuran(
       const chapter = nameFor(item.surah.number);
       const existing = hits.get(verseKeyValue);
       if (existing) {
-        assignSnippet(existing, item.text);
+        assignArabic(existing, item.text);
+        assignTranslation(existing, item.text, selectedName, translationId, cleaned);
         existing.chapterName ||= chapter?.nameSimple ?? item.surah.englishName;
         existing.translatedName ||= chapter?.translatedName;
         continue;
@@ -423,8 +442,9 @@ export async function searchQuran(
         chapterName: chapter?.nameSimple ?? item.surah.englishName,
         translatedName: chapter?.translatedName,
       };
-      assignSnippet(hit, item.text);
-      if (item.surah.name) assignSnippet(hit, item.surah.name);
+      assignArabic(hit, item.text);
+      assignTranslation(hit, item.text, selectedName, translationId, cleaned);
+      if (item.surah.name) assignArabic(hit, item.surah.name);
       hits.set(verseKeyValue, hit);
     }
   }

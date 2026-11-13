@@ -2,20 +2,10 @@
 
 import Image from "next/image";
 import { useReducedMotion } from "motion/react";
-import { useCallback, useState, useSyncExternalStore } from "react";
-import {
-  NUR_SRC,
-  companionFilterFromDocument,
-  companionFilterFromGold,
-} from "@/lib/companion";
+import { useCallback, useState } from "react";
+import { NUR_SRC, companionFilterFromGold } from "@/lib/companion";
 import { COMPANION_NAME } from "@/lib/brand";
 import { LUMEN_CANVAS, LUMEN_GOLD } from "@/lib/appearance";
-
-function subscribeTheme(onChange: () => void) {
-  const mo = new MutationObserver(onChange);
-  mo.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
-  return () => mo.disconnect();
-}
 
 const LUMEN_FILTER = companionFilterFromGold(LUMEN_GOLD, LUMEN_CANVAS);
 
@@ -30,8 +20,6 @@ export function SanaVisual({
   demoInteractive?: boolean;
 }) {
   const reduce = useReducedMotion();
-  const live = useSyncExternalStore(subscribeTheme, companionFilterFromDocument, () => "none");
-  const filter = lumen ? LUMEN_FILTER : live;
   const alt = `${COMPANION_NAME} floating companion`;
   const [tapped, setTapped] = useState(false);
 
@@ -72,13 +60,13 @@ export function SanaVisual({
             priority
             draggable={false}
             className="nur-face"
-            style={{ filter }}
+            style={lumen ? { filter: LUMEN_FILTER } : undefined}
           />
           <span className="nur-gloss" />
         </button>
       ) : (
         <span className={`nur-orb ${bob} ${tapped ? "is-tapped" : ""}`}>
-          <Image src={NUR_SRC} alt={alt} width={140} height={140} sizes="140px" draggable={false} className="nur-face" style={{ filter }} />
+          <Image src={NUR_SRC} alt={alt} width={140} height={140} sizes="140px" draggable={false} className="nur-face" style={lumen ? { filter: LUMEN_FILTER } : undefined} />
           <span className="nur-gloss" />
         </span>
       )}

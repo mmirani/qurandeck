@@ -10,7 +10,6 @@ import {
   NUR_SIZE,
   NUR_SRC,
   clampPose,
-  companionFilterFromDocument,
   defaultCorner,
   defaultPose,
   loadCompanionPose,
@@ -36,11 +35,6 @@ function writePose(next: CompanionPose) {
   window.dispatchEvent(new Event(POSE_EVENT));
 }
 
-function subscribeTheme(onChange: () => void) {
-  const mo = new MutationObserver(onChange);
-  mo.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
-  return () => mo.disconnect();
-}
 
 export function SanaCompanion({
   audioBarVisible = false,
@@ -87,7 +81,6 @@ function SanaDock({
 }) {
   const [open, setOpen] = useState(false);
   const guiding = usePausePanelForTour(open, setOpen);
-  const filter = useSyncExternalStore(subscribeTheme, companionFilterFromDocument, () => "none");
   const buttonRef = useRef<HTMLButtonElement>(null);
   const close = useCallback(() => {
     setOpen(false);
@@ -126,7 +119,6 @@ function SanaDock({
           width={28}
           height={28}
           className="nur-face h-7 w-7 shrink-0 object-contain"
-          style={{ filter }}
         />
       </button>
       {open ? (
@@ -154,7 +146,6 @@ function SanaDock({
 
 function SanaFloatingCompanion() {
   const pose = useSyncExternalStore(subscribePose, loadCompanionPose, () => defaultPose);
-  const filter = useSyncExternalStore(subscribeTheme, companionFilterFromDocument, () => "none");
   const [open, setOpen] = useState(false);
   const [dragging, setDragging] = useState(false);
   const moved = useRef(false);
@@ -243,7 +234,7 @@ function SanaFloatingCompanion() {
           setOpen(true);
         }}
       >
-        <Image src={NUR_SRC} alt="" width={36} height={32} className="nur-face" style={{ filter }} />
+        <Image src={NUR_SRC} alt="" width={36} height={32} className="nur-face" />
         Call {COMPANION_NAME}
       </button>
     );
@@ -310,7 +301,6 @@ function SanaFloatingCompanion() {
           height={NUR_SIZE}
           draggable={false}
           className="nur-face"
-          style={{ filter }}
         />
         <span className="nur-gloss" aria-hidden="true" />
       </button>
