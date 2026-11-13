@@ -8,7 +8,7 @@ export const metadata = pageMeta({
   path: "/privacy",
 });
 
-const UPDATED = "November 11, 2026";
+const UPDATED = "November 13, 2026";
 
 export default function PrivacyPage() {
   return (
@@ -108,6 +108,11 @@ export default function PrivacyPage() {
           time and an event from a fixed list. It does not store your email, name, IP address, or browser.
         </p>
         <p>
+          We record the country your visit comes from (worked out from your connection and then discarded; we don&apos;t store IP addresses). That country is a two-letter code on a daily total, not a city or region. The unique
+          count for a day is a hash of the random id mixed with a salt that changes each day, and the raw id is not
+          stored with the country. A page view is a count that a page opened. The page address is not stored.
+        </p>
+        <p>
           The list covers a guest session starting, a sign-up, a sign-in (email code, passkey, Google, or Apple), a
           guest library merging into an account, and an account deletion. It also covers product actions: audio
           started, a note, bookmark, or highlight added, tafsir opened, a search run, a share, a translation toggle,
@@ -131,7 +136,7 @@ export default function PrivacyPage() {
           Google, or Apple sign-in started, finished, or failed. A failure is a short category such as access denied or
           a redirect mismatch, not your email and not the raw error text.
         </p>
-        <p>Those event rows are deleted after about 13 months.</p>
+        <p>Those event rows, the daily country totals, and the daily visitor hashes are deleted after about 13 months.</p>
       </LegalSection>
 
       <LegalSection title="Quran text, tafsir, and audio">
@@ -147,9 +152,10 @@ export default function PrivacyPage() {
 
       <LegalSection title="Hosting">
         <p>
-          The site runs on Vercel. The sealed library, the anonymous reading-rank counters, and the anonymous usage
-          events are stored in Neon Postgres. Those hosts keep ordinary connection logs, such as IP address and time,
-          to operate and protect the service. QuranDeck does not use those logs to build an advertising profile.
+          The site runs on Vercel. The sealed library, the anonymous reading-rank counters, the anonymous usage
+          events, and the daily country totals are stored in Neon Postgres. Those hosts keep ordinary connection logs,
+          such as IP address and time, to operate and protect the service. QuranDeck does not copy those addresses
+          into its own tables, and it does not use those logs to build an advertising profile.
         </p>
       </LegalSection>
 
@@ -158,7 +164,7 @@ export default function PrivacyPage() {
           Guest data stays in the browser until you clear it. A signed-in library stays until you delete the account
           from the account panel or ask for it to be removed. Delete my account removes that email’s sealed library,
           passkeys, and unused sign-in codes. Sign-in codes expire after about 10 minutes and work only once. Anonymous
-          usage events are removed after about 13 months. Anonymous
+          usage events, daily country totals, and daily visitor hashes are removed after about 13 months. Anonymous
           platform rank totals are not tied to your row, so deleting an account does not unwind counts already added
           to those totals. Notes that never left this browser stay here until you clear site data.
         </p>
