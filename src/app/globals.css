@@ -1332,10 +1332,24 @@ body::before {
   pointer-events: none;
 }
 
-@media (min-width: 1280px) and (max-width: 1535px) {
-  .reader-stream {
-    padding-right: 7rem;
+@media (max-width: 1279px) {
+  #main-content {
+    padding-bottom: calc(5.5rem + env(safe-area-inset-bottom));
   }
+
+  #main-content[data-audio="on"] {
+    padding-bottom: calc(8.5rem + env(safe-area-inset-bottom));
+  }
+}
+
+@media (min-width: 1280px) and (max-width: 1535px) {
+  #main-reader {
+    margin-right: calc(88px + 4.5rem);
+  }
+}
+
+#main-content:has([data-focus="on"]) {
+  padding-bottom: calc(6.5rem + env(safe-area-inset-bottom));
 }
 
 .nur.is-placed {

@@ -435,11 +435,9 @@ export function ContinueCard({ compact = false }: { compact?: boolean }) {
         >
           Resume reading
         </button>
-      ) : (
-        <p className="flex h-11 items-center justify-center rounded-full bg-gold/20 text-sm font-medium text-gold-deep">
-          Saved here
-        </p>
-      )}
+      ) : here ? (
+        <p className="text-sm leading-6 text-ink-soft">{"You're on this ayah."}</p>
+      ) : null}
     </div>
   );
 }

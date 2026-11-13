@@ -162,13 +162,13 @@ export function SurahSidebar() {
         <ContinueCard compact />
         <QuranCredit compact className="mt-3" />
         <nav aria-label="Site" className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-ink-soft">
-          <Link href="/about" className="underline-offset-4 hover:text-ink hover:underline">
+          <Link href="/about" className="inline-flex min-h-11 items-center underline-offset-4 hover:text-ink hover:underline">
             About
           </Link>
-          <Link href="/contact" className="underline-offset-4 hover:text-ink hover:underline">
+          <Link href="/contact" className="inline-flex min-h-11 items-center underline-offset-4 hover:text-ink hover:underline">
             Contact
           </Link>
-          <Link href="/privacy" className="underline-offset-4 hover:text-ink hover:underline">
+          <Link href="/privacy" className="inline-flex min-h-11 items-center underline-offset-4 hover:text-ink hover:underline">
             Privacy
           </Link>
         </nav>

@@ -188,6 +188,7 @@ export type ModalName =
   | "bookmarks"
   | "notes"
   | "highlights"
+  | "saved"
   | null;
 
 export type SearchFilters = {

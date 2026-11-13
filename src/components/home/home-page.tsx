@@ -84,7 +84,7 @@ function HomeNav({ signedIn }: { signedIn: boolean }) {
   return (
     <header className="fixed inset-x-0 top-0 z-50 border-b border-line/70 bg-canvas/95 backdrop-blur-md">
       <div className="qd-gutter mx-auto flex h-14 min-h-14 max-w-6xl items-center gap-2 md:h-16 md:min-h-16">
-        <Link href="/" className="flex shrink-0 items-center gap-2">
+        <Link href="/" className="inline-flex min-h-11 shrink-0 items-center gap-2">
           <MihrabMark className="h-6 w-6 shrink-0 sm:h-7 sm:w-7 md:h-8 md:w-8" />
           <BrandWordmark className="text-lg leading-none sm:text-2xl md:text-3xl" />
         </Link>

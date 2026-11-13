@@ -1,4 +1,5 @@
 import { canonicalLanguage, translationQuery } from "./languages";
+import { readChapterInfo } from "./chapter-info";
 import { hasArabicScript } from "@/lib/text";
 import { fetchQuranJson } from "./qf";
 import {
@@ -96,16 +97,14 @@ function mapVerse(raw: Record<string, unknown>, chapterId: number): Verse {
   };
 }
 
-export async function fetchChapterInfo(id: number): Promise<string> {
+export async function fetchChapterInfo(id: number) {
   try {
-    const data = await getJson<{ chapter_info?: { short_text?: string; text?: string } }>(
+    const data = await getJson<{ chapter_info?: { short_text?: string; text?: string; source?: string } }>(
       `${QURAN_COM_API}/chapters/${id}/info?language=en`,
     );
-    const shortText = stripHtml(String(data.chapter_info?.short_text ?? ""));
-    if (shortText) return shortText;
-    return stripHtml(String(data.chapter_info?.text ?? ""));
+    return readChapterInfo(data, stripHtml);
   } catch {
-    return "";
+    return { text: "", source: "" };
   }
 }
 

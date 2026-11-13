@@ -13,6 +13,7 @@ import { ReaderToolbar } from "@/components/reader/reader-toolbar";
 import { AyahReaderMobile } from "@/components/reader/ayah-reader-mobile";
 import { VerseCard } from "@/components/reader/verse-card";
 import { MobileReadingProgress, PaneReadingProgress } from "@/components/reader/reading-progress";
+import { introductionCredit } from "@/lib/quran/chapter-info";
 import { useMobileReader } from "@/lib/use-media-query";
 
 export function ReaderPane() {
@@ -28,7 +29,7 @@ export function ReaderPane() {
     setVisibleVerseKeys,
     currentJuz,
   } = useMushaf();
-  const { verses, loading, error, chapter, introduction } = useDisplayedReading();
+  const { verses, loading, error, chapter, introduction, introductionSource } = useDisplayedReading();
   const scroller = useRef<HTMLDivElement>(null);
   const translationCols = preferences.showTranslation ? Math.max(preferences.translationIds.length, 0) : 0;
   const layers = Number(preferences.showArabic) + Number(preferences.showTransliteration) + translationCols;
@@ -137,7 +138,7 @@ export function ReaderPane() {
   }, [setSearchOpen]);
 
   return (
-    <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+    <div data-focus={preferences.focusMode ? "on" : "off"} className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
       <ReaderToolbar />
       <MobileReadingProgress ayahMode={ayahMode} />
       <div
@@ -170,7 +171,11 @@ export function ReaderPane() {
             data-traditional={traditional ? "on" : undefined}
           >
             {mode === "surah" && !preferences.focusMode && preferences.showIntroduction && introduction ? (
-              <SurahIntroduction introduction={introduction} chapterId={chapter?.id} mobile={mobile} />
+              <SurahIntroduction
+                introduction={introduction}
+                source={introductionSource}
+                chapterId={chapter?.id}
+              />
             ) : null}
             {traditional ? (
               <MushafPage
@@ -234,12 +239,12 @@ export function ReaderPane() {
 
 function SurahIntroduction({
   introduction,
+  source,
   chapterId,
-  mobile,
 }: {
   introduction: string;
+  source: string;
   chapterId?: number;
-  mobile: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [seenChapter, setSeenChapter] = useState(chapterId);
@@ -247,31 +252,24 @@ function SurahIntroduction({
     setSeenChapter(chapterId);
     setOpen(false);
   }
-
-  if (mobile) {
-    return (
-      <section className="qd-card rounded-3xl border border-line bg-surface">
-        <button
-          type="button"
-          onClick={() => setOpen((value) => !value)}
-          aria-expanded={open}
-          className="flex w-full min-h-11 cursor-pointer items-center justify-between gap-3 text-left"
-        >
-          <span className="section-heading text-gold-deep">Introduction</span>
-          <ChevronDown
-            className={`h-5 w-5 shrink-0 text-ink-soft transition-transform duration-200 ${open ? "rotate-180" : ""}`}
-            aria-hidden
-          />
-        </button>
-        {open ? <p className="text-base leading-relaxed text-ink">{introduction}</p> : null}
-      </section>
-    );
-  }
+  const credit = introductionCredit(source);
 
   return (
     <section className="qd-card rounded-3xl border border-line bg-surface">
-      <h3 className="section-heading text-gold-deep">Introduction</h3>
-      <p className="text-base leading-relaxed text-ink">{introduction}</p>
+      <button
+        type="button"
+        onClick={() => setOpen((value) => !value)}
+        aria-expanded={open}
+        className="flex w-full min-h-11 cursor-pointer items-center justify-between gap-3 text-left"
+      >
+        <span className="section-heading text-gold-deep">Introduction</span>
+        <ChevronDown
+          className={`h-5 w-5 shrink-0 text-ink-soft transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+          aria-hidden
+        />
+      </button>
+      {open ? <p className="text-base leading-relaxed text-ink">{introduction}</p> : null}
+      {credit ? <p className="text-xs leading-5 text-ink-soft">{credit}</p> : null}
     </section>
   );
 }

@@ -133,7 +133,12 @@ export const APPEARANCE_THEMES: Array<{
 ];
 
 export function appliedTheme(pathname: string, theme: AppearanceThemeId): AppearanceThemeId {
-  return pathname === "/" ? HOME_THEME : theme;
+  void pathname;
+  return APPEARANCE_THEMES.some((item) => item.id === theme) ? theme : HOME_THEME;
+}
+
+export function themeColorScheme(theme: AppearanceThemeId): "dark" | "light" {
+  return APPEARANCE_THEMES.find((item) => item.id === theme)?.group === "night" ? "dark" : "light";
 }
 
 export const FONT_SIZE_MIN = 14;

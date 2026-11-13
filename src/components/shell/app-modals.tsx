@@ -4,6 +4,7 @@ import { AccountModal } from "@/components/account/account-dashboard";
 import { AuthModal } from "@/components/modals/auth-modal";
 import { JuzModal } from "@/components/modals/juz-modal";
 import { BookmarksModal, HighlightsModal, NotesModal } from "@/components/modals/library-modals";
+import { SavedModal } from "@/components/modals/saved-modal";
 import { SettingsModal } from "@/components/modals/settings-modal";
 import { StillReadingPrompt } from "@/components/modals/still-reading-prompt";
 import { ThemePicker } from "@/components/modals/theme-picker";
@@ -17,6 +18,7 @@ export function AppModals() {
       <ThemePicker />
       <JuzModal />
       <SettingsModal />
+      <SavedModal />
       <AccountModal />
       <AuthModal />
       <BookmarksModal />

@@ -66,7 +66,7 @@ import {
   saveSwatches,
 } from "@/lib/storage";
 import { cleanDisplayName, validateDisplayName } from "@/lib/display-name";
-import { layoutSignals, appliedTheme } from "@/lib/appearance";
+import { layoutSignals, appliedTheme, themeColorScheme } from "@/lib/appearance";
 import { preferenceUsageEvents } from "@/lib/usage-catalog";
 import { trackUsage } from "@/lib/usage-client";
 import {
@@ -141,6 +141,7 @@ type MushafContextValue = {
   user: SessionUser | null;
   hydrated: boolean;
   introduction: string;
+  introductionSource: string;
   progress: ReadingProgress;
   audioRef: React.RefObject<HTMLAudioElement | null>;
   openSurah: (id: number, verseNumber?: number) => void;
@@ -253,6 +254,7 @@ export function MushafProvider({ children }: { children: ReactNode }) {
   const [visibleVerseKeys, setVisibleVerseKeysState] = useState<string[]>([]);
   const [user, setUser] = useState<SessionUser | null>(null);
   const [introduction, setIntroduction] = useState("");
+  const [introductionSource, setIntroductionSource] = useState("");
   const [progress, setProgress] = useState<ReadingProgress>(defaultReadingProgress);
   const [resumeCue, setResumeCue] = useState(false);
   const [stillReadingAsk, setStillReadingAsk] = useState(false);
@@ -322,11 +324,15 @@ export function MushafProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const layout = layoutSignals(preferences);
-    document.documentElement.dataset.theme = appliedTheme(pathname, preferences.theme);
+    const theme = appliedTheme(pathname, preferences.theme);
+    document.documentElement.dataset.theme = theme;
     document.documentElement.dataset.layers = String(layout.layers);
     document.documentElement.dataset.size = layout.size;
     document.documentElement.dataset.script = layout.script;
     document.documentElement.style.setProperty("--reading-size", `${preferences.fontSize}px`);
+    const canvas = getComputedStyle(document.documentElement).getPropertyValue("--canvas").trim();
+    document.querySelector('meta[name="theme-color"]')?.setAttribute("content", canvas);
+    document.querySelector('meta[name="color-scheme"]')?.setAttribute("content", themeColorScheme(theme));
   }, [pathname, preferences]);
 
   useEffect(() => {
@@ -483,6 +489,7 @@ export function MushafProvider({ children }: { children: ReactNode }) {
         setChapter(data.chapter);
         setVerses(data.verses);
         setIntroduction(data.introduction ?? "");
+        setIntroductionSource(data.introductionSource ?? "");
         const key =
           verseNumber && Number.isInteger(verseNumber) && verseNumber > 0
             ? `${id}:${verseNumber}`
@@ -513,6 +520,7 @@ export function MushafProvider({ children }: { children: ReactNode }) {
         const first = data.verses[0];
         setChapter(chapters.find((item) => item.id === first?.chapterId) ?? null);
         setIntroduction("");
+        setIntroductionSource("");
         setSelectedVerseKey(first?.verseKey ?? null);
         setSelectedWord(null);
       } catch (err: unknown) {
@@ -1196,6 +1204,7 @@ export function MushafProvider({ children }: { children: ReactNode }) {
       user,
       hydrated,
       introduction,
+      introductionSource,
       progress,
       audioRef,
       openSurah,
@@ -1273,6 +1282,7 @@ export function MushafProvider({ children }: { children: ReactNode }) {
       highlights,
       hydrated,
       introduction,
+      introductionSource,
       isPlaying,
       jumpToHit,
       juzs,

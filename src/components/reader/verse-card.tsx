@@ -208,12 +208,14 @@ export function VerseCard({
               onClick={() => toggleBookmarkVerse(verse)}
             >
               <Star className={`h-4 w-4 ${favorited ? "fill-gold text-gold" : ""}`} />
+              <span className="pr-1 text-xs font-medium">Star</span>
             </IconAction>
             <IconAction
               label={wash ? "Remove ayah highlight" : "Highlight this whole ayah"}
               onClick={() => highlightAyah(verse)}
             >
               <Highlighter className={`h-4 w-4 ${wash ? "text-gold" : ""}`} />
+              <span className="pr-1 text-xs font-medium">Mark</span>
             </IconAction>
             {marks.length > 0 ? (
               <IconAction
@@ -228,12 +230,14 @@ export function VerseCard({
               onClick={() => void navigator.clipboard.writeText(verseShareText(verse))}
             >
               <Copy className="h-4 w-4" />
+              <span className="pr-1 text-xs font-medium">Copy</span>
             </IconAction>
             <IconAction
               label="Share this ayah"
               onClick={() => void shareOrCopy(`${PRODUCT_NAME} · ${verse.verseKey}`, verseShareText(verse))}
             >
               <Share2 className="h-4 w-4" />
+              <span className="pr-1 text-xs font-medium">Share</span>
             </IconAction>
           </div>
         </div>

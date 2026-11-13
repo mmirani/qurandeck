@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Menu, Settings2 } from "lucide-react";
+import { Bookmark, Menu, Palette } from "lucide-react";
 import { HeaderAccount } from "@/components/auth/header-account";
 import { MihrabMark } from "@/components/art/ornaments";
 import { APPEARANCE_THEMES, FONT_SIZE_MAX, FONT_SIZE_MIN } from "@/lib/appearance";
@@ -77,6 +77,12 @@ export function MobileReaderBar() {
         >
           Ayah
         </LayoutChip>
+        <LayoutChip
+          active={preferences.focusMode}
+          onClick={() => updatePreferences({ focusMode: !preferences.focusMode })}
+        >
+          Focus
+        </LayoutChip>
         {tafsirOn ? (
           <button
             type="button"
@@ -91,12 +97,20 @@ export function MobileReaderBar() {
           type="button"
           onClick={() => openModal("themes")}
           className="inline-flex h-11 min-h-11 min-w-11 shrink-0 cursor-pointer items-center justify-center rounded-full border border-line bg-surface text-gold-deep"
-          aria-label={`Reading settings. Theme ${themeName}`}
+          aria-label={`Themes. ${themeName}`}
         >
-          <Settings2 className="h-4 w-4" />
+          <Palette className="h-4 w-4" />
+        </button>
+        <button
+          type="button"
+          onClick={() => openModal("saved")}
+          className="inline-flex h-11 min-h-11 shrink-0 cursor-pointer items-center gap-1 rounded-full border border-line bg-surface px-3 text-xs font-medium text-ink"
+        >
+          <Bookmark className="h-4 w-4" aria-hidden="true" />
+          Saved
         </button>
         {!ayahMode ? (
-          <>
+          <span className="inline-flex shrink-0 items-center">
             <button
               type="button"
               aria-label="Smaller text"
@@ -114,7 +128,7 @@ export function MobileReaderBar() {
             >
               +
             </button>
-          </>
+          </span>
         ) : null}
       </div>
     </div>
@@ -134,7 +148,7 @@ function LayoutChip({
     <button
       type="button"
       onClick={onClick}
-      className={`inline-flex h-11 min-h-11 flex-1 cursor-pointer items-center justify-center rounded-full text-sm font-medium ${
+      className={`inline-flex h-11 min-h-11 shrink-0 cursor-pointer items-center justify-center rounded-full px-4 text-sm font-medium ${
         active ? "bg-gold text-on-gold" : "border border-line bg-surface text-ink-soft"
       }`}
     >
