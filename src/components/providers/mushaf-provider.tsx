@@ -5,6 +5,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -65,7 +66,7 @@ import {
   saveSwatches,
 } from "@/lib/storage";
 import { cleanDisplayName, validateDisplayName } from "@/lib/display-name";
-import { layoutSignals, appliedTheme, themeColorScheme } from "@/lib/appearance";
+import { applyBootAppearance } from "@/lib/boot-appearance";
 import { preferenceUsageEvents } from "@/lib/usage-catalog";
 import { trackUsage } from "@/lib/usage-client";
 import {
@@ -210,6 +211,7 @@ export function MushafProvider({ children }: { children: ReactNode }) {
   const searchGenRef = useRef(0);
   const lastCountedSearchRef = useRef<string | null>(null);
   const [preferences, setPreferences] = useState<Preferences>(defaultPreferences);
+  const [booted, setBooted] = useState(false);
   const prefsRef = useRef(preferences);
   const [hydrated, setHydrated] = useState(false);
   const [chapters, setChapters] = useState<Chapter[]>([]);
@@ -271,7 +273,6 @@ export function MushafProvider({ children }: { children: ReactNode }) {
     let cancelled = false;
     queueMicrotask(() => {
       if (cancelled) return;
-      setPreferences(loadPreferences());
       setBookmarks(loadBookmarks());
       setNotes(loadNotes());
       setHighlights(loadHighlights());
@@ -313,18 +314,19 @@ export function MushafProvider({ children }: { children: ReactNode }) {
     };
   }, [authSession, authStatus]);
 
+  useLayoutEffect(() => {
+    const stored = loadPreferences();
+    applyBootAppearance(stored);
+    queueMicrotask(() => {
+      setPreferences(stored);
+      setBooted(true);
+    });
+  }, []);
+
   useEffect(() => {
-    const layout = layoutSignals(preferences);
-    const theme = appliedTheme(pathname, preferences.theme);
-    document.documentElement.dataset.theme = theme;
-    document.documentElement.dataset.layers = String(layout.layers);
-    document.documentElement.dataset.size = layout.size;
-    document.documentElement.dataset.script = layout.script;
-    document.documentElement.style.setProperty("--reading-size", `${preferences.fontSize}px`);
-    const canvas = getComputedStyle(document.documentElement).getPropertyValue("--canvas").trim();
-    document.querySelector('meta[name="theme-color"]')?.setAttribute("content", canvas);
-    document.querySelector('meta[name="color-scheme"]')?.setAttribute("content", themeColorScheme(theme));
-  }, [pathname, preferences]);
+    if (!booted) return;
+    applyBootAppearance(preferences);
+  }, [booted, preferences]);
 
   useEffect(() => {
     if (!hydrated) return;
