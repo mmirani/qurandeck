@@ -274,7 +274,7 @@ function SanaFloatingCompanion() {
       <button
         ref={orbRef}
         type="button"
-        className="nur-orb"
+        className="nur-orb is-alive"
         aria-label={`${COMPANION_NAME}, reading companion. Drag to move, click to talk.`}
         aria-expanded={open}
         aria-haspopup="dialog"

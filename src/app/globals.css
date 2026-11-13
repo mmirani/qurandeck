@@ -1425,6 +1425,7 @@ body::before {
   box-shadow: 0 8px 22px color-mix(in srgb, var(--ink) 12%, transparent);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
+  animation: sana-dock-bob 2.4s ease-in-out 2;
 }
 
 .sana-dock.is-audio {
@@ -1479,7 +1480,7 @@ body::before {
 }
 
 .nur-orb.is-alive {
-  animation: none;
+  animation: nur-bob 2.4s ease-in-out 2;
 }
 
 .nur.is-dragging .nur-orb,
@@ -1735,6 +1736,16 @@ body::before {
   }
   50% {
     transform: translateY(-7px);
+  }
+}
+
+@keyframes sana-dock-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
   }
 }
 
@@ -2004,5 +2015,10 @@ body::before {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+
+  .nur-orb.is-alive,
+  .sana-dock {
+    animation: none;
   }
 }
