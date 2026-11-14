@@ -76,5 +76,48 @@ describe("guest library merge", () => {
     assert.deepEqual(merged.progress.surahsRead, [1, 36]);
     assert.equal(merged.progress.totalSeconds, 90);
     assert.equal(merged.progress.lastVerseKey, "1:1");
+    assert.equal(merged.progress.lastActiveAt, 20);
+  });
+
+  it("keeps the place with the newer lastActiveAt, even when the other copy has a different ayah", () => {
+    const local = library({
+      progress: {
+        ...emptyLibrary().progress,
+        lastVerseKey: "2:255",
+        lastActiveAt: 5000,
+      },
+    });
+    const remote = library({
+      progress: {
+        ...emptyLibrary().progress,
+        lastVerseKey: "1:1",
+        lastActiveAt: 4000,
+      },
+    });
+
+    assert.equal(mergeLibraries(local, remote).progress.lastVerseKey, "2:255");
+    assert.equal(mergeLibraries(local, remote).progress.lastActiveAt, 5000);
+    assert.equal(mergeLibraries(remote, local).progress.lastVerseKey, "2:255");
+  });
+
+  it("lets a newer remote place replace a local ayah whose stamp was not bumped", () => {
+    const local = library({
+      progress: {
+        ...emptyLibrary().progress,
+        lastVerseKey: "18:1",
+        lastActiveAt: 1000,
+      },
+    });
+    const remote = library({
+      progress: {
+        ...emptyLibrary().progress,
+        lastVerseKey: "1:1",
+        lastActiveAt: 2000,
+      },
+    });
+
+    const merged = mergeLibraries(local, remote);
+    assert.equal(merged.progress.lastVerseKey, "1:1");
+    assert.equal(merged.progress.lastActiveAt, 2000);
   });
 });

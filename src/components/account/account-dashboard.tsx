@@ -17,7 +17,7 @@ import {
   downloadStatsCsv,
   type LibraryExportInput,
 } from "@/lib/export-library";
-import { parseVerseKey, TOTAL_AYAHS, TOTAL_SURAHS } from "@/lib/reading";
+import { continueBookmark, parseVerseKey, TOTAL_AYAHS, TOTAL_SURAHS } from "@/lib/reading";
 
 type AccountTab = "progress" | "saved" | "settings" | "account";
 
@@ -401,28 +401,32 @@ export function ContinueCard({ compact = false }: { compact?: boolean }) {
     chapters,
     jumpToHit,
     closeModal,
-    selectedVerseKey,
     playingVerseKey,
+    isPlaying,
     visibleVerseKeys,
     offerResume,
     clearResume,
   } = useMushaf();
-  const liveKey = playingVerseKey ?? visibleVerseKeys[0] ?? progress.lastVerseKey ?? "1:1";
-  const savedKey = progress.lastVerseKey ?? liveKey;
-  const place = parseVerseKey(liveKey);
+  const savedKey = progress.lastVerseKey;
+  const bookmark = continueBookmark({
+    savedKey,
+    lineKey: visibleVerseKeys[0] ?? null,
+    playingVerseKey,
+    isPlaying,
+    savedOnScreen: Boolean(savedKey && visibleVerseKeys.includes(savedKey)),
+    offerResume,
+  });
+  const place = parseVerseKey(bookmark.ayah);
   const savedChapter = place ? chapters.find((item) => item.id === place.chapterId) : null;
-  const here = liveKey === savedKey;
-  const showResume = offerResume && Boolean(parseVerseKey(savedKey)) && liveKey !== savedKey;
   const title = savedChapter ? savedChapter.nameSimple : "Al-Fatihah";
-  const ayah = liveKey;
 
   const resume = () => {
-    const target = parseVerseKey(savedKey);
-    if (!target) return;
+    const target = parseVerseKey(bookmark.resumeKey);
+    if (!target || !bookmark.resumeKey) return;
     clearResume();
     closeModal();
     jumpToHit({
-      verseKey: savedKey,
+      verseKey: bookmark.resumeKey,
       chapterId: target.chapterId,
       verseNumber: target.verseNumber,
       textArabic: "",
@@ -446,8 +450,8 @@ export function ContinueCard({ compact = false }: { compact?: boolean }) {
       <p className={`font-display font-semibold leading-tight tracking-tight text-ink ${compact ? "text-xl" : "text-2xl"}`}>
         {title}
       </p>
-      <p className="text-sm leading-6 text-ink">Ayah {ayah}</p>
-      {showResume ? (
+      <p className="text-sm leading-6 text-ink">Ayah {bookmark.ayah}</p>
+      {bookmark.showResume ? (
         <button
           type="button"
           onClick={resume}
@@ -457,7 +461,7 @@ export function ContinueCard({ compact = false }: { compact?: boolean }) {
         >
           Resume reading
         </button>
-      ) : here ? (
+      ) : bookmark.here ? (
         <p className="text-sm leading-6 text-ink-soft">{"You're on this ayah."}</p>
       ) : null}
     </div>
