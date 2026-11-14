@@ -124,8 +124,18 @@ export function buildStatsCsv(input: LibraryExportInput): string {
     `summary,notes,${stats.notes}`,
     `summary,highlights,${stats.highlights}`,
     `summary,last_verse_key,${csvEscape(stats.lastVerseKey)}`,
+    `summary,daily_history_since,${csvEscape(input.progress.historySince)}`,
     `summary,exported_at,${csvEscape(new Date().toISOString())}`,
   ];
+
+  const daily = input.progress.daily ?? {};
+  const dailyKeys = Object.keys(daily).sort();
+  for (const day of dailyKeys) {
+    const tally = daily[day];
+    if (!tally) continue;
+    lines.push(`daily_seconds,${csvEscape(day)},${tally.seconds}`);
+    lines.push(`daily_ayahs,${csvEscape(day)},${tally.ayahs}`);
+  }
 
   for (const chapterId of stats.surahsFinishedIds) {
     const count = stats.surahCompletions[String(chapterId)] ?? 1;
