@@ -2,7 +2,10 @@
 
 import { useMushaf } from "@/components/providers/mushaf-provider";
 import { Modal } from "@/components/ui/modal";
-import { highlightListCopy } from "@/lib/highlights";
+import { useState } from "react";
+import { ColourManagerSheet } from "@/components/reader/colour-manager";
+import { highlightListCopy, highlightsNewestFirst } from "@/lib/highlights";
+import { resolveSwatch } from "@/lib/swatch-palette";
 
 export function BookmarksModal() {
   const { modal, closeModal, bookmarks, jumpToHit } = useMushaf();
@@ -97,62 +100,33 @@ export function HighlightsModal() {
     jumpToHit,
     deleteHighlight,
     deleteHighlights,
-    addSwatch,
-    updateSwatch,
-    removeSwatch,
-    setActiveSwatch,
   } = useMushaf();
-  if (modal !== "highlights") return null;
+  const [coloursOpen, setColoursOpen] = useState(false);
+  if (modal !== "highlights") {
+    if (coloursOpen) setColoursOpen(false);
+    return null;
+  }
+  const marks = highlightsNewestFirst(highlights);
 
   return (
-    <Modal eyebrow="Study" title="Highlights" onClose={closeModal} wide>
-      <section className="mb-8">
-        <h3 className="kufic-label text-gold-deep">Pens</h3>
-        <p className="mt-2 text-sm leading-6 text-ink-soft">Name your colours. Yellow is the default pen.</p>
-        <ul className="mt-4 flex flex-col gap-2">
-          {swatches.map((pen) => (
-            <li key={pen.id} className="qd-pad-sm flex flex-wrap items-center gap-2 rounded-2xl border border-line">
-              <input
-                type="color"
-                value={pen.color}
-                aria-label={`${pen.name} colour`}
-                onChange={(event) => updateSwatch(pen.id, { color: event.target.value })}
-                className="h-8 w-10 cursor-pointer rounded-md border border-line bg-transparent"
-              />
-              <input
-                value={pen.name}
-                onChange={(event) => updateSwatch(pen.id, { name: event.target.value })}
-                className="h-11 min-w-40 flex-1 rounded-xl border border-line bg-transparent px-3 text-sm"
-              />
-              <button
-                type="button"
-                onClick={() => setActiveSwatch(pen.id)}
-                className="h-11 min-h-11 cursor-pointer rounded-full px-3 text-xs text-gold-deep"
-              >
-                Use
-              </button>
-              {pen.id !== "yellow" ? (
-                <button
-                  type="button"
-                  onClick={() => removeSwatch(pen.id)}
-                  className="h-11 min-h-11 cursor-pointer rounded-full px-3 text-xs text-danger"
-                >
-                  Remove
-                </button>
-              ) : (
-                <span className="text-xs text-muted">Default</span>
-              )}
-            </li>
-          ))}
-        </ul>
+    <>
+    <Modal
+      eyebrow="Study"
+      title="Highlights"
+      onClose={closeModal}
+      wide
+      actions={
         <button
           type="button"
-          onClick={() => addSwatch("New pen", "#C4B5FD")}
-          className="mt-3 h-10 cursor-pointer rounded-full border border-gold/40 px-4 text-sm text-gold-deep"
+          aria-haspopup="dialog"
+          aria-expanded={coloursOpen}
+          onClick={() => setColoursOpen(true)}
+          className="inline-flex h-11 min-h-11 items-center rounded-full border border-line px-4 text-sm font-medium text-ink"
         >
-          Add a named colour
+          Edit colours
         </button>
-      </section>
+      }
+    >
       <section>
         <div className="flex items-center justify-between gap-2">
           <h3 className="kufic-label text-gold-deep">All marks</h3>
@@ -172,22 +146,21 @@ export function HighlightsModal() {
           </p>
         ) : (
           <ul className="mt-4 flex flex-col gap-2">
-            {highlights
-              .slice()
-              .reverse()
-              .map((item) => {
-                const pen = swatches.find((swatch) => swatch.id === item.swatchId);
+            {marks.map((item) => {
+                const pen = resolveSwatch(swatches, item.swatchId).swatch;
                 const [chapterId, verseNumber] = item.verseKey.split(":").map(Number);
                 const verse = verses.find((entry) => entry.verseKey === item.verseKey);
                 const chapter = chapters.find((entry) => entry.id === chapterId);
                 const copy = highlightListCopy(item, {
                   chapterName: chapter?.nameSimple,
                   translation: verse?.translation,
-                  penName: item.label?.trim() || pen?.name,
                 });
                 return (
                   <li key={item.id} className="qd-pad-sm flex items-start gap-3 rounded-2xl border border-line">
-                    <span className="mt-1 h-4 w-4 shrink-0 rounded-full" style={{ background: pen?.color ?? "#F5D76E" }} />
+                    <div className="flex h-11 shrink-0 items-center gap-2">
+                      <span aria-hidden="true" className="h-4 w-4 rounded-full border border-line" style={{ background: pen.color }} />
+                      <span className="text-sm text-ink">{pen.name}</span>
+                    </div>
                     <button
                       type="button"
                       className="min-h-11 min-w-0 flex-1 cursor-pointer text-left"
@@ -221,5 +194,7 @@ export function HighlightsModal() {
         )}
       </section>
     </Modal>
+    <ColourManagerSheet open={coloursOpen} onClose={() => setColoursOpen(false)} backLabel="Back to highlights" />
+    </>
   );
 }

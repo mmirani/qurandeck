@@ -1,11 +1,11 @@
 "use client";
 
-import { useRef, useSyncExternalStore } from "react";
-import { createPortal } from "react-dom";
-import { Eraser, Highlighter, X } from "lucide-react";
+import { useRef } from "react";
 import { swatchById } from "@/lib/highlights";
 import type { Highlight, HighlightSwatch } from "@/lib/quran/types";
 import { markPlainText, selectionOffsets } from "@/lib/highlights";
+
+export { HighlightPopover } from "@/components/reader/swatch-row";
 
 export function MarkedText({
   text,
@@ -13,14 +13,14 @@ export function MarkedText({
   swatches,
   className,
   onSelect,
-  onRemove,
+  onRecolor,
 }: {
   text: string;
   marks: Highlight[];
   swatches: HighlightSwatch[];
   className?: string;
   onSelect: (start: number, end: number, snippet: string, x: number, y: number) => void;
-  onRemove?: (id: string) => void;
+  onRecolor?: (highlight: Highlight, anchor: HTMLElement) => void;
 }) {
   const root = useRef<HTMLParagraphElement>(null);
   const spans = markPlainText(text, marks);
@@ -48,11 +48,21 @@ export function MarkedText({
             key={index}
             className="ayah-mark cursor-pointer"
             style={{ ["--mark-color" as string]: pen.color }}
-            title={`${pen.name} · click to remove`}
+            role={onRecolor ? "button" : undefined}
+            tabIndex={onRecolor ? 0 : undefined}
+            aria-label={onRecolor ? `${pen.name} highlight. Change colour` : undefined}
+            title={`${pen.name}. Change colour`}
             onClick={(event) => {
-              if (!onRemove) return;
+              if (!onRecolor || !span.highlight) return;
               event.stopPropagation();
-              onRemove(span.highlight!.id);
+              onRecolor(span.highlight, event.currentTarget);
+            }}
+            onKeyDown={(event) => {
+              if (!onRecolor || !span.highlight) return;
+              if (event.key !== "Enter" && event.key !== " ") return;
+              event.preventDefault();
+              event.stopPropagation();
+              onRecolor(span.highlight, event.currentTarget);
             }}
           >
             {span.text}
@@ -60,85 +70,5 @@ export function MarkedText({
         );
       })}
     </p>
-  );
-}
-
-export function HighlightPopover({
-  x,
-  y,
-  swatches,
-  activeId,
-  onPick,
-  onAyah,
-  onErase,
-  onClose,
-}: {
-  x: number;
-  y: number;
-  swatches: HighlightSwatch[];
-  activeId: string;
-  onPick: (swatchId: string) => void;
-  onAyah?: () => void;
-  onErase?: () => void;
-  onClose: () => void;
-}) {
-  const ready = useSyncExternalStore(
-    () => () => {},
-    () => true,
-    () => false,
-  );
-  if (!ready) return null;
-
-  const left = Math.min(Math.max(12, x - 140), window.innerWidth - 292);
-  const top = Math.max(12, y - 72);
-
-  return createPortal(
-    <div
-      className="fixed z-50 flex items-center gap-1 rounded-full border border-gold/40 bg-surface px-2 py-1 shadow-[0_12px_30px_rgba(0,0,0,0.18)]"
-      style={{ left, top }}
-      onMouseDown={(event) => event.preventDefault()}
-    >
-      {swatches.map((pen) => (
-        <button
-          key={pen.id}
-          type="button"
-          title={pen.name}
-          aria-label={`Highlight with ${pen.name}`}
-          onClick={() => onPick(pen.id)}
-          className={`h-8 w-8 cursor-pointer rounded-full border ${
-            pen.id === activeId ? "ring-2 ring-gold-deep" : "border-black/10"
-          }`}
-          style={{ background: pen.color }}
-        />
-      ))}
-      <button
-        type="button"
-        onClick={() => onPick(activeId)}
-        className="inline-flex h-8 cursor-pointer items-center gap-1 rounded-full px-2 text-xs text-ink"
-      >
-        <Highlighter className="h-3.5 w-3.5" />
-        Mark
-      </button>
-      {onAyah ? (
-        <button type="button" onClick={onAyah} className="h-8 cursor-pointer rounded-full px-2 text-xs text-gold-deep">
-          Whole ayah
-        </button>
-      ) : null}
-      {onErase ? (
-        <button
-          type="button"
-          aria-label="Remove highlight"
-          onClick={onErase}
-          className="inline-flex h-8 cursor-pointer items-center gap-1 rounded-full px-2 text-xs text-danger"
-        >
-          <Eraser className="h-3.5 w-3.5" />
-          Remove
-        </button>
-      ) : null}
-      <button type="button" aria-label="Close" onClick={onClose} className="h-8 w-8 cursor-pointer rounded-full text-muted">
-        <X className="mx-auto h-3.5 w-3.5" />
-      </button>
-    </div>,
-    document.body,
   );
 }

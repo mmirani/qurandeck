@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { GeoDashboard } from "@/components/admin/geo-dashboard";
+import { InboxLink } from "@/components/admin/inbox-link";
 import { MihrabMark } from "@/components/art/ornaments";
 import { BrandWordmark } from "@/components/brand/brand-wordmark";
 import { APPEARANCE_THEMES } from "@/lib/appearance";
@@ -39,19 +40,22 @@ export function UsageStatsView({
   stats,
   notice,
   geo,
+  inboxUnread = null,
 }: {
   stats: UsageStats | null;
   notice?: string;
   geo?: GeoSummary | null;
+  inboxUnread?: number | null;
 }) {
   return (
     <div className="min-h-dvh bg-canvas text-ink">
       <header className="border-b border-line/70">
-        <div className="qd-gutter mx-auto flex h-16 max-w-5xl items-center">
-          <Link href="/" className="flex items-center gap-2">
+        <div className="qd-gutter mx-auto flex min-h-16 max-w-5xl flex-wrap items-center gap-3 py-2">
+          <Link href="/" className="flex min-h-11 items-center gap-2">
             <MihrabMark className="h-7 w-7" />
             <BrandWordmark className="text-2xl leading-none" />
           </Link>
+          <InboxLink unread={inboxUnread} className="ml-auto" />
         </div>
       </header>
       <main id="main-content" className="qd-gutter qd-section mx-auto flex max-w-5xl flex-col gap-8">

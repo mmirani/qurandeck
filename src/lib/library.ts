@@ -3,13 +3,18 @@ import { cleanDisplayName, validateDisplayName } from "@/lib/display-name";
 import { defaultPreferences, preferencesFromUnknown } from "@/lib/storage";
 import {
   defaultReadingProgress,
+  earlierHistorySince,
+  mergeDaily,
   mergeSurahCompletions,
   mergeVerseVisits,
+  normalizeReadingProgress,
   normalizeSurahCompletions,
   normalizeVerseVisits,
   syncSurahsRead,
   type ReadingProgress,
 } from "@/lib/reading";
+import { normalizeNote, normalizeNotes } from "@/lib/notes";
+import { cleanSwatches, swatchesOrDefaults } from "@/lib/swatch-palette";
 import type { Bookmark, Highlight, HighlightSwatch, Note, Preferences } from "@/lib/quran/types";
 
 export type LibrarySnapshot = {
@@ -59,7 +64,9 @@ function laterIso(a?: string, b?: string) {
 
 export function mergeLibraries(local: LibrarySnapshot, remote: LibrarySnapshot): LibrarySnapshot {
   const notes = new Map<string, Note>();
-  for (const note of [...remote.notes, ...local.notes]) {
+  for (const raw of [...remote.notes, ...local.notes]) {
+    const note = normalizeNote(raw);
+    if (!note) continue;
     const current = notes.get(note.verseKey);
     if (!current || (note.updatedAt ?? "") >= (current.updatedAt ?? "")) notes.set(note.verseKey, note);
   }
@@ -110,7 +117,7 @@ export function mergeLibraries(local: LibrarySnapshot, remote: LibrarySnapshot):
     bookmarks: [...verseBookmarks.values(), ...wordBookmarks.values(), ...byId(otherBookmarks)],
     notes: [...notes.values()],
     highlights: dedupeHighlights([...remote.highlights, ...local.highlights]),
-    swatches: byId([...remote.swatches, ...local.swatches]),
+    swatches: byId([...cleanSwatches(remote.swatches), ...cleanSwatches(local.swatches)]),
     progress: syncSurahsRead({
       surahsRead: [...new Set([...remote.progress.surahsRead, ...local.progress.surahsRead])].sort((a, b) => a - b),
       surahCompletions: mergeSurahCompletions(
@@ -127,6 +134,8 @@ export function mergeLibraries(local: LibrarySnapshot, remote: LibrarySnapshot):
       lastReadDay: laterIso(remote.progress.lastReadDay ?? undefined, local.progress.lastReadDay ?? undefined) ?? null,
       lastVerseKey,
       lastActiveAt: Math.max(localActive, remoteActive) || null,
+      daily: mergeDaily(remote.progress.daily, local.progress.daily),
+      historySince: earlierHistorySince(remote.progress.historySince, local.progress.historySince),
     }),
   };
 }
@@ -155,26 +164,15 @@ export function emptyLibrary(): LibrarySnapshot {
 export function normalizeLibrary(value: unknown): LibrarySnapshot | null {
   if (!value || typeof value !== "object") return null;
   const raw = value as Partial<LibrarySnapshot>;
-  const base = emptyLibrary();
   return {
     preferences: preferencesFromUnknown(raw.preferences),
     bookmarks: Array.isArray(raw.bookmarks) ? raw.bookmarks : [],
-    notes: Array.isArray(raw.notes) ? raw.notes : [],
+    // Notes are fields inside the sealed library JSON, not their own columns.
+    // createdAt is filled from updatedAt when an older library omits it.
+    notes: normalizeNotes(raw.notes),
     highlights: Array.isArray(raw.highlights) ? raw.highlights : [],
-    swatches: Array.isArray(raw.swatches) ? raw.swatches : base.swatches,
-    progress: (() => {
-      const surahsRead = Array.isArray(raw.progress?.surahsRead) ? raw.progress.surahsRead : [];
-      const versesRead = Array.isArray(raw.progress?.versesRead) ? raw.progress.versesRead : [];
-      const rawProgress = raw.progress && typeof raw.progress === "object" ? (raw.progress as ReadingProgress) : null;
-      return {
-        ...defaultReadingProgress,
-        ...(rawProgress ?? {}),
-        surahsRead,
-        surahCompletions: normalizeSurahCompletions(rawProgress?.surahCompletions, surahsRead),
-        versesRead,
-        verseVisits: normalizeVerseVisits(rawProgress?.verseVisits, versesRead),
-      };
-    })(),
+    swatches: swatchesOrDefaults(cleanSwatches(raw.swatches)),
+    progress: normalizeReadingProgress(raw.progress),
     ...safeDisplayName(raw.displayName, raw.displayNameUpdatedAt),
     ...safeAvatar(raw.avatar, raw.avatarUpdatedAt),
   };

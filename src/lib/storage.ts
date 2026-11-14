@@ -1,9 +1,12 @@
 import { asMushafInk } from "./appearance";
 import { sanitizeTranslationIds, withTranslationIds } from "./quran/languages";
 import { DEFAULT_RECITATION_ID, DEFAULT_TAFSIR_ID, DEFAULT_TRANSLATION_ID } from "./quran/sources";
-import { DEFAULT_SWATCH_ID, defaultSwatches } from "./highlights";
-import { defaultReadingProgress, normalizeVerseVisits, normalizeSurahCompletions, syncSurahsRead, type ReadingProgress } from "./reading";
+import { DEFAULT_SWATCH_ID } from "./highlights";
+import { cleanSwatches, swatchesOrDefaults } from "./swatch-palette";
+import { asDayKey, normalizeReadingProgress, syncSurahsRead, type ReadingProgress } from "./reading";
+import { isStatsRangeId } from "./stats-range";
 import { mergeStudyCards } from "./study-cards";
+import { normalizeNotes, notesMissingCreatedAt } from "./notes";
 import type {
   Bookmark,
   Highlight,
@@ -53,6 +56,9 @@ export const defaultPreferences: Preferences = {
   showStudyRail: true,
   mobileReadingMode: "scroll",
   mobileAyahScript: "both",
+  statsRange: "all",
+  statsRangeStart: null,
+  statsRangeEnd: null,
 };
 
 function parse(key: string): unknown {
@@ -86,6 +92,11 @@ export function preferencesFromUnknown(value: unknown): Preferences {
   merged.mobileReadingMode = raw.mobileReadingMode === "ayah" ? "ayah" : "scroll";
   merged.mobileAyahScript =
     raw.mobileAyahScript === "arabic" || raw.mobileAyahScript === "english" ? raw.mobileAyahScript : "both";
+  merged.statsRange = isStatsRangeId(raw.statsRange) ? raw.statsRange : "all";
+  const rangeStart = asDayKey(raw.statsRangeStart);
+  const rangeEnd = asDayKey(raw.statsRangeEnd);
+  merged.statsRangeStart = rangeStart && rangeEnd && rangeStart > rangeEnd ? rangeEnd : rangeStart;
+  merged.statsRangeEnd = rangeStart && rangeEnd && rangeStart > rangeEnd ? rangeStart : rangeEnd;
   const ids = Array.isArray(raw.translationIds)
     ? sanitizeTranslationIds(raw.translationIds)
     : sanitizeTranslationIds([merged.translationId]);
@@ -110,7 +121,9 @@ export function saveBookmarks(value: Bookmark[]) {
 
 export function loadNotes(): Note[] {
   const value = parse(KEYS.notes);
-  return Array.isArray(value) ? (value as Note[]) : [];
+  const notes = normalizeNotes(value);
+  if (notesMissingCreatedAt(value)) saveNotes(notes);
+  return notes;
 }
 
 export function saveNotes(value: Note[]) {
@@ -127,9 +140,7 @@ export function saveHighlights(value: Highlight[]) {
 }
 
 export function loadSwatches(): HighlightSwatch[] {
-  const value = parse(KEYS.swatches);
-  if (!Array.isArray(value) || value.length === 0) return defaultSwatches;
-  return value as HighlightSwatch[];
+  return swatchesOrDefaults(cleanSwatches(parse(KEYS.swatches)));
 }
 
 export function saveSwatches(value: HighlightSwatch[]) {
@@ -152,22 +163,25 @@ export function loadSession(): SessionUser | null {
 }
 
 export function loadProgress(): ReadingProgress {
-  const value = parse(KEYS.progress);
-  if (!value || typeof value !== "object") return defaultReadingProgress;
-  const raw = value as Partial<ReadingProgress>;
-  const versesRead = Array.isArray(raw.versesRead) ? raw.versesRead.filter((key) => typeof key === "string") : [];
-  const surahsRead = Array.isArray(raw.surahsRead) ? raw.surahsRead.filter((id) => Number.isInteger(id)) : [];
-  const loaded = {
-    ...defaultReadingProgress,
-    ...raw,
-    surahsRead,
-    surahCompletions: normalizeSurahCompletions(raw.surahCompletions, surahsRead),
-    versesRead,
-    verseVisits: normalizeVerseVisits(raw.verseVisits, versesRead),
-    lastVerseKey: typeof raw.lastVerseKey === "string" ? raw.lastVerseKey : null,
-    lastActiveAt: typeof raw.lastActiveAt === "number" ? raw.lastActiveAt : null,
-  };
-  return syncSurahsRead(loaded);
+  return syncSurahsRead(normalizeReadingProgress(parse(KEYS.progress)));
+}
+
+const FIRST_SEEN_KEY = "al-mushaf-first-seen";
+
+export function loadFirstSeen(): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(FIRST_SEEN_KEY);
+    if (!raw || Number.isNaN(Date.parse(raw))) return null;
+    return raw;
+  } catch {
+    return null;
+  }
+}
+
+export function saveFirstSeen(iso: string) {
+  if (typeof window === "undefined" || Number.isNaN(Date.parse(iso))) return;
+  window.localStorage.setItem(FIRST_SEEN_KEY, iso);
 }
 
 export function saveProgress(value: ReadingProgress) {

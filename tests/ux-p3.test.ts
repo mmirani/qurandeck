@@ -9,7 +9,7 @@ const layout = readFileSync(new URL("../src/app/layout.tsx", import.meta.url), "
 const search = readFileSync(new URL("../src/components/search/search-bar.tsx", import.meta.url), "utf8");
 const auth = readFileSync(new URL("../src/components/modals/auth-modal.tsx", import.meta.url), "utf8");
 const study = readFileSync(new URL("../src/components/sidebar/study-sidebar.tsx", import.meta.url), "utf8");
-const note = readFileSync(new URL("../src/components/reader/note-composer.tsx", import.meta.url), "utf8");
+const note = readFileSync(new URL("../src/components/reader/verse-note-panel.tsx", import.meta.url), "utf8");
 const player = readFileSync(new URL("../src/components/audio/audio-player.tsx", import.meta.url), "utf8");
 const mobile = readFileSync(new URL("../src/components/reader/mobile-reader-bar.tsx", import.meta.url), "utf8");
 const themes = readFileSync(new URL("../src/components/modals/theme-picker.tsx", import.meta.url), "utf8");
@@ -84,9 +84,9 @@ describe("P3 reader chrome", () => {
   });
 
   it("labels the note fields with the ayah", () => {
-    assert.match(note, /htmlFor=\{id\}[\s\S]*Note on \{verseKey\}/);
-    assert.match(study, /htmlFor="verse-note"[\s\S]*Note on/);
-    assert.match(study, /id="verse-note"/);
+    assert.match(note, /htmlFor=\{fieldId\}[\s\S]*Note on \{verseKey/);
+    assert.match(note, /id=\{fieldId\}/);
+    assert.match(study, /fieldId="verse-note"/);
   });
 
   it("arms ayah-mode word taps and keeps the phone controls on one row", () => {

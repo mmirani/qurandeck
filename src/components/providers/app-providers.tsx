@@ -5,6 +5,7 @@ import { SessionProvider } from "next-auth/react";
 import { GuestSession } from "@/components/analytics/guest-session";
 import { PageView } from "@/components/analytics/page-view";
 import { UsageSession } from "@/components/analytics/usage-session";
+import { RememberFirstSeen } from "@/components/account/reading-since";
 import { MushafProvider } from "@/components/providers/mushaf-provider";
 import { ToastHost } from "@/components/ui/toast-host";
 
@@ -14,6 +15,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
       <MushafProvider>
         {children}
         <ToastHost />
+        <RememberFirstSeen />
         <GuestSession />
         <UsageSession />
         <PageView />

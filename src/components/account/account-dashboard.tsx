@@ -10,18 +10,14 @@ import { Modal } from "@/components/ui/modal";
 import { PROMISE_LINE, PROMISE_WHY } from "@/lib/brand";
 import { AvatarPicker } from "@/components/account/profile-avatar";
 import { CompletionMap } from "@/components/account/completion-map";
+import { ReadingSince } from "@/components/account/reading-since";
+import { StatsRangeBar, useRangeStats } from "@/components/account/stats-range-bar";
 import {
   downloadLibraryJson,
   downloadStatsCsv,
   type LibraryExportInput,
 } from "@/lib/export-library";
-import {
-  continueBookmark,
-  formatReadingMinutes,
-  parseVerseKey,
-  TOTAL_AYAHS,
-  TOTAL_SURAHS,
-} from "@/lib/reading";
+import { continueBookmark, parseVerseKey, TOTAL_AYAHS, TOTAL_SURAHS } from "@/lib/reading";
 
 type AccountTab = "progress" | "saved" | "settings" | "account";
 
@@ -131,19 +127,43 @@ export function AccountRailCard() {
 }
 
 function AccountDashboard() {
-  const { user, progress, bookmarks, notes, highlights, openAuth } = useMushaf();
-  const minutes = formatReadingMinutes(progress.totalSeconds);
+  const { user, progress, openAuth } = useMushaf();
+  const stats = useRangeStats();
+  const ranged = Boolean(stats.range.start && stats.range.end);
+  const count = (value: number | null) => (value == null ? "—" : value.toLocaleString("en-US"));
 
   return (
     <div className="flex flex-col gap-6">
+      <ReadingSince />
       <ContinueCard />
+      <StatsRangeBar />
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <StatCard label="Verses read" value={`${progress.versesRead.length}`} hint={`of ${TOTAL_AYAHS}`} />
-        <StatCard label="Surahs finished" value={`${progress.surahsRead.length}`} hint={`of ${TOTAL_SURAHS}`} />
-        <StatCard label="Streak" value={`${progress.streak} day${progress.streak === 1 ? "" : "s"}`} hint={progress.lastReadDay ? `Last ${progress.lastReadDay}` : "Stay on an ayah to begin"} />
-        <StatCard label="Minutes" value={`${minutes}`} hint="While reading in the mushaf" />
-        <StatCard label="Favorites" value={`${bookmarks.length}`} hint="In Saved" />
-        <StatCard label="Notes" value={`${notes.length}`} hint={`${highlights.length} highlights`} />
+        <StatCard
+          label="Verses read"
+          value={count(stats.ayahs)}
+          hint={stats.ayahs == null ? "Not in daily history" : ranged ? "Newly marked in this range" : `of ${TOTAL_AYAHS}`}
+        />
+        <StatCard
+          label="Surahs finished"
+          value={`${stats.surahsFinished}`}
+          hint={ranged ? "All time" : `of ${TOTAL_SURAHS}`}
+        />
+        <StatCard
+          label="Streak"
+          value={`${stats.streak} day${stats.streak === 1 ? "" : "s"}`}
+          hint={progress.lastReadDay ? `Last ${progress.lastReadDay}` : "Stay on an ayah to begin"}
+        />
+        <StatCard
+          label="Minutes"
+          value={count(stats.minutes)}
+          hint={stats.minutes == null ? "Not in daily history" : ranged ? "In this range" : "While reading in the mushaf"}
+        />
+        <StatCard label="Favorites" value={count(stats.bookmarks)} hint={ranged ? "Saved in this range" : "In Saved"} />
+        <StatCard
+          label="Notes"
+          value={count(stats.notes)}
+          hint={`${count(stats.highlights)} highlights${ranged ? " in this range" : ""}`}
+        />
       </div>
       <CompletionMap />
       {!user ? <DataExportPanel compact /> : null}
@@ -196,8 +216,9 @@ function DeleteAccountPanel() {
     >
       <h3 className="text-sm font-semibold text-ink">Delete my account</h3>
       <p className="text-sm text-ink-soft">
-        This deletes the sealed library, passkeys, and unused sign-in codes stored for this email. Reading on this
-        device stays until you clear the browser. Anonymous rank totals are not removed.
+        This deletes the sealed library, including day-by-day reading totals, passkeys, and unused sign-in codes stored
+        for this email. Reading on this device stays until you clear the browser. Anonymous rank totals are not
+        removed.
       </p>
       <label className="block text-sm">
         Type delete to confirm

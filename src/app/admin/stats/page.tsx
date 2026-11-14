@@ -2,9 +2,10 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { auth } from "@/auth";
 import { UsageStatsView } from "@/components/admin/usage-stats";
+import { countUnreadFeedback } from "@/lib/feedback-store";
 import { loadGeoSnapshot } from "@/lib/geo-store";
-import { parseGeoDir, parseGeoRange, parseGeoSort, summarizeGeo, type GeoSummary } from "@/lib/geo";
-import { adminStatsStatus, type UsageStats } from "@/lib/usage";
+import { parseGeoDir, parseGeoRange, parseGeoSort, summarizeGeo } from "@/lib/geo";
+import { adminStatsStatus } from "@/lib/usage";
 import { loadUsageStats } from "@/lib/usage-store";
 
 export const dynamic = "force-dynamic";
@@ -34,18 +35,27 @@ export default async function AdminStatsPage({
   const sort = parseGeoSort(query.sort);
   const dir = parseGeoDir(query.dir);
 
-  let stats: UsageStats | null = null;
-  try {
-    stats = await loadUsageStats();
-  } catch {
-    console.error("Usage stats failed");
-  }
-
-  let geo: GeoSummary | null = null;
-  try {
-    geo = summarizeGeo(await loadGeoSnapshot(), range, sort, dir);
-  } catch {
-    console.error("Country stats failed");
-  }
-  return <UsageStatsView stats={stats} geo={geo} />;
+  const [stats, geo, inboxUnread] = await Promise.all([
+    loadUsageStats().then(
+      (value) => value,
+      () => {
+        console.error("Usage stats failed");
+        return null;
+      },
+    ),
+    loadGeoSnapshot()
+      .then((snapshot) => summarizeGeo(snapshot, range, sort, dir))
+      .catch(() => {
+        console.error("Country stats failed");
+        return null;
+      }),
+    countUnreadFeedback().then(
+      (value) => value,
+      () => {
+        console.error("Feedback unread count failed");
+        return null;
+      },
+    ),
+  ]);
+  return <UsageStatsView stats={stats} geo={geo} inboxUnread={inboxUnread} />;
 }

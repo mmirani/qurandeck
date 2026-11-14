@@ -1300,7 +1300,7 @@ body::before {
 
 .ayah-mark {
   color: inherit;
-  background: color-mix(in srgb, var(--mark-color, #f5d76e) 58%, transparent);
+  background: color-mix(in srgb, var(--mark-color, #f5d76e) 40%, transparent);
   border-radius: 0.28em;
   box-decoration-break: clone;
   -webkit-box-decoration-break: clone;

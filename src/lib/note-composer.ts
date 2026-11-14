@@ -44,10 +44,16 @@ export function noteComposerReply(verseKey: string, focused: boolean) {
  */
 export function focusOpenNote(key: string): boolean {
   if (typeof document !== "undefined") {
-    const field = document.getElementById("verse-note");
-    if (field instanceof HTMLElement && noteFieldIsVisible(field.getBoundingClientRect())) {
-      field.focus();
-      return document.activeElement === field;
+    const panels = [...document.querySelectorAll<HTMLElement>("[data-note-panel='rail']")];
+    const panel = panels.find((node) => noteFieldIsVisible(node.getBoundingClientRect()));
+    if (panel) {
+      panel.dispatchEvent(new CustomEvent("qurandeck-note-edit"));
+      const field = panel.querySelector("textarea");
+      if (field instanceof HTMLElement && noteFieldIsVisible(field.getBoundingClientRect())) {
+        field.focus();
+        return document.activeElement === field;
+      }
+      return false;
     }
   }
   openNoteComposer(key);

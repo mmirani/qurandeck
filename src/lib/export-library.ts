@@ -112,7 +112,7 @@ function csvEscape(value: string | number | null | undefined) {
 export function buildStatsCsv(input: LibraryExportInput): string {
   const stats = buildExportStats(input);
   const lines: string[] = [
-    "section,key,value",
+    "section,key,value,created_at,updated_at",
     `summary,verses_read,${stats.versesRead}`,
     `summary,verses_total,${stats.versesTotal}`,
     `summary,surahs_finished,${stats.surahsFinished}`,
@@ -124,8 +124,18 @@ export function buildStatsCsv(input: LibraryExportInput): string {
     `summary,notes,${stats.notes}`,
     `summary,highlights,${stats.highlights}`,
     `summary,last_verse_key,${csvEscape(stats.lastVerseKey)}`,
+    `summary,daily_history_since,${csvEscape(input.progress.historySince)}`,
     `summary,exported_at,${csvEscape(new Date().toISOString())}`,
   ];
+
+  const daily = input.progress.daily ?? {};
+  const dailyKeys = Object.keys(daily).sort();
+  for (const day of dailyKeys) {
+    const tally = daily[day];
+    if (!tally) continue;
+    lines.push(`daily_seconds,${csvEscape(day)},${tally.seconds}`);
+    lines.push(`daily_ayahs,${csvEscape(day)},${tally.ayahs}`);
+  }
 
   for (const chapterId of stats.surahsFinishedIds) {
     const count = stats.surahCompletions[String(chapterId)] ?? 1;
@@ -139,7 +149,9 @@ export function buildStatsCsv(input: LibraryExportInput): string {
   }
 
   for (const note of input.notes) {
-    lines.push(`note,${csvEscape(note.verseKey)},${csvEscape(note.body)}`);
+    lines.push(
+      `note,${csvEscape(note.verseKey)},${csvEscape(note.body)},${csvEscape(note.createdAt)},${csvEscape(note.updatedAt)}`,
+    );
   }
 
   return `${lines.join("\n")}\n`;

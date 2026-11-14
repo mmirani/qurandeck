@@ -20,13 +20,15 @@ export function CornerFrame({
   children,
   className = "",
   style,
+  onClick,
 }: {
   children: React.ReactNode;
   className?: string;
   style?: React.CSSProperties;
+  onClick?: (event: React.MouseEvent<HTMLDivElement>) => void;
 }) {
   return (
-    <div className={className} style={style}>
+    <div className={className} style={style} onClick={onClick}>
       {children}
     </div>
   );

@@ -11,6 +11,7 @@ export function Modal({
   onClose,
   wide = false,
   stable = false,
+  actions,
 }: {
   title: string;
   eyebrow?: string;
@@ -18,6 +19,7 @@ export function Modal({
   onClose: () => void;
   wide?: boolean;
   stable?: boolean;
+  actions?: ReactNode;
 }) {
   const dialogRef = useRef<HTMLDivElement>(null);
   const onCloseRef = useRef(onClose);
@@ -88,6 +90,8 @@ export function Modal({
               {title}
             </h2>
           </div>
+          <div className="flex shrink-0 items-center gap-2">
+            {actions}
           <button
             type="button"
             data-dialog-close
@@ -97,6 +101,7 @@ export function Modal({
           >
             <X className="h-4 w-4" aria-hidden="true" />
           </button>
+          </div>
         </div>
         <div className={`qd-pad overflow-y-auto ${stable ? "min-h-0 flex-1" : "max-h-[calc(88vh-5.5rem)]"}`}>{children}</div>
       </div>

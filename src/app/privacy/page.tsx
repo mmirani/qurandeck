@@ -8,7 +8,7 @@ export const metadata = pageMeta({
   path: "/privacy",
 });
 
-const UPDATED = "November 13, 2026";
+const UPDATED = "November 14, 2026";
 
 export default function PrivacyPage() {
   return (
@@ -29,8 +29,10 @@ export default function PrivacyPage() {
       <LegalSection title="Reading without an account">
         <p>
           You can open the mushaf without signing in. Preferences, your place in the Quran, favorites, notes,
-          highlights, and reading time then stay in this browser. That guest library is not copied to the QuranDeck
-          database.
+          highlights, and reading time then stay in this browser. Reading time is a running total, and from the day
+          daily history begins it also keeps a count for each calendar day: seconds read, and how many ayahs were
+          newly marked read. That day count does not list which ayahs, and it does not include note text, search
+          text, an IP address, or a browser. That guest library is not copied to the QuranDeck database.
         </p>
         <p>Clearing this site’s saved data in the browser removes that guest library from the device.</p>
       </LegalSection>
@@ -56,8 +58,10 @@ export default function PrivacyPage() {
       <LegalSection title="The library we sync">
         <p>
           After you sign in, QuranDeck can save a library for that email: reading preferences, favorites, notes,
-          highlights, color swatches, progress (including how often an ayah was returned to), display name, and profile
-          photo or icon. The same library is merged back onto a device when you sign in there.
+          highlights, color swatches, progress (including how often an ayah was returned to, and those same per-day
+          second and ayah counts), display name, and profile photo or icon. The same library is merged back onto a
+          device when you sign in there. A per-day count stores only the date, the seconds, and the number of ayahs.
+          It does not store which ayahs those were.
         </p>
         <p>
           In the database, the row is not labeled with your email address. The account key is a one-way hash of the
@@ -163,7 +167,8 @@ export default function PrivacyPage() {
         <p>
           Guest data stays in the browser until you clear it. A signed-in library stays until you delete the account
           from the account panel or ask for it to be removed. Delete my account removes that email’s sealed library,
-          passkeys, and unused sign-in codes. Sign-in codes expire after about 10 minutes and work only once. Anonymous
+          including the day-by-day reading totals, plus passkeys and unused sign-in codes. Sign-in codes expire after
+          about 10 minutes and work only once. Anonymous
           usage events, daily country totals, and daily visitor hashes are removed after about 13 months. Anonymous
           platform rank totals are not tied to your row, so deleting an account does not unwind counts already added
           to those totals. Notes that never left this browser stay here until you clear site data.
