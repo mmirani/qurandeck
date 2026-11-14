@@ -30,7 +30,23 @@ export type ReadingProgress = {
   verseVisits: Record<string, number>;
   lastVerseKey: string | null;
   lastActiveAt: number | null;
+  /**
+   * Day totals only. Keys are `YYYY-MM-DD`, or `YYYY-MM` after older days are folded.
+   * Values are seconds and newly marked ayahs — never which ayah, and never note text.
+   */
+  daily: DailyMap;
+  /** First local day a daily count was recorded. Null until that happens. */
+  historySince: string | null;
 };
+
+/** Seconds read and ayahs newly marked on one day or one rolled-up month. */
+export type DailyTally = { seconds: number; ayahs: number };
+export type DailyMap = Record<string, DailyTally>;
+
+/** Keep this many recent days as individual keys. Older days fold into `YYYY-MM`. */
+export const DAILY_DETAIL_DAYS = 400;
+const MAX_DAY_SECONDS = 86_400;
+const MAX_MONTH_SECONDS = 31 * MAX_DAY_SECONDS;
 
 export const defaultReadingProgress: ReadingProgress = {
   surahsRead: [],
@@ -42,15 +58,186 @@ export const defaultReadingProgress: ReadingProgress = {
   verseVisits: {},
   lastVerseKey: null,
   lastActiveAt: null,
+  daily: {},
+  historySince: null,
 };
 
 export function todayKey(date = new Date()) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
 
+export function isDayKey(value: unknown): boolean {
+  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const [year, month, day] = value.split("-").map(Number);
+  const date = new Date(year, month - 1, day);
+  return date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day;
+}
+
+export function asDayKey(value: unknown): string | null {
+  return typeof value === "string" && isDayKey(value) ? value : null;
+}
+
+export function isMonthKey(value: unknown): boolean {
+  if (typeof value !== "string" || !/^\d{4}-\d{2}$/.test(value)) return false;
+  const month = Number(value.slice(5));
+  return month >= 1 && month <= 12;
+}
+
+export function parseDayKey(value: string): Date | null {
+  if (!isDayKey(value)) return null;
+  const [year, month, day] = value.split("-").map(Number);
+  return new Date(year, month - 1, day);
+}
+
+export function shiftDayKey(day: string, delta: number): string {
+  const date = parseDayKey(day);
+  if (!date) return day;
+  date.setDate(date.getDate() + delta);
+  return todayKey(date);
+}
+
+/** True when `day` is after the local calendar day of `now`. Day keys are local, not UTC. */
+export function isFutureDay(day: string, now = new Date()) {
+  return isDayKey(day) && day > todayKey(now);
+}
+
+export function lastDayKeyOfMonth(month: string): string {
+  if (!isMonthKey(month)) return month;
+  const [year, monthIndex] = month.split("-").map(Number);
+  return todayKey(new Date(year, monthIndex, 0));
+}
+
+function cleanCount(value: unknown, max: number) {
+  if (typeof value !== "number" || !Number.isFinite(value) || value <= 0) return 0;
+  return Math.min(max, Math.floor(value));
+}
+
+function cleanTally(value: unknown, maxSeconds: number): DailyTally | null {
+  if (!value || typeof value !== "object") return null;
+  const raw = value as Partial<DailyTally>;
+  const seconds = cleanCount(raw.seconds, maxSeconds);
+  const ayahs = cleanCount(raw.ayahs, TOTAL_AYAHS);
+  if (seconds === 0 && ayahs === 0) return null;
+  return { seconds, ayahs };
+}
+
+export function normalizeDaily(value: unknown): DailyMap {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+  const out: DailyMap = {};
+  for (const [key, tally] of Object.entries(value as Record<string, unknown>)) {
+    const maxSeconds = isMonthKey(key) ? MAX_MONTH_SECONDS : MAX_DAY_SECONDS;
+    if (!isDayKey(key) && !isMonthKey(key)) continue;
+    const clean = cleanTally(tally, maxSeconds);
+    if (clean) out[key] = clean;
+  }
+  return out;
+}
+
+export function addDaily(daily: DailyMap | undefined, day: string, delta: { seconds?: number; ayahs?: number }): DailyMap {
+  const base = daily ?? {};
+  if (!isDayKey(day)) return base;
+  const current = base[day] ?? { seconds: 0, ayahs: 0 };
+  const seconds = Math.min(MAX_DAY_SECONDS, current.seconds + Math.max(0, Math.floor(delta.seconds ?? 0)));
+  const ayahs = Math.min(TOTAL_AYAHS, current.ayahs + Math.max(0, Math.floor(delta.ayahs ?? 0)));
+  if (seconds === 0 && ayahs === 0) {
+    if (!base[day]) return base;
+    const next = { ...base };
+    delete next[day];
+    return next;
+  }
+  return { ...base, [day]: { seconds, ayahs } };
+}
+
+/** Fold days older than the detail window into month totals so the map stays small. */
+export function compactDaily(daily: DailyMap, today = todayKey(), keepDays = DAILY_DETAIL_DAYS): DailyMap {
+  const cutoff = shiftDayKey(today, -(Math.max(1, keepDays) - 1));
+  const next: DailyMap = {};
+  for (const [key, tally] of Object.entries(normalizeDaily(daily))) {
+    if (isMonthKey(key)) {
+      const prev = next[key] ?? { seconds: 0, ayahs: 0 };
+      next[key] = {
+        seconds: Math.min(MAX_MONTH_SECONDS, prev.seconds + tally.seconds),
+        ayahs: Math.min(TOTAL_AYAHS, prev.ayahs + tally.ayahs),
+      };
+      continue;
+    }
+    if (key >= cutoff) {
+      next[key] = tally;
+      continue;
+    }
+    const month = key.slice(0, 7);
+    const prev = next[month] ?? { seconds: 0, ayahs: 0 };
+    next[month] = {
+      seconds: Math.min(MAX_MONTH_SECONDS, prev.seconds + tally.seconds),
+      ayahs: Math.min(TOTAL_AYAHS, prev.ayahs + tally.ayahs),
+    };
+  }
+  return next;
+}
+
+/** Per-day max so two devices syncing the same day do not add the counts twice. */
+export function mergeDaily(a: DailyMap | undefined, b: DailyMap | undefined): DailyMap {
+  const left = normalizeDaily(a);
+  const right = normalizeDaily(b);
+  const keys = new Set([...Object.keys(left), ...Object.keys(right)]);
+  const out: DailyMap = {};
+  for (const key of keys) {
+    const tallyA = left[key] ?? { seconds: 0, ayahs: 0 };
+    const tallyB = right[key] ?? { seconds: 0, ayahs: 0 };
+    const seconds = Math.max(tallyA.seconds, tallyB.seconds);
+    const ayahs = Math.max(tallyA.ayahs, tallyB.ayahs);
+    if (seconds === 0 && ayahs === 0) continue;
+    out[key] = { seconds, ayahs };
+  }
+  return out;
+}
+
+export function earlierHistorySince(a: string | null | undefined, b: string | null | undefined): string | null {
+  const left = asDayKey(a);
+  const right = asDayKey(b);
+  if (!left) return right;
+  if (!right) return left;
+  return left < right ? left : right;
+}
+
+function inferredHistorySince(daily: DailyMap, explicit: unknown): string | null {
+  const stated = asDayKey(explicit);
+  if (stated) return stated;
+  let earliest: string | null = null;
+  for (const key of Object.keys(daily)) {
+    const day = isDayKey(key) ? key : isMonthKey(key) ? `${key}-01` : null;
+    if (!day) continue;
+    if (!earliest || day < earliest) earliest = day;
+  }
+  return earliest;
+}
+
+export function normalizeReadingProgress(raw: unknown): ReadingProgress {
+  if (!raw || typeof raw !== "object") return defaultReadingProgress;
+  const value = raw as Partial<ReadingProgress>;
+  const versesRead = Array.isArray(value.versesRead) ? value.versesRead.filter((key) => typeof key === "string") : [];
+  const surahsRead = Array.isArray(value.surahsRead) ? value.surahsRead.filter((id) => Number.isInteger(id)) : [];
+  const daily = compactDaily(normalizeDaily(value.daily));
+  const totalSeconds = cleanCount(value.totalSeconds, 1_000_000_000);
+  const streak = cleanCount(value.streak, 100_000);
+  return {
+    surahsRead,
+    surahCompletions: normalizeSurahCompletions(value.surahCompletions, surahsRead),
+    lastReadDay: typeof value.lastReadDay === "string" ? value.lastReadDay : null,
+    streak,
+    totalSeconds,
+    versesRead,
+    verseVisits: normalizeVerseVisits(value.verseVisits, versesRead),
+    lastVerseKey: typeof value.lastVerseKey === "string" ? value.lastVerseKey : null,
+    lastActiveAt: typeof value.lastActiveAt === "number" && Number.isFinite(value.lastActiveAt) ? value.lastActiveAt : null,
+    daily,
+    historySince: earlierHistorySince(asDayKey(value.historySince), inferredHistorySince(daily, null)),
+  };
+}
+
 export function bumpStreak(progress: ReadingProgress, day = todayKey()): ReadingProgress {
   if (progress.lastReadDay === day) return progress;
-  const yesterday = todayKey(new Date(Date.now() - 86400000));
+  const yesterday = shiftDayKey(day, -1);
   return {
     ...progress,
     lastReadDay: day,
@@ -58,13 +245,30 @@ export function bumpStreak(progress: ReadingProgress, day = todayKey()): Reading
   };
 }
 
-export function addReadingSeconds(progress: ReadingProgress, seconds: number): ReadingProgress {
-  return bumpStreak({ ...progress, totalSeconds: progress.totalSeconds + seconds });
+export function addReadingSeconds(progress: ReadingProgress, seconds: number, day = todayKey()): ReadingProgress {
+  const withStreak = bumpStreak(progress, day);
+  if (seconds <= 0) return withStreak;
+  const added = Math.floor(seconds);
+  if (added <= 0) return withStreak;
+  return {
+    ...withStreak,
+    totalSeconds: withStreak.totalSeconds + added,
+    daily: compactDaily(addDaily(withStreak.daily, day, { seconds: added }), day),
+    historySince: withStreak.historySince ?? (isDayKey(day) ? day : null),
+  };
 }
 
-export function subtractReadingSeconds(progress: ReadingProgress, seconds: number): ReadingProgress {
+export function subtractReadingSeconds(progress: ReadingProgress, seconds: number, day = todayKey()): ReadingProgress {
   if (seconds <= 0) return progress;
-  return { ...progress, totalSeconds: Math.max(0, progress.totalSeconds - seconds) };
+  const removed = Math.floor(seconds);
+  const totalSeconds = Math.max(0, progress.totalSeconds - removed);
+  const current = progress.daily?.[day];
+  if (!current) return { ...progress, totalSeconds };
+  const nextSeconds = Math.max(0, current.seconds - removed);
+  const daily = { ...progress.daily };
+  if (nextSeconds === 0 && current.ayahs === 0) delete daily[day];
+  else daily[day] = { ...current, seconds: nextSeconds };
+  return { ...progress, totalSeconds, daily };
 }
 
 export function isMushafPath(pathname: string | null | undefined) {
@@ -159,17 +363,25 @@ function recordSurahCompletion(progress: ReadingProgress, chapterId: number): Re
   return { ...progress, surahsRead, surahCompletions };
 }
 
-export function markVerseRead(progress: ReadingProgress, verseKey: string): ReadingProgress {
-  const next = bumpStreak(progress);
+export function markVerseRead(progress: ReadingProgress, verseKey: string, day = todayKey()): ReadingProgress {
+  const next = bumpStreak(progress, day);
+  const isNew = !next.versesRead.includes(verseKey);
   const visits = { ...next.verseVisits };
   visits[verseKey] = (visits[verseKey] ?? 0) + 1;
-  const versesRead = next.versesRead.includes(verseKey) ? next.versesRead : [...next.versesRead, verseKey];
-  const result: ReadingProgress = {
+  const versesRead = isNew ? [...next.versesRead, verseKey] : next.versesRead;
+  let result: ReadingProgress = {
     ...next,
     versesRead,
     verseVisits: visits,
     surahCompletions: normalizeSurahCompletions(next.surahCompletions, next.surahsRead),
   };
+  if (isNew && isDayKey(day)) {
+    result = {
+      ...result,
+      daily: compactDaily(addDaily(result.daily, day, { ayahs: 1 }), day),
+      historySince: result.historySince ?? day,
+    };
+  }
 
   const place = parseVerseKey(verseKey);
   if (!place || result.surahsRead.includes(place.chapterId)) return result;
