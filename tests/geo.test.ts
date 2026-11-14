@@ -262,7 +262,10 @@ describe("map", () => {
     const source = [
       "src/lib/geo-map.ts",
       "src/components/admin/geo-dashboard.tsx",
+      "src/components/admin/country-choropleth.tsx",
+      "src/components/admin/signup-countries.tsx",
       "src/lib/geo-store.ts",
+      "src/lib/signup-country-store.ts",
       "src/app/api/usage/route.ts",
     ]
       .map((path) => readFileSync(path, "utf8"))

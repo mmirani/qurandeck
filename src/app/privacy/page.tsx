@@ -116,6 +116,7 @@ export default function PrivacyPage() {
           count for a day is a hash of the random id mixed with a salt that changes each day, and the raw id is not
           stored with the country. A page view is a count that a page opened. The page address is not stored.
         </p>
+        <p>Sign-up counts by country are kept the same aggregate way, and removed on the same schedule.</p>
         <p>
           The list covers a guest session starting, a sign-up, a sign-in (email code, passkey, Google, or Apple), a
           guest library merging into an account, and an account deletion. It also covers product actions: audio

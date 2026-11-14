@@ -3,9 +3,11 @@ import type { NextAuthConfig } from "next-auth";
 import Apple from "next-auth/providers/apple";
 import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { appleClientSecretFromEnv } from "@/lib/apple-client-secret";
 import { verifyMagicToken } from "@/lib/magic-link";
+import { shouldCountSignupCountry } from "@/lib/signup-country";
+import { recordSignupCountry } from "@/lib/signup-country-store";
 import { recordSignIn } from "@/lib/usage-store";
 import { getMagicLinkStore } from "@/lib/magic-link-store";
 
@@ -83,8 +85,33 @@ async function canSignUp(email?: string | null) {
   return store.get(BETA_COOKIE)?.value === "1";
 }
 
+async function countSignupCountry(input: {
+  source: "createUser" | "jwt";
+  isNewUser?: boolean;
+  trigger?: "signIn" | "signUp" | "update";
+  signUp?: "inserted" | "duplicate" | null;
+}) {
+  try {
+    if (!shouldCountSignupCountry(input)) return;
+    let countryHeader: string | null = null;
+    try {
+      countryHeader = (await headers()).get("x-vercel-ip-country");
+    } catch {
+      countryHeader = null;
+    }
+    await recordSignupCountry(countryHeader);
+  } catch {
+    console.error("Signup country counter failed");
+  }
+}
+
 export const authConfig = {
   providers: buildProviders(),
+  events: {
+    async createUser() {
+      await countSignupCountry({ source: "createUser" });
+    },
+  },
   pages: {
     signIn: "/",
     verifyRequest: "/auth/check-email",
@@ -97,7 +124,7 @@ export const authConfig = {
     async signIn({ user }) {
       return canSignUp(user.email);
     },
-    async jwt({ token, account, profile, user }) {
+    async jwt({ token, account, profile, user, isNewUser, trigger }) {
       if (user) {
         token.sub = user.id ?? token.sub;
         token.email = user.email ?? token.email;
@@ -106,11 +133,14 @@ export const authConfig = {
       if (account?.provider) token.authProvider = account.provider;
       if (profile?.email && !token.email) token.email = profile.email;
       if (user?.email && account?.provider) {
+        let signUp: "inserted" | "duplicate" | null = null;
         try {
-          await recordSignIn(user.email, account.provider);
+          const result = await recordSignIn(user.email, account.provider);
+          if (result?.signUp === "inserted" || result?.signUp === "duplicate") signUp = result.signUp;
         } catch {
           console.error("Usage sign-in event failed");
         }
+        await countSignupCountry({ source: "jwt", isNewUser, trigger, signUp });
       }
       return token;
     },

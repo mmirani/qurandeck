@@ -1,25 +1,13 @@
+import { CountryChoropleth } from "@/components/admin/country-choropleth";
+import { ADMIN_RANGES, adminRangeLabel, adminStatsHref, type AdminRange } from "@/lib/admin-range";
 import {
-  GEO_EMPTY,
-  GEO_RANGES,
-  countryNumericId,
   formatShare,
-  geoFill,
-  geoScaleBands,
   geoStatsHref,
   geoSummaryText,
   type GeoDir,
-  type GeoRange,
   type GeoSort,
   type GeoSummary,
 } from "@/lib/geo";
-import { countryShapes, mapViewBox } from "@/lib/geo-map";
-
-const RANGE_LABELS: Record<GeoRange, string> = {
-  "7": "7 days",
-  "28": "28 days",
-  "90": "90 days",
-  all: "All time",
-};
 
 const SORT_LABELS: Record<GeoSort, string> = {
   country: "Country",
@@ -27,7 +15,80 @@ const SORT_LABELS: Record<GeoSort, string> = {
   share: "Share",
 };
 
-export function GeoDashboard({ summary }: { summary: GeoSummary | null }) {
+export function GeoRangeNav({
+  range,
+  sort,
+  dir,
+}: {
+  range: AdminRange;
+  sort: GeoSort;
+  dir: GeoDir;
+}) {
+  const choices = range.id === "28" || range.id === "90" ? [range.id, ...ADMIN_RANGES] : [...ADMIN_RANGES];
+  return (
+    <div className="flex flex-col gap-3">
+      <nav aria-label="Date range for countries and sign-ups" className="flex flex-wrap gap-2">
+        {choices.map((item) => {
+          const current = item === range.id;
+          return (
+            <a
+              key={item}
+              href={adminStatsHref(range, sort, dir, item)}
+              aria-current={current ? "page" : undefined}
+              className={`inline-flex min-h-11 items-center rounded-full px-3 text-sm font-medium ${
+                current ? "bg-gold text-on-gold" : "border border-line bg-surface text-ink"
+              }`}
+            >
+              {adminRangeLabel(item)}
+            </a>
+          );
+        })}
+      </nav>
+      {range.id === "custom" ? (
+        <form method="get" action="/admin/stats" className="flex flex-wrap items-end gap-3" aria-label="Custom dates">
+          <input type="hidden" name="range" value="custom" />
+          {sort !== "visitors" ? <input type="hidden" name="sort" value={sort} /> : null}
+          {dir !== "desc" ? <input type="hidden" name="dir" value={dir} /> : null}
+          <label className="flex min-w-36 flex-col gap-1 text-sm font-medium text-ink">
+            Start
+            <input
+              type="date"
+              name="from"
+              defaultValue={range.from ?? ""}
+              max={range.today}
+              required
+              className="min-h-11 rounded-xl border border-line bg-surface px-3 text-base text-ink"
+            />
+          </label>
+          <label className="flex min-w-36 flex-col gap-1 text-sm font-medium text-ink">
+            End
+            <input
+              type="date"
+              name="to"
+              defaultValue={range.to ?? ""}
+              max={range.today}
+              required
+              className="min-h-11 rounded-xl border border-line bg-surface px-3 text-base text-ink"
+            />
+          </label>
+          <button type="submit" className="inline-flex min-h-11 items-center rounded-full bg-gold px-4 text-sm font-medium text-on-gold">
+            Apply
+          </button>
+        </form>
+      ) : null}
+    </div>
+  );
+}
+
+export function GeoDashboard({
+  summary,
+  showRange = true,
+  statsRange,
+}: {
+  summary: GeoSummary | null;
+  showRange?: boolean;
+  statsRange?: AdminRange;
+}) {
   return (
     <section id="countries" className="qd-pad rounded-3xl border border-line bg-surface" aria-labelledby="geo-heading">
       <div className="flex flex-wrap items-end justify-between gap-3">
@@ -41,32 +102,28 @@ export function GeoDashboard({ summary }: { summary: GeoSummary | null }) {
           </p>
         </div>
       </div>
-      {summary ? <GeoBody summary={summary} /> : <p className="mt-4 text-sm text-ink-soft">Country counts are unavailable right now.</p>}
+      {summary ? (
+        <GeoBody summary={summary} showRange={showRange} statsRange={statsRange} />
+      ) : (
+        <p className="mt-4 text-sm text-ink-soft">Country counts are unavailable right now.</p>
+      )}
     </section>
   );
 }
 
-function GeoBody({ summary }: { summary: GeoSummary }) {
+function GeoBody({
+  summary,
+  showRange,
+  statsRange,
+}: {
+  summary: GeoSummary;
+  showRange: boolean;
+  statsRange?: AdminRange;
+}) {
   const summaryText = geoSummaryText(summary);
   return (
     <div className="mt-5 flex flex-col gap-5">
-      <nav aria-label="Date range" className="flex flex-wrap gap-2">
-        {GEO_RANGES.map((range) => {
-          const current = range === summary.range;
-          return (
-            <a
-              key={range}
-              href={geoStatsHref({ range, sort: summary.sort, dir: summary.dir })}
-              aria-current={current ? "page" : undefined}
-              className={`inline-flex min-h-11 items-center rounded-full px-3 text-sm font-medium ${
-                current ? "bg-gold text-on-gold" : "border border-line text-ink"
-              }`}
-            >
-              {RANGE_LABELS[range]}
-            </a>
-          );
-        })}
-      </nav>
+      {showRange && statsRange ? <GeoRangeNav range={statsRange} sort={summary.sort} dir={summary.dir} /> : null}
 
       <div className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-3">
         <Kpi label="Unique visitors" value={summary.uniqueVisitors} hint="Counted once per day" />
@@ -75,7 +132,7 @@ function GeoBody({ summary }: { summary: GeoSummary }) {
       </div>
 
       <WorldMap summary={summary} summaryText={summaryText} />
-      <CountryTable summary={summary} />
+      <CountryTable summary={summary} statsRange={statsRange} />
       <Trend summary={summary} />
     </div>
   );
@@ -94,60 +151,21 @@ function Kpi({ label, value, hint }: { label: string; value: number; hint: strin
 }
 
 function WorldMap({ summary, summaryText }: { summary: GeoSummary; summaryText: string }) {
-  const shapes = countryShapes();
-  const visitors = new Map<string, { name: string; visitors: number }>();
-  for (const row of summary.countries) {
-    const id = countryNumericId(row.country);
-    if (!id || row.country === "ZZ") continue;
-    visitors.set(id, { name: row.name, visitors: row.visitors });
-  }
-  const bands = geoScaleBands(summary.maxVisitors);
-
   return (
-    <figure>
-      <figcaption id="geo-map-summary" className="text-sm leading-6 text-ink">
-        {summaryText} The table under the map lists every country.
-      </figcaption>
-      <svg
-        viewBox={mapViewBox()}
-        role="img"
-        aria-labelledby="geo-map-summary"
-        className="mt-3 h-auto w-full"
-      >
-        {shapes.map((shape) => {
-          const row = visitors.get(shape.id);
-          const value = row?.visitors ?? 0;
-          return (
-            <path
-              key={shape.id}
-              d={shape.d}
-              fill={geoFill(value, summary.maxVisitors)}
-              stroke="var(--surface)"
-              strokeWidth={0.6}
-            >
-              <title>{row ? `${row.name}: ${row.visitors.toLocaleString("en-US")} unique visitors` : "No visitors"}</title>
-            </path>
-          );
-        })}
-      </svg>
-      <ul className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-ink-soft" aria-label="Map legend">
-        <li className="flex items-center gap-2">
-          <span className="h-3 w-6 rounded-sm border border-line" style={{ background: GEO_EMPTY }} aria-hidden="true" />
-          None
-        </li>
-        {bands.map((band) => (
-          <li key={band.step} className="flex items-center gap-2">
-            <span className="h-3 w-6 rounded-sm border border-line" style={{ background: band.fill }} aria-hidden="true" />
-            {band.from === band.to ? band.from.toLocaleString("en-US") : `${band.from.toLocaleString("en-US")}–${band.to.toLocaleString("en-US")}`}
-          </li>
-        ))}
-      </ul>
-      <p className="mt-2 text-xs leading-5 text-ink-soft">Darker means more unique visitors. Colour is not the only cue: the table has the counts.</p>
-    </figure>
+    <CountryChoropleth
+      rows={summary.countries
+        .filter((row) => row.country !== "ZZ")
+        .map((row) => ({ country: row.country, name: row.name, value: row.visitors }))}
+      max={summary.maxVisitors}
+      summaryId="geo-map-summary"
+      summaryText={`${summaryText} The table under the map lists every country.`}
+      valueNoun="unique visitors"
+      emptyTitle="No visitors"
+    />
   );
 }
 
-function CountryTable({ summary }: { summary: GeoSummary }) {
+function CountryTable({ summary, statsRange }: { summary: GeoSummary; statsRange?: AdminRange }) {
   const columns: GeoSort[] = ["country", "visitors", "share"];
   return (
     <div>
@@ -172,7 +190,7 @@ function CountryTable({ summary }: { summary: GeoSummary }) {
                       className={column === "country" ? "pb-2 font-medium" : "pb-2 text-right font-medium"}
                     >
                       <a
-                        href={geoStatsHref({ range: summary.range, sort: column, dir: nextDir })}
+                        href={statsRange ? adminStatsHref(statsRange, column, nextDir) : geoStatsHref({ range: summary.range, sort: column, dir: nextDir })}
                         className="inline-flex min-h-11 items-center underline-offset-4 hover:underline"
                       >
                         {SORT_LABELS[column]}
