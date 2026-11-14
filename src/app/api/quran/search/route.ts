@@ -1,4 +1,4 @@
-import { QURAN_CACHE_CONTROL } from "@/lib/quran/qf";
+import { quranCacheHeaders } from "@/lib/quran/http-cache";
 import { NextRequest, NextResponse } from "next/server";
 import { DEFAULT_TRANSLATION_ID } from "@/lib/quran/sources";
 import { searchQuran } from "@/lib/quran/server";
@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
 
   try {
     const results = await searchQuran(query, translation, language);
-    return NextResponse.json({ results }, { headers: { "Cache-Control": QURAN_CACHE_CONTROL } });
+    return NextResponse.json({ results }, { headers: quranCacheHeaders() });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Search failed";
     return NextResponse.json({ error: message }, { status: 502 });

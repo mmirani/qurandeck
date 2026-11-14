@@ -8,6 +8,7 @@ import { VerseNotePanel } from "@/components/reader/verse-note-panel";
 import { anchorBox, HighlightPopover } from "@/components/reader/swatch-row";
 import { highlightListCopy } from "@/lib/highlights";
 import { resolveSwatch } from "@/lib/swatch-palette";
+import { WORD_GLOSS_CREDIT } from "@/lib/quran/credits";
 import { verseRangeLabel } from "@/lib/verse-range";
 import type { Highlight } from "@/lib/quran/types";
 
@@ -65,6 +66,9 @@ export function StudySidebar() {
         <h2 className="section-heading text-gold">Word by word</h2>
         <p className="text-sm leading-6 text-ink-soft">
           Tap a word in the verse to hear it, without starting the whole chapter.
+        </p>
+        <p className="mt-1 text-xs leading-5 text-ink-soft" translate="no">
+          {WORD_GLOSS_CREDIT}
         </p>
         <ArabesqueDivider className="my-3 text-gold/50" />
         <div className="space-y-3">

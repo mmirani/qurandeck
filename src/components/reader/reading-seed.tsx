@@ -4,7 +4,7 @@ import { createContext, useContext, useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import { useMushaf } from "@/components/providers/mushaf-provider";
 import { getSurah } from "@/lib/quran/client";
-import { requestedAyahNumber, seedMatchesReading, type SurahSeed } from "@/lib/quran/surah-seed";
+import { requestedAyahNumber, seedMatchesReading, type SurahSeed } from "@/lib/quran/surah-reading";
 import type { Chapter, Verse } from "@/lib/quran/types";
 
 const SurahSeedContext = createContext<SurahSeed | null>(null);

@@ -1,4 +1,4 @@
-import { QURAN_CACHE_CONTROL } from "@/lib/quran/qf";
+import { quranCacheHeaders } from "@/lib/quran/http-cache";
 import { NextRequest, NextResponse } from "next/server";
 import { parseTranslationQuery } from "@/lib/quran/languages";
 import { fetchVersesByJuz } from "@/lib/quran/server";
@@ -19,7 +19,7 @@ export async function GET(
     const verses = await fetchVersesByJuz(juzNumber, translation);
     return NextResponse.json(
       { juz: juzNumber, verses },
-      { headers: { "Cache-Control": QURAN_CACHE_CONTROL } },
+      { headers: quranCacheHeaders() },
     );
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to load juz";

@@ -1,5 +1,6 @@
 import { AppShell } from "@/components/shell/app-shell";
-import { loadSurahSeed, type SurahSeed } from "@/lib/quran/surah-seed";
+import type { SurahSeed } from "@/lib/quran/surah-reading";
+import { loadSurahSeed } from "@/lib/quran/surah-seed";
 import { pageMeta } from "@/lib/seo";
 
 export const metadata = pageMeta({

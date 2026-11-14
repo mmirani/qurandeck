@@ -41,6 +41,7 @@ export function AudioPlayer({
   } = useMushaf();
 
   const reciter = recitations.find((item) => item.id === preferences.recitationId);
+  const reciterName = reciter?.reciterName ?? "Mishari Rashid al-Afasy";
   const currentKey = playingVerseKey ?? selectedVerseKey ?? verses[0]?.verseKey;
   const index = Math.max(0, verses.findIndex((item) => item.verseKey === currentKey));
   const current = verses[index];
@@ -99,11 +100,16 @@ export function AudioPlayer({
               className="qd-seek"
             />
           </label>
-          <div className="mt-0.5 flex justify-between gap-2 text-xs font-medium text-gold">
-            <span className="truncate">
-              {currentKey ?? "—"} · {formatTime(currentTime)}
+          <div className="mt-0.5 flex justify-between gap-2 text-xs font-medium text-player-ink">
+            <span className="min-w-0 truncate">
+              <span className="sr-only">Reciter: </span>
+              <span translate="no">{reciterName}</span>
+              <span className="text-player-ink/80">
+                {" "}
+                · {currentKey ?? "—"} · {formatTime(currentTime)}
+              </span>
             </span>
-            <span className="shrink-0">{formatTime(duration)}</span>
+            <span className="shrink-0 text-player-ink/80">{formatTime(duration)}</span>
           </div>
         </div>
         <StyledSelect
@@ -139,7 +145,15 @@ export function AudioPlayer({
   return (
     <section className="mushaf-player rounded-xl p-4">
       <p className="kufic-label text-gold">Now reciting</p>
-      <p className="mt-1 font-display text-xl font-semibold tracking-tight text-player-ink">{reciter?.reciterName ?? "Mishari Rashid al-Afasy"}</p>
+      <p className="mt-1 font-display text-xl font-semibold tracking-tight text-player-ink">
+        <span className="sr-only">Reciter: </span>
+        <span translate="no">{reciterName}</span>
+      </p>
+      {reciter?.style ? (
+        <p className="text-xs leading-5 text-player-ink" translate="no">
+          {reciter.style}
+        </p>
+      ) : null}
       <p className="text-xs text-player-ink/70">
         {playMode === "verse"
           ? "This ayah only — recitation stops at the end"

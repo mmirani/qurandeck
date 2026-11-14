@@ -26,7 +26,7 @@ import {
   searchQuran,
 } from "@/lib/quran/client";
 import { groupForId, translationQuery, withTranslationIds } from "@/lib/quran/languages";
-import { mergeVerses, type SurahSeed } from "@/lib/quran/surah-seed";
+import { mergeVerses, type SurahSeed } from "@/lib/quran/surah-reading";
 import { searchGenerationWins, shouldCountSearch, shouldLiveSearch } from "@/lib/search-status";
 import { mergeStudyCards } from "@/lib/study-cards";
 import type {

@@ -1,10 +1,6 @@
 import { createHash } from "node:crypto";
 import { getSql } from "@/lib/db";
 
-type Bucket = { stamps: number[] };
-
-const buckets = new Map<string, Bucket>();
-
 export type RateLimit = {
   ok: boolean;
   limit: number;
@@ -12,19 +8,40 @@ export type RateLimit = {
   retryAfter: number;
 };
 
-export function rateLimit(key: string, limit: number, windowMs: number, now = Date.now()): RateLimit {
-  const bucket = buckets.get(key) ?? { stamps: [] };
-  const fresh = bucket.stamps.filter((stamp) => now - stamp < windowMs);
-  if (fresh.length >= limit) {
-    const retryAfter = Math.max(1, Math.ceil((windowMs - (now - fresh[0])) / 1000));
-    bucket.stamps = fresh;
-    buckets.set(key, bucket);
-    return { ok: false, limit, remaining: 0, retryAfter };
+/**
+ * Plug-in for the proxy buckets. The default keeps stamps in this instance's
+ * memory. A shared store can replace it later without a paid service from here.
+ */
+export interface RateLimitStore {
+  take(key: string, limit: number, windowMs: number, now?: number): RateLimit;
+}
+
+export class MemoryRateLimitStore implements RateLimitStore {
+  private buckets = new Map<string, number[]>();
+
+  take(key: string, limit: number, windowMs: number, now = Date.now()): RateLimit {
+    const fresh = (this.buckets.get(key) ?? []).filter((stamp) => now - stamp < windowMs);
+    if (fresh.length >= limit) {
+      const retryAfter = Math.max(1, Math.ceil((windowMs - (now - fresh[0])) / 1000));
+      this.buckets.set(key, fresh);
+      return { ok: false, limit, remaining: 0, retryAfter };
+    }
+    fresh.push(now);
+    this.buckets.set(key, fresh);
+    return { ok: true, limit, remaining: Math.max(0, limit - fresh.length), retryAfter: 0 };
   }
-  fresh.push(now);
-  bucket.stamps = fresh;
-  buckets.set(key, bucket);
-  return { ok: true, limit, remaining: Math.max(0, limit - fresh.length), retryAfter: 0 };
+}
+
+const memoryRateLimitStore = new MemoryRateLimitStore();
+let rateLimitStore: RateLimitStore = memoryRateLimitStore;
+
+/** Tests and a future shared store. Pass null to restore the in-memory store. */
+export function setRateLimitStore(store: RateLimitStore | null) {
+  rateLimitStore = store ?? memoryRateLimitStore;
+}
+
+export function rateLimit(key: string, limit: number, windowMs: number, now = Date.now()): RateLimit {
+  return rateLimitStore.take(key, limit, windowMs, now);
 }
 
 export function clientAddress(headerValue: string | null, fallback = "local") {

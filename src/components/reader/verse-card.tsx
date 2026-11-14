@@ -16,6 +16,7 @@ import {
   wordHighlight,
 } from "@/lib/highlights";
 import type { Highlight, HighlightLayer, HighlightSwatch, Preferences, Verse, Word } from "@/lib/quran/types";
+import { creditLine } from "@/lib/quran/credits";
 import { groupForId, htmlLang, isRtlLanguage, scriptClass } from "@/lib/quran/languages";
 import { PRODUCT_NAME } from "@/lib/brand";
 import { focusOpenNote } from "@/lib/note-composer";
@@ -79,9 +80,19 @@ export function VerseCard({
   const ayahShowArabic = ayahFocus ? true : showArabic;
   const ayahShowTranslation = ayahFocus ? true : showTranslation;
   const translationCols = ayahShowTranslation
-    ? preferences.translationIds
-        .map((id) => (verse.translations ?? []).find((item) => item.id === id) ?? (verse.translation && id === preferences.translationId ? { id, text: verse.translation } : null))
-        .filter((item): item is { id: number; text: string } => Boolean(item?.text))
+    ? preferences.translationIds.flatMap((id) => {
+        const fromVerse = (verse.translations ?? []).find((item) => item.id === id);
+        const text = fromVerse?.text || (verse.translation && id === preferences.translationId ? verse.translation : "");
+        if (!text) return [];
+        const catalog = translations.find((item) => item.id === id);
+        const name =
+          fromVerse?.name || (id === preferences.translationId ? verse.translationName : undefined) || catalog?.name;
+        const authorName =
+          fromVerse?.authorName ||
+          (id === preferences.translationId ? verse.translationAuthor : undefined) ||
+          catalog?.authorName;
+        return [{ id, text, name, authorName }];
+      })
     : [];
   const layers =
     Number(ayahShowArabic) +
@@ -345,6 +356,7 @@ export function VerseCard({
                       }}
                       onRecolor={primary ? openRecolor : undefined}
                     />
+                    <EditionCredit name={column.name} author={column.authorName} />
                   </div>
                 );
               })}
@@ -477,6 +489,17 @@ export function VerseCard({
   );
 }
 
+function EditionCredit({ name, author }: { name?: string; author?: string }) {
+  const line = creditLine(name, author);
+  if (!line) return null;
+  return (
+    <p className="mt-2 text-xs leading-5 text-ink-soft" translate="no">
+      <span className="sr-only">Translation: </span>
+      {line}
+    </p>
+  );
+}
+
 function AyahFocusBody({
   verse,
   showArabic,
@@ -500,7 +523,7 @@ function AyahFocusBody({
   verse: Verse;
   showArabic: boolean;
   showTranslation: boolean;
-  translationCols: { id: number; text: string }[];
+  translationCols: { id: number; text: string; name?: string; authorName?: string }[];
   preferences: Preferences;
   marks: Highlight[];
   swatches: HighlightSwatch[];
@@ -566,6 +589,7 @@ function AyahFocusBody({
               }
               onRecolor={onRecolor}
             />
+            <EditionCredit name={primary.name} author={primary.authorName} />
           </div>
         ) : null}
       </div>

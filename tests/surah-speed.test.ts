@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
-import { FIRST_SCREEN_AYAHS, mergeVerses, requestedAyahNumber, seedMatchesReading, type SurahSeed } from "../src/lib/quran/surah-seed";
+import { FIRST_SCREEN_AYAHS, mergeVerses, requestedAyahNumber, seedMatchesReading, type SurahSeed } from "../src/lib/quran/surah-reading";
 import type { Chapter, Verse } from "../src/lib/quran/types";
 
 const provider = readFileSync(new URL("../src/components/providers/mushaf-provider.tsx", import.meta.url), "utf8");

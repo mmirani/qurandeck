@@ -9,9 +9,9 @@
  * - Audio CDN: https://audio.qurancdn.com (word audio + ayah mp3s)
  * - Chapter files: https://download.quranicaudio.com
  * - Official docs: https://api-docs.quran.foundation
- * - When QF_CLIENT_ID, QF_CLIENT_SECRET, and QF_ENV are set, server
- *   fetches use the authenticated Content API. Otherwise this public
- *   api.quran.com/v4 base is the fallback.
+ * - When the server has Quran Foundation credentials, fetches use the
+ *   authenticated Content API. Otherwise this public api.quran.com/v4
+ *   base is the fallback.
  *
  * AlQuran Cloud / Islamic Network
  * - https://api.alquran.cloud/v1 — 100+ translation editions, search, juz

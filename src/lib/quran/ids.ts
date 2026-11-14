@@ -12,3 +12,11 @@ export function parseSurahId(raw: string): number | null {
 export function parseJuzId(raw: string): number | null {
   return parseBoundedId(raw, 30);
 }
+
+export function surahStaticParams() {
+  return Array.from({ length: 114 }, (_, index) => ({ id: String(index + 1) }));
+}
+
+export function juzStaticParams() {
+  return Array.from({ length: 30 }, (_, index) => ({ id: String(index + 1) }));
+}

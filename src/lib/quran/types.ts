@@ -28,6 +28,9 @@ export type Word = {
 export type VerseTranslation = {
   id: number;
   text: string;
+  /** Edition name from the content resources catalog or the verse payload. */
+  name?: string;
+  authorName?: string;
 };
 
 export type Verse = {
@@ -41,6 +44,7 @@ export type Verse = {
   textUthmani: string;
   translation: string;
   translationName?: string;
+  translationAuthor?: string;
   translations: VerseTranslation[];
   transliteration: string;
   words: Word[];
@@ -66,6 +70,7 @@ export type TafsirResource = {
 export type TafsirPassage = {
   id: number;
   name: string;
+  authorName?: string;
   verseKey: string;
   verseKeys: string[];
   text: string;
