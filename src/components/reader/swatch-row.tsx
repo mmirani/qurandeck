@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useSyncExternalStore } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
-import { Eraser, Highlighter, X } from "lucide-react";
+import { Eraser, Highlighter, Plus, X } from "lucide-react";
+import { useMushaf } from "@/components/providers/mushaf-provider";
+import { NewColourDialog } from "@/components/reader/new-colour-dialog";
 import type { HighlightSwatch } from "@/lib/quran/types";
 
 export type AnchorBox = { left: number; top: number; width: number; height: number };
@@ -16,7 +18,9 @@ function moveFocus(buttons: HTMLButtonElement[], delta: number) {
   if (buttons.length === 0) return;
   const index = buttons.findIndex((button) => button === document.activeElement);
   const next = index < 0 ? 0 : (index + delta + buttons.length) % buttons.length;
-  buttons[next]?.focus();
+  const button = buttons[next];
+  button?.focus();
+  button?.scrollIntoView({ block: "nearest", inline: "nearest" });
 }
 
 export function SwatchRow({
@@ -38,7 +42,21 @@ export function SwatchRow({
   label?: string;
   autoFocus?: boolean;
 }) {
+  const { addSwatch } = useMushaf();
   const listRef = useRef<HTMLDivElement>(null);
+  const addRef = useRef<HTMLButtonElement>(null);
+  const [creating, setCreating] = useState(false);
+  const [hint, setHint] = useState<{ name: string; x: number; y: number } | null>(null);
+  const hintTimer = useRef(0);
+
+  const showHint = (el: HTMLElement, swatchName: string) => {
+    const rect = el.getBoundingClientRect();
+    setHint({ name: swatchName, x: rect.left + rect.width / 2, y: rect.top });
+  };
+
+  useEffect(() => {
+    return () => window.clearTimeout(hintTimer.current);
+  }, []);
 
   useLayoutEffect(() => {
     if (!autoFocus) return;
@@ -74,36 +92,92 @@ export function SwatchRow({
   };
 
   return (
-    <div ref={listRef} role="group" aria-label={label} className="flex flex-wrap items-center gap-1" onKeyDown={onKeyDown}>
-      {swatches.map((pen) => {
-        const pressed = pen.id === activeId;
-        return (
+    <div ref={listRef} className="flex min-w-0 items-center gap-1" onKeyDown={onKeyDown}>
+      <div role="group" aria-label={label} className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto">
+        {swatches.map((pen) => {
+          const pressed = pen.id === activeId;
+          return (
+            <button
+              key={pen.id}
+              type="button"
+              data-swatch=""
+              aria-label={pen.name}
+              aria-pressed={pressed}
+              title={pen.name}
+              onClick={() => onPick(pen.id)}
+              onMouseEnter={(event) => showHint(event.currentTarget, pen.name)}
+              onMouseLeave={() => setHint(null)}
+              onFocus={(event) => showHint(event.currentTarget, pen.name)}
+              onBlur={() => setHint(null)}
+              onPointerDown={(event) => {
+                if (event.pointerType === "mouse") return;
+                const el = event.currentTarget;
+                window.clearTimeout(hintTimer.current);
+                hintTimer.current = window.setTimeout(() => showHint(el, pen.name), 450);
+              }}
+              onPointerUp={() => window.clearTimeout(hintTimer.current)}
+              onPointerCancel={() => {
+                window.clearTimeout(hintTimer.current);
+                setHint(null);
+              }}
+              className={`inline-flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full ${
+                pressed ? "ring-2 ring-gold-deep ring-offset-2 ring-offset-surface" : ""
+              }`}
+            >
+              <span aria-hidden="true" className="h-6 w-6 rounded-full border border-line" style={{ background: pen.color }} />
+            </button>
+          );
+        })}
+        {onErase ? (
           <button
-            key={pen.id}
             type="button"
             data-swatch=""
-            aria-label={pen.name}
-            aria-pressed={pressed}
-            onClick={() => onPick(pen.id)}
-            className={`inline-flex h-11 w-11 cursor-pointer items-center justify-center rounded-full ${
-              pressed ? "ring-2 ring-gold-deep ring-offset-2 ring-offset-surface" : ""
-            }`}
+            aria-label={eraseLabel}
+            onClick={onErase}
+            className="inline-flex h-11 min-w-11 shrink-0 cursor-pointer items-center gap-1 rounded-full px-3 text-sm text-danger"
           >
-            <span aria-hidden="true" className="h-6 w-6 rounded-full border border-line" style={{ background: pen.color }} />
+            <Eraser className="h-4 w-4" />
+            {eraseLabel}
           </button>
-        );
-      })}
-      {onErase ? (
-        <button
-          type="button"
-          data-swatch=""
-          aria-label={eraseLabel}
-          onClick={onErase}
-          className="inline-flex h-11 min-w-11 cursor-pointer items-center gap-1 rounded-full px-3 text-sm text-danger"
-        >
-          <Eraser className="h-4 w-4" />
-          {eraseLabel}
-        </button>
+        ) : null}
+      </div>
+      <button
+        ref={addRef}
+        type="button"
+        data-swatch=""
+        aria-label="New colour"
+        title="New colour"
+        onClick={() => setCreating(true)}
+        className="inline-flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full border border-line text-ink"
+      >
+        <Plus className="h-4 w-4" />
+      </button>
+      {hint
+        ? createPortal(
+            <span
+              role="tooltip"
+              className="pointer-events-none fixed z-[80] -translate-x-1/2 -translate-y-full whitespace-nowrap rounded-lg bg-panel px-2 py-1 text-xs text-panel-ink"
+              style={{ left: hint.x, top: hint.y - 6 }}
+            >
+              {hint.name}
+            </span>,
+            document.body,
+          )
+        : null}
+      {creating ? (
+        <NewColourDialog
+          swatches={swatches}
+          onClose={() => {
+            setCreating(false);
+            addRef.current?.focus();
+          }}
+          onSave={(swatchName, swatchColor) => {
+            const created = addSwatch(swatchName, swatchColor);
+            setCreating(false);
+            if (created) onPick(created.id);
+            else addRef.current?.focus();
+          }}
+        />
       ) : null}
     </div>
   );
@@ -165,7 +239,7 @@ export function HighlightPopover({
       const target = event.target;
       if (!(target instanceof Node)) return;
       if (rootRef.current?.contains(target)) return;
-      if (target instanceof Element && target.closest("[data-highlight-trigger]")) return;
+      if (target instanceof Element && target.closest("[data-highlight-trigger], [data-colour-dialog]")) return;
       onCloseRef.current();
     };
     window.addEventListener("pointerdown", onPointer);

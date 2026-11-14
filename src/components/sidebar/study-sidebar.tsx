@@ -7,6 +7,7 @@ import { AccountRailCard } from "@/components/account/account-dashboard";
 import { VerseNotePanel } from "@/components/reader/verse-note-panel";
 import { anchorBox, HighlightPopover } from "@/components/reader/swatch-row";
 import { highlightListCopy } from "@/lib/highlights";
+import { resolveSwatch } from "@/lib/swatch-palette";
 import { verseRangeLabel } from "@/lib/verse-range";
 import type { Highlight } from "@/lib/quran/types";
 
@@ -139,20 +140,20 @@ function HighlightFeed({ marks }: { marks: Highlight[] }) {
     <>
     <ul className={`highlight-feed flex flex-col gap-2 ${updating ? "is-updating" : ""}`}>
       {shown.map((item) => {
-        const pen = swatches.find((swatch) => swatch.id === item.swatchId);
+        const pen = resolveSwatch(swatches, item.swatchId).swatch;
         const verse = verses.find((entry) => entry.verseKey === item.verseKey);
         const chapter = chapters.find((entry) => entry.id === Number(item.verseKey.split(":")[0]));
         const copy = highlightListCopy(item, {
           chapterName: chapter?.nameSimple,
           translation: verse?.translation,
-          penName: item.label?.trim() || pen?.name,
+          penName: item.label?.trim() || pen.name,
         });
         return (
           <li key={item.id} className="qd-pad-sm flex items-start gap-2 rounded-2xl bg-surface">
             <button
               type="button"
               data-highlight-trigger=""
-              aria-label={`Change ${pen?.name ?? "highlight"} colour`}
+              aria-label={`Change ${pen.name} colour`}
               onClick={(event) => {
                 const el = event.currentTarget;
                 setMenu((current) =>
@@ -163,7 +164,7 @@ function HighlightFeed({ marks }: { marks: Highlight[] }) {
               }}
               className="inline-flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full"
             >
-              <span aria-hidden="true" className="h-3 w-3 rounded-full" style={{ background: pen?.color ?? "#F5D76E" }} />
+              <span aria-hidden="true" className="h-3 w-3 rounded-full" style={{ background: pen.color }} />
             </button>
             <button
               type="button"

@@ -1,7 +1,8 @@
 import { asMushafInk } from "./appearance";
 import { sanitizeTranslationIds, withTranslationIds } from "./quran/languages";
 import { DEFAULT_RECITATION_ID, DEFAULT_TAFSIR_ID, DEFAULT_TRANSLATION_ID } from "./quran/sources";
-import { DEFAULT_SWATCH_ID, defaultSwatches } from "./highlights";
+import { DEFAULT_SWATCH_ID } from "./highlights";
+import { cleanSwatches, swatchesOrDefaults } from "./swatch-palette";
 import { defaultReadingProgress, normalizeVerseVisits, normalizeSurahCompletions, syncSurahsRead, type ReadingProgress } from "./reading";
 import { mergeStudyCards } from "./study-cards";
 import { normalizeNotes, notesMissingCreatedAt } from "./notes";
@@ -130,9 +131,7 @@ export function saveHighlights(value: Highlight[]) {
 }
 
 export function loadSwatches(): HighlightSwatch[] {
-  const value = parse(KEYS.swatches);
-  if (!Array.isArray(value) || value.length === 0) return defaultSwatches;
-  return value as HighlightSwatch[];
+  return swatchesOrDefaults(cleanSwatches(parse(KEYS.swatches)));
 }
 
 export function saveSwatches(value: HighlightSwatch[]) {

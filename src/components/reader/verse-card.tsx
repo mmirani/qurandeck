@@ -669,7 +669,7 @@ function ArabicBlock({
                 className={`mx-[2px] inline cursor-pointer rounded-md px-1 leading-[2.25] ${
                   on ? "bg-gold/25" : "hover:bg-gold/10"
                 }`}
-                style={pen ? { background: `color-mix(in srgb, ${pen.color} 62%, transparent)` } : undefined}
+                style={pen ? { background: `color-mix(in srgb, ${pen.color} 40%, transparent)` } : undefined}
               >
                 {word.textUthmani}
                 {marked ? <span className="sr-only">. Change colour</span> : null}

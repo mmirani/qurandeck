@@ -11,6 +11,7 @@ import {
   type ReadingProgress,
 } from "@/lib/reading";
 import { normalizeNote, normalizeNotes } from "@/lib/notes";
+import { cleanSwatches, swatchesOrDefaults } from "@/lib/swatch-palette";
 import type { Bookmark, Highlight, HighlightSwatch, Note, Preferences } from "@/lib/quran/types";
 
 export type LibrarySnapshot = {
@@ -111,7 +112,7 @@ export function mergeLibraries(local: LibrarySnapshot, remote: LibrarySnapshot):
     bookmarks: [...verseBookmarks.values(), ...wordBookmarks.values(), ...byId(otherBookmarks)],
     notes: [...notes.values()],
     highlights: dedupeHighlights([...remote.highlights, ...local.highlights]),
-    swatches: byId([...remote.swatches, ...local.swatches]),
+    swatches: byId([...cleanSwatches(remote.swatches), ...cleanSwatches(local.swatches)]),
     progress: syncSurahsRead({
       surahsRead: [...new Set([...remote.progress.surahsRead, ...local.progress.surahsRead])].sort((a, b) => a - b),
       surahCompletions: mergeSurahCompletions(
@@ -156,7 +157,6 @@ export function emptyLibrary(): LibrarySnapshot {
 export function normalizeLibrary(value: unknown): LibrarySnapshot | null {
   if (!value || typeof value !== "object") return null;
   const raw = value as Partial<LibrarySnapshot>;
-  const base = emptyLibrary();
   return {
     preferences: preferencesFromUnknown(raw.preferences),
     bookmarks: Array.isArray(raw.bookmarks) ? raw.bookmarks : [],
@@ -164,7 +164,7 @@ export function normalizeLibrary(value: unknown): LibrarySnapshot | null {
     // createdAt is filled from updatedAt when an older library omits it.
     notes: normalizeNotes(raw.notes),
     highlights: Array.isArray(raw.highlights) ? raw.highlights : [],
-    swatches: Array.isArray(raw.swatches) ? raw.swatches : base.swatches,
+    swatches: swatchesOrDefaults(cleanSwatches(raw.swatches)),
     progress: (() => {
       const surahsRead = Array.isArray(raw.progress?.surahsRead) ? raw.progress.surahsRead : [];
       const versesRead = Array.isArray(raw.progress?.versesRead) ? raw.progress.versesRead : [];
