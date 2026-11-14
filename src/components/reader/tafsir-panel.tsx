@@ -4,6 +4,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Check, ChevronDown, X } from "lucide-react";
 import { getTafsir, getTafsirs } from "@/lib/quran/client";
+import { creditLine } from "@/lib/quran/credits";
 import { useMushaf } from "@/components/providers/mushaf-provider";
 import { DEFAULT_TAFSIR_ID } from "@/lib/quran/sources";
 import { readableExcerpt } from "@/lib/text";
@@ -166,10 +167,18 @@ export function VerseTafsir({ verseKey }: { verseKey: string }) {
       onClick={(event) => event.stopPropagation()}
     >
       <div className="flex items-start justify-between gap-2">
-        <p className="kufic-label min-w-0 text-gold-deep">
-          Tafsir
-          {work ? ` · ${titleLang(work.languageName)} · ${work.name}` : ""}
-        </p>
+        <div className="min-w-0">
+          <p className="kufic-label text-gold-deep">
+            Tafsir
+            {work ? ` · ${titleLang(work.languageName)} · ${work.name}` : passage?.name ? ` · ${passage.name}` : ""}
+          </p>
+          {creditLine(undefined, work?.authorName || passage?.authorName) ? (
+            <p className="mt-1 text-xs leading-5 text-ink-soft" translate="no">
+              <span className="sr-only">Tafsir author: </span>
+              {work?.authorName || passage?.authorName}
+            </p>
+          ) : null}
+        </div>
         <button
           type="button"
           onClick={() => updatePreferences({ showTafsir: false })}

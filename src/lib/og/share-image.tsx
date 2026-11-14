@@ -1,9 +1,7 @@
 import { readFile } from "node:fs/promises";
-import { join } from "node:path";
 import { ImageResponse } from "next/og";
 import { WORK_TITLE } from "@/lib/brand";
 import { parseSurahId } from "@/lib/quran/ids";
-import { fetchChapter } from "@/lib/quran/server";
 import { arabicSvg } from "@/lib/og/naskh";
 
 export const ogSize = { width: 1200, height: 630 };
@@ -37,15 +35,29 @@ export const HOME_SHARE = {
 
 type FontFace = { name: string; data: Buffer; weight: 400; style: "normal" };
 
+/** Traced into the Open Graph function. `import.meta.url` keeps the file in the bundle. */
+export const JAKARTA_FONT_URL = new URL("../../assets/fonts/PlusJakartaSans-SemiBold.ttf", import.meta.url);
+const ICON_URL = new URL("../../app/icon.svg", import.meta.url);
+
 let fontsPromise: Promise<FontFace[]> | null = null;
 
 function loadFonts() {
   if (!fontsPromise) {
-    fontsPromise = readFile(join(process.cwd(), "src/assets/fonts/PlusJakartaSans-SemiBold.ttf")).then((jakarta) => [
+    fontsPromise = readBundled(JAKARTA_FONT_URL, "src/assets/fonts/PlusJakartaSans-SemiBold.ttf").then((jakarta) => [
       { name: "Jakarta", data: jakarta, weight: 400, style: "normal" },
     ]);
   }
   return fontsPromise;
+}
+
+export async function readBundled(url: URL, projectRelative: string) {
+  try {
+    return await readFile(url);
+  } catch {
+    const { readFile: readFallback } = await import("node:fs/promises");
+    const { join } = await import("node:path");
+    return readFallback(join(process.cwd(), projectRelative));
+  }
 }
 
 function markSrc(svg: string) {
@@ -64,11 +76,12 @@ export async function shareImage({
   arabic?: string;
   badge?: string;
 }) {
-  const [fonts, svg, arabicMark] = await Promise.all([
+  const [fonts, svgBytes, arabicMark] = await Promise.all([
     loadFonts(),
-    readFile(join(process.cwd(), "src/app/icon.svg"), "utf8"),
+    readBundled(ICON_URL, "src/app/icon.svg"),
     arabic ? arabicSvg(arabic, PURPLE, badge ? 78 : 84) : Promise.resolve(null),
   ]);
+  const svg = svgBytes.toString("utf8");
   const mark = markSrc(svg);
   const titleSize = badge ? 72 : 80;
 
@@ -179,6 +192,7 @@ export async function renderSurahShareImage(rawId: string) {
     return shareImage({ title: "Surah", subtitle: "That chapter is not in the mushaf." });
   }
   try {
+    const { fetchChapter } = await import("@/lib/quran/server");
     const chapter = await fetchChapter(id);
     return shareImage({
       badge: String(id),

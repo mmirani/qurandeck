@@ -17,7 +17,7 @@ import { SyncPrompt } from "@/components/account/sync-prompt";
 import { ReaderChromeProvider } from "@/components/shell/reader-chrome";
 import { NAV_SIDEBAR_QUERY, useMediaQuery, useMobileReader } from "@/lib/use-media-query";
 import { SurahSeedProvider } from "@/components/reader/reading-seed";
-import type { SurahSeed } from "@/lib/quran/surah-seed";
+import type { SurahSeed } from "@/lib/quran/surah-reading";
 
 const CALM = { type: "tween" as const, duration: 0.8, ease: [0.33, 0.05, 0.2, 1] as const };
 

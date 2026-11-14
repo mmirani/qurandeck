@@ -2,12 +2,17 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { JsonLd } from "@/components/seo/json-ld";
 import { AppShell } from "@/components/shell/app-shell";
-import { parseSurahId } from "@/lib/quran/ids";
+import { parseSurahId, surahStaticParams } from "@/lib/quran/ids";
 import { fetchChapter } from "@/lib/quran/server";
-import { loadSurahSeed, type SurahSeed } from "@/lib/quran/surah-seed";
+import { loadSurahSeed } from "@/lib/quran/surah-seed";
+import type { SurahSeed } from "@/lib/quran/surah-reading";
 import { pageMeta, surahBreadcrumb } from "@/lib/seo";
 
 export const revalidate = 86400;
+
+export function generateStaticParams() {
+  return surahStaticParams();
+}
 
 export async function generateMetadata({
   params,

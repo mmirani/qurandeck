@@ -23,6 +23,18 @@ type AuthConfig = {
   hasSecret: boolean;
 };
 
+const AUTH_CONFIG_TTL_MS = 60 * 60 * 1000;
+let authConfigCache: { at: number; value: AuthConfig } | null = null;
+
+function readAuthConfig(now = Date.now()) {
+  if (!authConfigCache || now - authConfigCache.at > AUTH_CONFIG_TTL_MS) return null;
+  return authConfigCache.value;
+}
+
+function writeAuthConfig(value: AuthConfig) {
+  authConfigCache = { at: Date.now(), value };
+}
+
 function AuthChoiceButton({
   type = "button",
   label,
@@ -64,13 +76,22 @@ export function AuthModal() {
   const [oneTimeCode, setOneTimeCode] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [busy, setBusy] = useState(false);
-  const [config, setConfig] = useState<AuthConfig | null>(null);
+  const [config, setConfig] = useState<AuthConfig | null>(readAuthConfig());
 
   useEffect(() => {
+    if (modal !== "auth") return;
     let cancelled = false;
-    void fetch("/api/auth/config")
-      .then((response) => response.json())
-      .then((data: AuthConfig) => {
+    const cached = readAuthConfig();
+    const pending = cached
+      ? Promise.resolve(cached)
+      : fetch("/api/auth/config")
+          .then((response) => response.json() as Promise<AuthConfig>)
+          .then((data) => {
+            writeAuthConfig(data);
+            return data;
+          });
+    void pending
+      .then((data) => {
         if (!cancelled) setConfig(data);
       })
       .catch(() => {
@@ -79,7 +100,7 @@ export function AuthModal() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [modal]);
 
   if (modal === "auth" && !open) {
     setOpen(true);

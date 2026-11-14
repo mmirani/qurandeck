@@ -1,8 +1,14 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { AppShell } from "@/components/shell/app-shell";
-import { parseJuzId } from "@/lib/quran/ids";
+import { juzStaticParams, parseJuzId } from "@/lib/quran/ids";
 import { pageMeta } from "@/lib/seo";
+
+export const revalidate = 86400;
+
+export function generateStaticParams() {
+  return juzStaticParams();
+}
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;

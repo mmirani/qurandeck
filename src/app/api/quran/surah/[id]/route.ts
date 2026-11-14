@@ -1,4 +1,4 @@
-import { QURAN_CACHE_CONTROL } from "@/lib/quran/qf";
+import { quranCacheHeaders } from "@/lib/quran/http-cache";
 import { NextRequest, NextResponse } from "next/server";
 import { parseTranslationQuery } from "@/lib/quran/languages";
 import { DEFAULT_RECITATION_ID } from "@/lib/quran/sources";
@@ -25,7 +25,7 @@ export async function GET(
     ]);
     return NextResponse.json(
       { chapter, verses, introduction: info.text, introductionSource: info.source },
-      { headers: { "Cache-Control": QURAN_CACHE_CONTROL } },
+      { headers: quranCacheHeaders() },
     );
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to load surah";

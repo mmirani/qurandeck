@@ -2,6 +2,8 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { create, type Font } from "fontkit";
 
+export const NASKH_FONT_URL = new URL("../../assets/fonts/NotoNaskhArabic-SemiBold.ttf", import.meta.url);
+
 /**
  * Satori's text shaper cannot apply Noto Naskh Arabic's joining lookups,
  * so Arabic is shaped here and painted as an SVG. The file is the same
@@ -11,9 +13,9 @@ let fontPromise: Promise<Font> | null = null;
 
 function loadNaskh() {
   if (!fontPromise) {
-    fontPromise = readFile(join(process.cwd(), "src/assets/fonts/NotoNaskhArabic-SemiBold.ttf")).then((data) =>
-      create(data),
-    );
+    fontPromise = readFile(NASKH_FONT_URL)
+      .catch(() => readFile(join(process.cwd(), "src/assets/fonts/NotoNaskhArabic-SemiBold.ttf")))
+      .then((data) => create(data));
   }
   return fontPromise;
 }

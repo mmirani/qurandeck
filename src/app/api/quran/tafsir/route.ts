@@ -1,4 +1,4 @@
-import { QURAN_CACHE_CONTROL } from "@/lib/quran/qf";
+import { quranCacheHeaders } from "@/lib/quran/http-cache";
 import { NextRequest, NextResponse } from "next/server";
 import { DEFAULT_TAFSIR_ID } from "@/lib/quran/sources";
 import { fetchTafsirByAyah } from "@/lib/quran/server";
@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
   try {
     const passage = await fetchTafsirByAyah(id, verse);
     return NextResponse.json(passage, {
-      headers: { "Cache-Control": QURAN_CACHE_CONTROL },
+      headers: quranCacheHeaders(),
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to load tafsir";

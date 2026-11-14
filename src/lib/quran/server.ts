@@ -1,3 +1,6 @@
+import "server-only";
+import { cache } from "react";
+import { translationCredit } from "./credits";
 import { canonicalLanguage, translationQuery } from "./languages";
 import { readChapterInfo } from "./chapter-info";
 import { hasArabicScript } from "@/lib/text";
@@ -64,12 +67,18 @@ function mapWord(raw: Record<string, unknown>): Word {
   };
 }
 
-function mapVerse(raw: Record<string, unknown>, chapterId: number): Verse {
+function mapVerse(raw: Record<string, unknown>, chapterId: number, catalog: TranslationResource[] = []): Verse {
   const translations = ((raw.translations as Array<Record<string, unknown>> | undefined) ?? []).map(
-    (item): VerseTranslation => ({
-      id: Number(item.resource_id ?? item.id ?? 0),
-      text: stripHtml(String(item.text ?? "")),
-    }),
+    (item): VerseTranslation => {
+      const id = Number(item.resource_id ?? item.id ?? 0);
+      const credit = translationCredit(id, item, catalog);
+      return {
+        id,
+        text: stripHtml(String(item.text ?? "")),
+        name: credit.name || undefined,
+        authorName: credit.authorName || undefined,
+      };
+    },
   );
   const first = translations[0];
   const words = ((raw.words as Array<Record<string, unknown>> | undefined) ?? []).map(mapWord);
@@ -90,7 +99,8 @@ function mapVerse(raw: Record<string, unknown>, chapterId: number): Verse {
     pageNumber: Number(raw.page_number ?? 0),
     textUthmani: String(raw.text_uthmani ?? words.filter((w) => w.charType === "word").map((w) => w.textUthmani).join(" ")),
     translation: first?.text ?? "",
-    translationName: undefined,
+    translationName: first?.name,
+    translationAuthor: first?.authorName,
     translations,
     transliteration,
     words,
@@ -109,13 +119,32 @@ export async function fetchChapterInfo(id: number) {
   }
 }
 
+const loadTranslationCatalog = cache(async (): Promise<TranslationResource[]> => {
+  try {
+    return await fetchTranslations();
+  } catch {
+    return [];
+  }
+});
+
+const loadTafsirCatalog = cache(async (): Promise<TafsirResource[]> => {
+  try {
+    return await fetchTafsirs();
+  } catch {
+    return [];
+  }
+});
+
 export async function fetchVerseByKey(verseKey: string, translationIds: number[] | number = DEFAULT_TRANSLATION_ID): Promise<Verse> {
   const translations = translationQuery(Array.isArray(translationIds) ? translationIds : [translationIds]);
-  const data = await getJson<{ verse: Record<string, unknown> }>(
-    `${QURAN_COM_API}/verses/by_key/${verseKey}?language=en&words=true&translations=${translations}&word_fields=verse_key,text_uthmani,translation,transliteration,audio_url,location&fields=text_uthmani,verse_key,juz_number,page_number,hizb_number,chapter_id`,
-  );
+  const [data, catalog] = await Promise.all([
+    getJson<{ verse: Record<string, unknown> }>(
+      `${QURAN_COM_API}/verses/by_key/${verseKey}?language=en&words=true&translations=${translations}&word_fields=verse_key,text_uthmani,translation,transliteration,audio_url,location&fields=text_uthmani,verse_key,juz_number,page_number,hizb_number,chapter_id`,
+    ),
+    loadTranslationCatalog(),
+  ]);
   const chapterId = Number(String(verseKey).split(":")[0] || 1);
-  return mapVerse(data.verse, chapterId);
+  return mapVerse(data.verse, chapterId, catalog);
 }
 
 async function paginateQuranCom<T>(
@@ -199,9 +228,13 @@ export async function fetchTafsirByAyah(tafsirId: number, verseKey: string): Pro
   const raw = data.tafsir ?? {};
   const verses = (raw.verses as Record<string, unknown> | undefined) ?? {};
   const verseKeys = Object.keys(verses);
+  const id = Number(raw.resource_id ?? tafsirId);
+  const catalog = await loadTafsirCatalog();
+  const known = catalog.find((item) => item.id === id) ?? catalog.find((item) => item.id === tafsirId);
   return {
-    id: Number(raw.resource_id ?? tafsirId),
-    name: String(raw.resource_name ?? ""),
+    id,
+    name: String(raw.resource_name ?? known?.name ?? ""),
+    authorName: known?.authorName || undefined,
     verseKey,
     verseKeys: verseKeys.length > 0 ? verseKeys : [verseKey],
     text: tafsirPlain(String(raw.text ?? "")),
@@ -251,11 +284,14 @@ export async function fetchVersePage(
   perPage: number,
 ): Promise<Verse[]> {
   const translations = translationQuery(Array.isArray(translationIds) ? translationIds : [translationIds]);
-  const data = await getJson<Record<string, unknown>>(
-    `${QURAN_COM_API}/verses/by_chapter/${chapterId}?per_page=${perPage}&page=${page}&translations=${translations}&${VERSE_QUERY}`,
-  );
+  const [data, catalog] = await Promise.all([
+    getJson<Record<string, unknown>>(
+      `${QURAN_COM_API}/verses/by_chapter/${chapterId}?per_page=${perPage}&page=${page}&translations=${translations}&${VERSE_QUERY}`,
+    ),
+    loadTranslationCatalog(),
+  ]);
   const raw = (data.verses as Array<Record<string, unknown>> | undefined) ?? [];
-  return raw.map((item) => mapVerse(item, chapterId));
+  return raw.map((item) => mapVerse(item, chapterId, catalog));
 }
 
 export async function fetchVersesByChapter(
@@ -264,12 +300,15 @@ export async function fetchVersesByChapter(
   recitationId?: number,
 ): Promise<Verse[]> {
   const translations = translationQuery(Array.isArray(translationIds) ? translationIds : [translationIds]);
-  const raw = await paginateQuranCom<Record<string, unknown>>(
-    `/verses/by_chapter/${chapterId}`,
-    "verses",
-    `&language=en&words=true&translations=${translations}&word_fields=verse_key,text_uthmani,translation,transliteration,audio_url,location&fields=text_uthmani,verse_key,juz_number,page_number,hizb_number`,
-  );
-  const verses = raw.map((item) => mapVerse(item, chapterId));
+  const [raw, catalog] = await Promise.all([
+    paginateQuranCom<Record<string, unknown>>(
+      `/verses/by_chapter/${chapterId}`,
+      "verses",
+      `&language=en&words=true&translations=${translations}&word_fields=verse_key,text_uthmani,translation,transliteration,audio_url,location&fields=text_uthmani,verse_key,juz_number,page_number,hizb_number`,
+    ),
+    loadTranslationCatalog(),
+  ]);
+  const verses = raw.map((item) => mapVerse(item, chapterId, catalog));
   if (recitationId) {
     try {
       const audio = await fetchAudioByChapter(recitationId, chapterId);
@@ -288,12 +327,15 @@ export async function fetchVersesByJuz(
   translationIds: number[] | number = DEFAULT_TRANSLATION_ID,
 ): Promise<Verse[]> {
   const translations = translationQuery(Array.isArray(translationIds) ? translationIds : [translationIds]);
-  const raw = await paginateQuranCom<Record<string, unknown>>(
-    `/verses/by_juz/${juzNumber}`,
-    "verses",
-    `&language=en&words=true&translations=${translations}&word_fields=verse_key,text_uthmani,translation,transliteration,audio_url,location&fields=text_uthmani,verse_key,juz_number,page_number,hizb_number,chapter_id`,
-  );
-  return raw.map((item) => mapVerse(item, Number(item.chapter_id ?? 1)));
+  const [raw, catalog] = await Promise.all([
+    paginateQuranCom<Record<string, unknown>>(
+      `/verses/by_juz/${juzNumber}`,
+      "verses",
+      `&language=en&words=true&translations=${translations}&word_fields=verse_key,text_uthmani,translation,transliteration,audio_url,location&fields=text_uthmani,verse_key,juz_number,page_number,hizb_number,chapter_id`,
+    ),
+    loadTranslationCatalog(),
+  ]);
+  return raw.map((item) => mapVerse(item, Number(item.chapter_id ?? 1), catalog));
 }
 
 export async function fetchAudioMap(recitationId: number, chapterId: number) {

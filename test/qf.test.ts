@@ -1,17 +1,16 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
+import { QURAN_CACHE_CONTROL, cacheWindowSeconds, quranCacheHeaders } from "../src/lib/quran/http-cache";
 import {
   QF_CONTENT_SCOPES,
-  QURAN_CACHE_CONTROL,
   backoffDelayMs,
-  cacheWindowSeconds,
   foundationUrl,
   qfApiBase,
   qfAuthBase,
   qfConfigFrom,
   tokenExpiresAt,
   tokenIsFresh,
-} from "../src/lib/quran/qf";
+} from "../src/lib/quran/qf-config";
 
 describe("Quran Foundation config", () => {
   it("stays off until id, secret, and env are all set", () => {
@@ -52,5 +51,9 @@ describe("Quran Foundation config", () => {
     assert.equal(window.withinWeek, true);
     assert.equal(window.fresh, 86400);
     assert.equal(window.stale, 172800);
+    const headers = quranCacheHeaders();
+    assert.equal(headers["Cache-Control"], QURAN_CACHE_CONTROL);
+    assert.equal(headers["CDN-Cache-Control"], QURAN_CACHE_CONTROL);
+    assert.equal(headers["Vercel-CDN-Cache-Control"], QURAN_CACHE_CONTROL);
   });
 });
