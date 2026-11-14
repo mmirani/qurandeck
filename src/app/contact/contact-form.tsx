@@ -72,8 +72,16 @@ export function ContactForm() {
       >
         {status === "sending" ? "Sending…" : "Send feedback"}
       </button>
-      {status === "sent" ? <p className="text-sm text-ink">Thank you. The note is saved.</p> : null}
-      {status === "error" ? <p className="text-sm text-danger">{error}</p> : null}
+      {status === "sent" ? (
+        <p className="text-sm text-ink" role="status">
+          Thank you. Your message was sent.
+        </p>
+      ) : null}
+      {status === "error" ? (
+        <p className="text-sm text-danger" role="alert">
+          {error}
+        </p>
+      ) : null}
     </form>
   );
 }
