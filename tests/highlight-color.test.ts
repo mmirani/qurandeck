@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { paintAyahHighlight, recolorHighlight } from "../src/lib/highlights";
+import { highlightsNewestFirst, paintAyahHighlight, recolorHighlight } from "../src/lib/highlights";
 import type { Highlight } from "../src/lib/quran/types";
 
 function mark(partial: Partial<Highlight> & Pick<Highlight, "id" | "layer">): Highlight {
@@ -55,6 +55,17 @@ describe("recolorHighlight", () => {
     const list = [original];
     assert.equal(recolorHighlight(list, "a", "yellow"), list);
     assert.equal(recolorHighlight(list, "missing", "pink"), list);
+  });
+});
+
+describe("highlightsNewestFirst", () => {
+  it("lists the newest mark first", () => {
+    const older = mark({ id: "old", layer: "ayah", createdAt: "2026-11-01T00:00:00.000Z" });
+    const newer = mark({ id: "new", layer: "translation", createdAt: "2026-11-13T00:00:00.000Z" });
+    assert.deepEqual(
+      highlightsNewestFirst([older, newer]).map((item) => item.id),
+      ["new", "old"],
+    );
   });
 });
 

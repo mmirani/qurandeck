@@ -1,14 +1,17 @@
 "use client";
 
+import { useState } from "react";
 import { Palette } from "lucide-react";
 import { APPEARANCE_THEMES, FONT_SIZE_MAX, FONT_SIZE_MIN } from "@/lib/appearance";
 import { useMushaf } from "@/components/providers/mushaf-provider";
+import { ColourManagerSheet } from "@/components/reader/colour-manager";
 import { LanguagePicker } from "@/components/reader/language-picker";
 import { Modal } from "@/components/ui/modal";
 import { StyledSelect } from "@/components/ui/styled-select";
 
 export function ReadingSettings() {
   const { preferences, updatePreferences, recitations, openModal } = useMushaf();
+  const [coloursOpen, setColoursOpen] = useState(false);
 
   return (
       <div className="grid gap-8 lg:grid-cols-2">
@@ -18,11 +21,25 @@ export function ReadingSettings() {
           <button
             type="button"
             onClick={() => openModal("themes")}
-            className="inline-flex h-11 cursor-pointer items-center gap-2 rounded-full border border-line px-5 text-sm text-ink"
+            className="inline-flex h-11 min-h-11 cursor-pointer items-center gap-2 rounded-full border border-line px-5 text-sm text-ink"
           >
             <Palette className="h-4 w-4" />
             {APPEARANCE_THEMES.find((item) => item.id === preferences.theme)?.name ?? preferences.theme}
           </button>
+        </section>
+        <section className="qd-stack">
+          <h3 className="kufic-label text-gold-deep">Highlight colours</h3>
+          <p className="text-sm leading-6 text-ink-soft">The pens used when you mark an ayah, a word, or a phrase.</p>
+          <button
+            type="button"
+            aria-haspopup="dialog"
+            aria-expanded={coloursOpen}
+            onClick={() => setColoursOpen(true)}
+            className="inline-flex h-11 min-h-11 cursor-pointer items-center rounded-full border border-line px-5 text-sm text-ink"
+          >
+            Highlight colours
+          </button>
+          <ColourManagerSheet open={coloursOpen} onClose={() => setColoursOpen(false)} backLabel="Back to settings" />
         </section>
         <section className="qd-stack">
           <h3 className="kufic-label text-gold-deep">Text size</h3>

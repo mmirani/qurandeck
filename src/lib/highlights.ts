@@ -287,6 +287,15 @@ function mergeArabic(highlights: Highlight[], verseKey: string, swatchId: string
   return [...others, ...merged];
 }
 
+/** Newest createdAt first. Equal times keep a stable id order. */
+export function highlightsNewestFirst(highlights: Highlight[]) {
+  return [...highlights].sort((a, b) => {
+    const byTime = (b.createdAt || "").localeCompare(a.createdAt || "");
+    if (byTime !== 0) return byTime;
+    return b.id.localeCompare(a.id);
+  });
+}
+
 export function removeHighlight(highlights: Highlight[], id: string) {
   return highlights.filter((item) => item.id !== id);
 }
