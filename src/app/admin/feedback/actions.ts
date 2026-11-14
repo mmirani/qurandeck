@@ -3,7 +3,8 @@
 import { notFound } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
-import { mutateFeedback, type FeedbackMutation } from "@/lib/feedback";
+import { mutateFeedback } from "@/lib/feedback-admin";
+import type { FeedbackMutation } from "@/lib/feedback";
 import { adminStatsStatus } from "@/lib/usage";
 import { deleteFeedback, setFeedbackRead } from "@/lib/feedback-store";
 

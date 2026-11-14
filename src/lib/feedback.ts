@@ -1,5 +1,3 @@
-import { adminStatsStatus } from "@/lib/usage";
-
 export const FEEDBACK_PAGE_SIZE = 50;
 export const FEEDBACK_CLAMP_CHARS = 320;
 export const FEEDBACK_CLAMP_LINES = 6;
@@ -22,11 +20,6 @@ export type FeedbackMutation =
   | { status: 404 }
   | { status: 400 }
   | { status: 200; ok: boolean };
-
-/** Same ADMIN_EMAILS rule as /admin/stats. Anyone else is a 404. */
-export function feedbackAdminStatus(email: string | null | undefined, raw = process.env.ADMIN_EMAILS ?? ""): 200 | 404 {
-  return adminStatsStatus(email, raw);
-}
 
 export function parseFeedbackId(value: unknown): number | null {
   const id = typeof value === "number" ? value : typeof value === "string" && value.trim() !== "" ? Number(value) : Number.NaN;
@@ -79,26 +72,4 @@ export function unreadFeedbackCount(rows: readonly FeedbackMessage[]): number {
   let count = 0;
   for (const row of rows) if (row.readAt == null) count += 1;
   return count;
-}
-
-/**
- * Admin check before any write. A non-admin never reaches the store.
- * The page and the server actions both call this with the session email.
- */
-export async function mutateFeedback(input: {
-  email: string | null | undefined;
-  id: unknown;
-  op: { type: "read"; read: boolean } | { type: "delete" };
-  store: FeedbackMutations;
-  allow?: string;
-}): Promise<FeedbackMutation> {
-  if (feedbackAdminStatus(input.email, input.allow) === 404) return { status: 404 };
-  const id = parseFeedbackId(input.id);
-  if (id == null) return { status: 400 };
-  if (input.op.type === "read") {
-    const ok = await input.store.setRead(id, input.op.read);
-    return { status: 200, ok };
-  }
-  const ok = await input.store.remove(id);
-  return { status: 200, ok };
 }

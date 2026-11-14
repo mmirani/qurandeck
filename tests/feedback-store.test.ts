@@ -1,12 +1,11 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
+import { feedbackAdminStatus, mutateFeedback } from "../src/lib/feedback-admin";
 import {
-  feedbackAdminStatus,
   feedbackIsLong,
   feedbackWindow,
   formatFeedbackTime,
-  mutateFeedback,
   parseFeedbackId,
   sortFeedbackNewest,
   unreadFeedbackCount,
@@ -321,6 +320,9 @@ describe("feedback inbox rules", () => {
     assert.equal(page.includes("No messages yet."), false);
     const empty = readFileSync("src/components/admin/feedback-inbox.tsx", "utf8");
     assert.equal(empty.includes("No messages yet."), true);
+    assert.equal(empty.includes("feedback-admin"), false);
+    assert.equal(empty.includes("node:crypto"), false);
+    assert.equal(empty.includes("@/lib/usage"), false);
 
     const actions = readFileSync("src/app/admin/feedback/actions.ts", "utf8");
     for (const name of ["setFeedbackReadAction", "deleteFeedbackAction"]) {
