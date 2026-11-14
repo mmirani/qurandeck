@@ -223,4 +223,8 @@ export type Preferences = {
   /** Mobile: continuous scroll vs one ayah per screen */
   mobileReadingMode: "scroll" | "ayah";
   mobileAyahScript: "both" | "arabic" | "english";
+  /** Shared by every stat on the home page and the account dashboard. */
+  statsRange: "7d" | "30d" | "year" | "all" | "custom";
+  statsRangeStart: string | null;
+  statsRangeEnd: string | null;
 };

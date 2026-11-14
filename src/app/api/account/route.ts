@@ -1,3 +1,4 @@
+import { lookupAccountCreatedAt } from "@/lib/account-created";
 import { auth } from "@/auth";
 import { getSql } from "@/lib/db";
 import { deleteStoredAccount } from "@/lib/delete-account";
@@ -7,6 +8,19 @@ import { prepareLibraryStore } from "@/lib/library-seal";
 import { getPasskeyStore } from "@/lib/passkey-store";
 
 export const dynamic = "force-dynamic";
+
+export async function GET() {
+  const session = await auth();
+  const email = session?.user?.email?.trim().toLowerCase();
+  if (!email) return Response.json({ createdAt: null }, { status: 401 });
+  if (!process.env.DATABASE_URL) return Response.json({ createdAt: null });
+  try {
+    const createdAt = await lookupAccountCreatedAt(email);
+    return Response.json({ createdAt });
+  } catch {
+    return Response.json({ createdAt: null });
+  }
+}
 
 type Sql = (strings: TemplateStringsArray, ...values: unknown[]) => Promise<unknown>;
 

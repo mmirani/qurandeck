@@ -17,6 +17,8 @@ import {
   Type,
   UserRound,
 } from "lucide-react";
+import { ReadingSince } from "@/components/account/reading-since";
+import { StatsRangeBar, useRangeStats } from "@/components/account/stats-range-bar";
 import { CompletionMap } from "@/components/account/completion-map";
 import { HomeReadingRanks } from "@/components/home/home-reading-ranks";
 import { HomeStats } from "@/components/home/home-stats";
@@ -31,7 +33,7 @@ import { ACCOUNT_BENEFIT } from "@/lib/auth-entry";
 import { PRODUCT_NAME, PROMISE_LINE, PROMISE_STORY, WORK_TITLE } from "@/lib/brand";
 import { QuranCredit } from "@/components/site/quran-credit";
 import { HOME_FEATURES, HOME_MORE, HOME_PROMISES, HOME_STARTS } from "@/lib/home";
-import { formatReadingMinutes, versePlaceLabel } from "@/lib/reading";
+import { TOTAL_AYAHS, TOTAL_SURAHS, versePlaceLabel } from "@/lib/reading";
 
 const FEATURE_ICONS = {
   search: Search,
@@ -142,9 +144,10 @@ function HomeGuestHero() {
 }
 
 function HomeSignedIn() {
-  const { user, progress, bookmarks, notes, highlights, chapters } = useMushaf();
+  const { user, progress, chapters } = useMushaf();
+  const stats = useRangeStats();
   const place = versePlaceLabel(chapters, progress.lastVerseKey);
-  const minutes = formatReadingMinutes(progress.totalSeconds);
+  const ranged = Boolean(stats.range.start && stats.range.end);
 
   return (
     <section className="qd-gutter qd-section mx-auto flex max-w-6xl flex-col gap-8">
@@ -154,6 +157,7 @@ function HomeSignedIn() {
           Assalamu alaykum, {user?.displayName}.
         </h1>
         <p className="max-w-2xl text-ink-soft">Your place, your notes, your map of {WORK_TITLE} — saved with your account.</p>
+        <ReadingSince />
       </div>
 
       <div className="grid items-stretch gap-4 lg:grid-cols-3">
@@ -170,15 +174,22 @@ function HomeSignedIn() {
         </div>
         <HomeReadingRanks />
       </div>
-      <div>
+      <div className="flex flex-col gap-4">
+        <StatsRangeBar />
         <HomeStats
-          versesRead={progress.versesRead.length}
-          surahsFinished={progress.surahsRead.length}
-          streak={progress.streak}
-          minutes={minutes}
-          favorites={bookmarks.length}
-          notes={notes.length}
-          highlights={highlights.length}
+          versesRead={stats.ayahs}
+          surahsFinished={stats.surahsFinished}
+          streak={stats.streak}
+          minutes={stats.minutes}
+          favorites={stats.bookmarks}
+          notes={stats.notes}
+          highlights={stats.highlights}
+          mushafPercent={stats.mushafPercent}
+          versesHint={ranged ? "Newly marked in this range" : `of ${TOTAL_AYAHS.toLocaleString("en-US")}`}
+          surahsHint={ranged ? "All time" : `of ${TOTAL_SURAHS}`}
+          streakHint={ranged ? "All time" : undefined}
+          minutesHint={stats.minutes == null ? "Not in daily history" : ranged ? "In this range" : undefined}
+          mushafHint={ranged ? "All time" : undefined}
         />
       </div>
       <CompletionMap />

@@ -3,8 +3,11 @@ import { cleanDisplayName, validateDisplayName } from "@/lib/display-name";
 import { defaultPreferences, preferencesFromUnknown } from "@/lib/storage";
 import {
   defaultReadingProgress,
+  earlierHistorySince,
+  mergeDaily,
   mergeSurahCompletions,
   mergeVerseVisits,
+  normalizeReadingProgress,
   normalizeSurahCompletions,
   normalizeVerseVisits,
   syncSurahsRead,
@@ -125,6 +128,8 @@ export function mergeLibraries(local: LibrarySnapshot, remote: LibrarySnapshot):
       lastReadDay: laterIso(remote.progress.lastReadDay ?? undefined, local.progress.lastReadDay ?? undefined) ?? null,
       lastVerseKey,
       lastActiveAt: Math.max(localActive, remoteActive) || null,
+      daily: mergeDaily(remote.progress.daily, local.progress.daily),
+      historySince: earlierHistorySince(remote.progress.historySince, local.progress.historySince),
     }),
   };
 }
@@ -160,19 +165,7 @@ export function normalizeLibrary(value: unknown): LibrarySnapshot | null {
     notes: Array.isArray(raw.notes) ? raw.notes : [],
     highlights: Array.isArray(raw.highlights) ? raw.highlights : [],
     swatches: Array.isArray(raw.swatches) ? raw.swatches : base.swatches,
-    progress: (() => {
-      const surahsRead = Array.isArray(raw.progress?.surahsRead) ? raw.progress.surahsRead : [];
-      const versesRead = Array.isArray(raw.progress?.versesRead) ? raw.progress.versesRead : [];
-      const rawProgress = raw.progress && typeof raw.progress === "object" ? (raw.progress as ReadingProgress) : null;
-      return {
-        ...defaultReadingProgress,
-        ...(rawProgress ?? {}),
-        surahsRead,
-        surahCompletions: normalizeSurahCompletions(rawProgress?.surahCompletions, surahsRead),
-        versesRead,
-        verseVisits: normalizeVerseVisits(rawProgress?.verseVisits, versesRead),
-      };
-    })(),
+    progress: normalizeReadingProgress(raw.progress),
     ...safeDisplayName(raw.displayName, raw.displayNameUpdatedAt),
     ...safeAvatar(raw.avatar, raw.avatarUpdatedAt),
   };
