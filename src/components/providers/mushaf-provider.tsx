@@ -75,12 +75,16 @@ import {
   defaultReadingProgress,
   isMushafPath,
   isResumeDue,
+  landingReadingPlace,
   markVerseRead,
+  noteReadingPlace,
   READING_IDLE_MS,
   READING_TICK_SECONDS,
+  readingPlaceKey,
   RESUME_AFTER_MS,
   saveReadingPlace,
   subtractReadingSeconds,
+  surahIdFromPath,
   syncSurahsRead,
   VERSE_READ_DWELL_MS,
 } from "@/lib/reading";
@@ -251,6 +255,8 @@ export function MushafProvider({ children }: { children: ReactNode }) {
   const [swatches, setSwatches] = useState<HighlightSwatch[]>(defaultSwatches);
   const [highlighting, setHighlighting] = useState(false);
   const [visibleVerseKeys, setVisibleVerseKeysState] = useState<string[]>([]);
+  const [engagedVerseKey, setEngagedVerseKey] = useState<string | null>(null);
+  const [scrolledPlace, setScrolledPlace] = useState(false);
   const [user, setUser] = useState<SessionUser | null>(null);
   const [introduction, setIntroduction] = useState("");
   const [introductionSource, setIntroductionSource] = useState("");
@@ -259,7 +265,21 @@ export function MushafProvider({ children }: { children: ReactNode }) {
   const [stillReadingAsk, setStillReadingAsk] = useState(false);
   const visibleRef = useRef(visibleVerseKeys);
   const placeRef = useRef<string | null>(null);
-  const readingKey = playingVerseKey ?? visibleVerseKeys[0] ?? null;
+  const versesRef = useRef(verses);
+  const selectedRef = useRef(selectedVerseKey);
+  const progressRef = useRef(progress);
+  const landingPathRef = useRef<string | null>(null);
+  const landingKeyRef = useRef<string | null>(null);
+  const userMovedRef = useRef(false);
+  const armScrollRef = useRef(false);
+  const visibleKey = visibleVerseKeys[0] ?? null;
+  const readingKey = readingPlaceKey({
+    isPlaying,
+    playingVerseKey,
+    engagedVerseKey,
+    visibleVerseKey: visibleKey,
+    scrolled: scrolledPlace,
+  });
   const hiddenAtRef = useRef(0);
   const pathnameRef = useRef(pathname);
   const lastActivityRef = useRef(0);
@@ -268,12 +288,15 @@ export function MushafProvider({ children }: { children: ReactNode }) {
   const stillReadingAskRef = useRef(false);
 
   useEffect(() => {
+    versesRef.current = verses;
+    selectedRef.current = selectedVerseKey;
+    progressRef.current = progress;
     visibleRef.current = visibleVerseKeys;
     placeRef.current = readingKey;
     pathnameRef.current = pathname;
     stillReadingAskRef.current = stillReadingAsk;
     if (lastActivityRef.current === 0) lastActivityRef.current = Date.now();
-  }, [pathname, readingKey, stillReadingAsk, visibleVerseKeys]);
+  }, [pathname, progress, readingKey, selectedVerseKey, stillReadingAsk, verses, visibleVerseKeys]);
 
   useEffect(() => {
     let cancelled = false;
@@ -352,6 +375,8 @@ export function MushafProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
+    const key = placeRef.current;
+    if (key) setProgress((current) => saveReadingPlace(current, key, { touch: false }));
     if (isMushafPath(pathname)) {
       lastActivityRef.current = Date.now();
       return;
@@ -369,15 +394,37 @@ export function MushafProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!isMushafPath(pathname)) return;
     const bump = () => markReadingActivity();
+    const arm = () => {
+      armScrollRef.current = true;
+    };
+    const armScrollbar = (event: Event) => {
+      const target = event.target;
+      if (target instanceof Element && target.id === "main-reader") arm();
+    };
+    const onScroll = (event: Event) => {
+      const target = event.target;
+      if (!(target instanceof Element) || target.id !== "main-reader") return;
+      if (!armScrollRef.current) return;
+      armScrollRef.current = false;
+      userMovedRef.current = true;
+    };
     window.addEventListener("pointerdown", bump);
+    window.addEventListener("pointerdown", armScrollbar);
     window.addEventListener("keydown", bump);
+    window.addEventListener("wheel", arm, { passive: true });
+    window.addEventListener("touchmove", arm, { passive: true });
     window.addEventListener("wheel", bump, { passive: true });
     window.addEventListener("touchmove", bump, { passive: true });
+    document.addEventListener("scroll", onScroll, true);
     return () => {
       window.removeEventListener("pointerdown", bump);
+      window.removeEventListener("pointerdown", armScrollbar);
       window.removeEventListener("keydown", bump);
+      window.removeEventListener("wheel", arm);
+      window.removeEventListener("touchmove", arm);
       window.removeEventListener("wheel", bump);
       window.removeEventListener("touchmove", bump);
+      document.removeEventListener("scroll", onScroll, true);
     };
   }, [pathname, markReadingActivity]);
 
@@ -425,15 +472,65 @@ export function MushafProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
+    if (!isMushafPath(pathname)) {
+      landingPathRef.current = pathname;
+      landingKeyRef.current = null;
+      return;
+    }
+    const visible = visibleVerseKeys[0] ?? null;
+    const pathChapter = surahIdFromPath(pathname);
+    const visibleChapter = visible?.split(":")[0] ?? null;
+    if (visible && pathChapter && visibleChapter !== pathChapter) return;
+
+    if (landingPathRef.current !== pathname) {
+      landingPathRef.current = pathname;
+      landingKeyRef.current = visible;
+      setScrolledPlace(false);
+      setEngagedVerseKey((current) => {
+        if (!current) return current;
+        if (pathChapter && current.startsWith(`${pathChapter}:`)) return current;
+        return null;
+      });
+      return;
+    }
+
+    if (!visible) {
+      landingKeyRef.current = null;
+      return;
+    }
+    if (!landingKeyRef.current) {
+      landingKeyRef.current = visible;
+      return;
+    }
+    if (visible !== landingKeyRef.current && userMovedRef.current) {
+      userMovedRef.current = false;
+      setScrolledPlace(true);
+      setEngagedVerseKey(null);
+    }
+  }, [pathname, visibleVerseKeys]);
+
+  useEffect(() => {
     if (!hydrated || loading) return;
-    if (!readingKey) return;
-    const wait = playingVerseKey ? 800 : 900;
+    if (!isMushafPath(pathname)) return;
+    const visible = visibleVerseKeys[0] ?? null;
+    const followed = readingPlaceKey({
+      isPlaying,
+      playingVerseKey,
+      engagedVerseKey,
+      visibleVerseKey: visible,
+      scrolled: scrolledPlace,
+    });
+    const wait = isPlaying || engagedVerseKey ? 400 : 900;
     const timer = window.setTimeout(() => {
       if (document.visibilityState !== "visible") return;
-      setProgress((current) => saveReadingPlace(current, readingKey));
+      setProgress((current) => {
+        const target = followed ?? landingReadingPlace(current.lastVerseKey, visible);
+        if (!target) return current;
+        return saveReadingPlace(current, target);
+      });
     }, wait);
     return () => window.clearTimeout(timer);
-  }, [hydrated, loading, playingVerseKey, readingKey]);
+  }, [engagedVerseKey, hydrated, isPlaying, loading, pathname, playingVerseKey, scrolledPlace, visibleVerseKeys]);
 
   useEffect(() => {
     if (!hydrated) return;
@@ -477,14 +574,40 @@ export function MushafProvider({ children }: { children: ReactNode }) {
       });
   }, []);
 
-  const rememberVerse = useCallback((id: number, verseNumber: number | undefined, fallbackKey: string | null) => {
-    const key =
-      verseNumber && Number.isInteger(verseNumber) && verseNumber > 0 ? `${id}:${verseNumber}` : fallbackKey;
-    setSelectedVerseKey(key);
-    setPendingScrollVerseKey(
-      verseNumber && Number.isInteger(verseNumber) && verseNumber > 0 ? `${id}:${verseNumber}` : null,
-    );
+  const engageVerse = useCallback((verseKey: string, update?: (current: ReadingProgress) => ReadingProgress) => {
+    if (!verseKey) return;
+    armScrollRef.current = false;
+    userMovedRef.current = false;
+    setEngagedVerseKey(verseKey);
+    setScrolledPlace(false);
+    setProgress(update ?? ((current) => saveReadingPlace(current, verseKey)));
   }, []);
+
+  const selectVerse = useCallback(
+    (key: string) => {
+      setSelectedVerseKey(key);
+      const first = versesRef.current[0]?.verseKey ?? null;
+      const previous = selectedRef.current;
+      const saved = progressRef.current.lastVerseKey;
+      const chapter = key.split(":")[0];
+      const automaticFirst =
+        key === first &&
+        previous?.split(":")[0] !== chapter &&
+        saved?.split(":")[0] === chapter &&
+        saved !== key;
+      if (automaticFirst) return;
+      engageVerse(key);
+    },
+    [engageVerse],
+  );
+
+  const rememberVerse = useCallback((id: number, verseNumber: number | undefined, fallbackKey: string | null) => {
+    const explicit = Boolean(verseNumber && Number.isInteger(verseNumber) && verseNumber > 0);
+    const key = explicit ? `${id}:${verseNumber}` : fallbackKey;
+    setSelectedVerseKey(key);
+    setPendingScrollVerseKey(explicit ? `${id}:${verseNumber}` : null);
+    if (explicit && key) engageVerse(key);
+  }, [engageVerse]);
 
   const loadSurah = useCallback(
     async (id: number, verseNumber?: number) => {
@@ -579,18 +702,18 @@ export function MushafProvider({ children }: { children: ReactNode }) {
   const openSurah = useCallback(
     (id: number, verseNumber?: number) => {
       const href = verseNumber ? `/surah/${id}#ayah-${verseNumber}` : `/surah/${id}`;
+      const explicit = Boolean(verseNumber && Number.isInteger(verseNumber) && verseNumber > 0);
+      if (explicit) engageVerse(`${id}:${verseNumber}`);
       if (pathname !== `/surah/${id}`) {
-        if (verseNumber && Number.isInteger(verseNumber) && verseNumber > 0) {
-          setPendingScrollVerseKey(`${id}:${verseNumber}`);
-        }
+        if (explicit) setPendingScrollVerseKey(`${id}:${verseNumber}`);
         router.push(href);
-      } else if (verseNumber && Number.isInteger(verseNumber) && verseNumber > 0) {
+      } else if (explicit) {
         rememberVerse(id, verseNumber, null);
       } else if (chapter?.id !== id) {
         void loadSurah(id, verseNumber);
       }
     },
-    [chapter?.id, loadSurah, pathname, rememberVerse, router],
+    [chapter?.id, engageVerse, loadSurah, pathname, rememberVerse, router],
   );
 
   const clearPendingScrollVerse = useCallback(() => {
@@ -689,9 +812,10 @@ export function MushafProvider({ children }: { children: ReactNode }) {
       setPlayingVerseKey(verseKey);
       setPlayingWordLocation(null);
       setSelectedVerseKey(verseKey);
+      engageVerse(verseKey);
       await loadSource(verse.audioUrl, false);
     },
-    [loadSource, verses],
+    [engageVerse, loadSource, verses],
   );
 
   const playVerse = useCallback(
@@ -702,11 +826,11 @@ export function MushafProvider({ children }: { children: ReactNode }) {
       setPlayingVerseKey(verseKey);
       setPlayingWordLocation(null);
       setSelectedVerseKey(verseKey);
-      setProgress((current) => saveReadingPlace(markVerseRead(current, verseKey), verseKey));
+      engageVerse(verseKey, (current) => saveReadingPlace(markVerseRead(current, verseKey), verseKey));
       await playSource(verse.audioUrl);
       trackUsage({ name: "feature", feature: "audio_play" });
     },
-    [playSource, verses],
+    [engageVerse, playSource, verses],
   );
 
   const playFrom = useCallback(
@@ -717,11 +841,11 @@ export function MushafProvider({ children }: { children: ReactNode }) {
       setPlayingVerseKey(verseKey);
       setPlayingWordLocation(null);
       setSelectedVerseKey(verseKey);
-      setProgress((current) => saveReadingPlace(markVerseRead(current, verseKey), verseKey));
+      engageVerse(verseKey, (current) => saveReadingPlace(markVerseRead(current, verseKey), verseKey));
       await playSource(verse.audioUrl);
       if (origin === "user") trackUsage({ name: "feature", feature: "audio_play" });
     },
-    [playSource, verses],
+    [engageVerse, playSource, verses],
   );
 
   const playWord = useCallback(
@@ -938,8 +1062,8 @@ export function MushafProvider({ children }: { children: ReactNode }) {
       saveNotes(next);
       return next;
     });
-    if (body.trim()) setProgress((current) => saveReadingPlace(markVerseRead(current, verseKey), verseKey));
-  }, []);
+    engageVerse(verseKey, (current) => noteReadingPlace(current, verseKey, body));
+  }, [engageVerse]);
 
   const commitHighlights = useCallback((next: Highlight[]) => {
     setHighlights((current) => {
@@ -1006,9 +1130,9 @@ export function MushafProvider({ children }: { children: ReactNode }) {
     (verse: Verse, swatchId?: string) => {
       const color = swatchId ?? preferences.activeSwatchId ?? DEFAULT_SWATCH_ID;
       commitHighlights(toggleAyahHighlight(highlights, verse.verseKey, color, verse.translation || verse.verseKey));
-      setProgress((current) => saveReadingPlace(markVerseRead(current, verse.verseKey), verse.verseKey));
+      engageVerse(verse.verseKey, (current) => saveReadingPlace(markVerseRead(current, verse.verseKey), verse.verseKey));
     },
-    [commitHighlights, highlights, preferences.activeSwatchId],
+    [commitHighlights, engageVerse, highlights, preferences.activeSwatchId],
   );
 
   const highlightWords = useCallback(
@@ -1022,16 +1146,18 @@ export function MushafProvider({ children }: { children: ReactNode }) {
         .map((item) => item.textUthmani)
         .join(" ");
       commitHighlights(paintArabicRange(highlights, verse.verseKey, lo, hi, color, text));
+      engageVerse(verse.verseKey);
     },
-    [commitHighlights, highlights, preferences.activeSwatchId],
+    [commitHighlights, engageVerse, highlights, preferences.activeSwatchId],
   );
 
   const toggleWordHighlight = useCallback(
     (verse: Verse, word: Word, swatchId?: string) => {
       const color = swatchId ?? preferences.activeSwatchId ?? DEFAULT_SWATCH_ID;
       commitHighlights(toggleArabicWord(highlights, verse.verseKey, word.position, color, word.textUthmani));
+      engageVerse(verse.verseKey);
     },
-    [commitHighlights, highlights, preferences.activeSwatchId],
+    [commitHighlights, engageVerse, highlights, preferences.activeSwatchId],
   );
 
   const highlightText = useCallback(
@@ -1045,8 +1171,9 @@ export function MushafProvider({ children }: { children: ReactNode }) {
     ) => {
       const color = swatchId ?? preferences.activeSwatchId ?? DEFAULT_SWATCH_ID;
       commitHighlights(addTextHighlight(highlights, verse.verseKey, layer, color, start, end, text));
+      engageVerse(verse.verseKey);
     },
-    [commitHighlights, highlights, preferences.activeSwatchId],
+    [commitHighlights, engageVerse, highlights, preferences.activeSwatchId],
   );
 
   const deleteHighlight = useCallback(
@@ -1233,7 +1360,7 @@ export function MushafProvider({ children }: { children: ReactNode }) {
       appendSurahVerses,
       loadSurah,
       reportReadingError,
-      selectVerse: setSelectedVerseKey,
+      selectVerse,
       selectWord: setSelectedWord,
       cueVerse,
       playFrom,
@@ -1285,6 +1412,7 @@ export function MushafProvider({ children }: { children: ReactNode }) {
       applyLibrary,
       updateDisplayName,
       updateAvatar,
+      bookmarkWord,
       bookmarks,
       chapter,
       chapters,
@@ -1332,13 +1460,16 @@ export function MushafProvider({ children }: { children: ReactNode }) {
       removeSwatch,
       resumeCue,
       runSearch,
+      saveNote,
       searchOpen,
       searchQuery,
       searchResults,
       searching,
       seek,
+      selectVerse,
       selectedVerseKey,
       selectedWord,
+      setActiveSwatch,
       setVisibleVerseKeys,
       signOut,
       stillReadingAsk,

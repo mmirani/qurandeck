@@ -80,15 +80,101 @@ export function isResumeDue(progress: ReadingProgress, now = Date.now()) {
 export function saveReadingPlace(
   progress: ReadingProgress,
   verseKey: string | null | undefined,
-  options: { touch?: boolean } = {},
+  options: { touch?: boolean; now?: number } = {},
 ): ReadingProgress {
   if (!verseKey) return progress;
   const touch = options.touch !== false;
+  const now = options.now ?? Date.now();
   const same = progress.lastVerseKey === verseKey;
+  // A quiet flush (page hide, leaving the reader) must not refresh the idle
+  // clock when the ayah did not change, or "resume after a break" never fires.
+  // A new ayah is real activity: always stamp it, or sync will keep an older place.
   if (same && !touch) return progress;
-  if (same && touch) return { ...progress, lastActiveAt: Date.now() };
-  if (!touch) return { ...progress, lastVerseKey: verseKey };
-  return { ...progress, lastVerseKey: verseKey, lastActiveAt: Date.now() };
+  return { ...progress, lastVerseKey: verseKey, lastActiveAt: now };
+}
+
+export type ReadingPlaceInput = {
+  isPlaying: boolean;
+  playingVerseKey?: string | null;
+  engagedVerseKey?: string | null;
+  visibleVerseKey?: string | null;
+  /** The reading line has moved since this page opened. */
+  scrolled: boolean;
+};
+
+/**
+ * The ayah worth saving. Null means "keep the place we already have" —
+ * opening a surah at the top is not a request to forget the last ayah.
+ */
+export function readingPlaceKey(input: ReadingPlaceInput): string | null {
+  if (input.isPlaying && input.playingVerseKey) return input.playingVerseKey;
+  if (input.engagedVerseKey) return input.engagedVerseKey;
+  if (input.scrolled && input.visibleVerseKey) return input.visibleVerseKey;
+  return null;
+}
+
+/** Surah id from `/surah/2`, or null for home, juz, and other routes. */
+export function surahIdFromPath(pathname: string | null | undefined): string | null {
+  if (!pathname) return null;
+  const match = pathname.match(/^\/surah\/(\d+)/);
+  return match?.[1] ?? null;
+}
+
+/**
+ * The first ayah in view becomes the place only when the reader opened a
+ * different surah. Coming back to the same surah keeps the saved ayah.
+ */
+export function landingReadingPlace(
+  savedKey: string | null | undefined,
+  visibleVerseKey: string | null | undefined,
+): string | null {
+  if (!visibleVerseKey || !parseVerseKey(visibleVerseKey)) return null;
+  if (!savedKey || !parseVerseKey(savedKey)) return visibleVerseKey;
+  if (savedKey.split(":")[0] === visibleVerseKey.split(":")[0]) return null;
+  return visibleVerseKey;
+}
+
+/**
+ * Move the place as soon as a note is edited, including an empty draft.
+ * A visit is counted only once the note has text, matching a real save.
+ */
+export function noteReadingPlace(
+  progress: ReadingProgress,
+  verseKey: string,
+  body: string,
+  now = Date.now(),
+): ReadingProgress {
+  const placed = saveReadingPlace(progress, verseKey, { now });
+  if (!body.trim()) return placed;
+  return markVerseRead(placed, verseKey);
+}
+
+export type ContinueBookmark = {
+  ayah: string;
+  here: boolean;
+  showResume: boolean;
+  resumeKey: string | null;
+};
+
+/** What the Auto Bookmark card should say. The ayah is the saved place. */
+export function continueBookmark(input: {
+  savedKey?: string | null;
+  lineKey?: string | null;
+  playingVerseKey?: string | null;
+  isPlaying?: boolean;
+  savedOnScreen?: boolean;
+  offerResume?: boolean;
+}): ContinueBookmark {
+  const saved = input.savedKey || null;
+  const line = input.lineKey || null;
+  const playing = input.isPlaying ? input.playingVerseKey || null : null;
+  const ayah = saved ?? playing ?? line ?? "1:1";
+  const onPlace = Boolean(saved && (line === saved || playing === saved || input.savedOnScreen));
+  // The card names the saved ayah. Resume is the way back whenever this screen
+  // is not already on that ayah, including before the reading line is measured.
+  const showResume = Boolean(saved && parseVerseKey(saved) && !onPlace);
+  const here = Boolean((onPlace || (!saved && (playing ?? line) === ayah)) && !showResume);
+  return { ayah, here, showResume, resumeKey: saved };
 }
 
 export function isSurahFullyRead(versesRead: string[], chapterId: number) {
