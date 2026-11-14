@@ -1,7 +1,5 @@
 import type { Metadata, MetadataRoute } from "next";
-import { CANONICAL_ORIGIN, PRODUCT_NAME, SITE_DESCRIPTION, siteUrl } from "@/lib/brand";
-
-const ALIAS_HOSTS = new Set(["www.qurandeck.com", "qurandeck.vercel.app"]);
+import { PRODUCT_NAME, SITE_DESCRIPTION, siteUrl } from "@/lib/brand";
 
 export function isPreviewDeployment(env = process.env.VERCEL_ENV) {
   return env === "preview";
@@ -10,15 +8,6 @@ export function isPreviewDeployment(env = process.env.VERCEL_ENV) {
 export function googleSiteVerification(env = process.env.GOOGLE_SITE_VERIFICATION) {
   const value = env?.trim();
   return value ? value : undefined;
-}
-
-/** 301 target for hosts that duplicate the apex. API routes stay put for OAuth callbacks. */
-export function canonicalRedirectUrl(hostHeader: string, pathname: string, search = ""): string | null {
-  const host = hostHeader.split(",")[0]?.trim().split(":")[0]?.toLowerCase() ?? "";
-  if (!ALIAS_HOSTS.has(host)) return null;
-  if (pathname === "/api" || pathname.startsWith("/api/")) return null;
-  const path = pathname.startsWith("/") ? pathname : `/${pathname}`;
-  return `${CANONICAL_ORIGIN}${path}${search}`;
 }
 
 export function robotRules(env = process.env.VERCEL_ENV): MetadataRoute.Robots {
