@@ -55,6 +55,12 @@ export type GeoTrendPoint = {
   pageViews: number;
 };
 
+export type CountWindow = {
+  start: string | null;
+  end: string;
+  label: string;
+};
+
 export type GeoSummary = {
   range: GeoRange;
   rangeLabel: string;
@@ -281,9 +287,10 @@ export function summarizeGeo(
   sort: GeoSort = "visitors",
   dir: GeoDir = "desc",
   now = new Date(),
+  window?: CountWindow,
 ): GeoSummary {
-  const end = utcDay(now);
-  const start = geoRangeStart(range, now);
+  const end = window?.end ?? utcDay(now);
+  const start = window ? window.start : geoRangeStart(range, now);
   const visitorsByCountry = new Map<string, number>();
   const visitorsByDay = new Map<string, number>();
   const visitsByDay = new Map<string, number>();
@@ -316,7 +323,8 @@ export function summarizeGeo(
     }))
     .sort(compareCountries(sort, dir));
 
-  const earliest = range === "all" ? [...visitorsByDay.keys(), ...visitsByDay.keys()].sort()[0] : start;
+  const earliest =
+    start === null ? [...visitorsByDay.keys(), ...visitsByDay.keys()].sort()[0] : start;
   const trendStart = earliest && earliest < end ? earliest : end;
   const trend: GeoTrendPoint[] = [];
   for (let day = trendStart; day <= end; day = addDays(day, 1)) {
@@ -330,7 +338,7 @@ export function summarizeGeo(
 
   return {
     range,
-    rangeLabel: geoRangeLabel(range),
+    rangeLabel: window?.label ?? geoRangeLabel(range),
     sort,
     dir,
     uniqueVisitors,

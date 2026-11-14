@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { GeoDashboard } from "@/components/admin/geo-dashboard";
+import { GeoDashboard, GeoRangeNav } from "@/components/admin/geo-dashboard";
+import { SignupCountries } from "@/components/admin/signup-countries";
 import { InboxLink } from "@/components/admin/inbox-link";
 import { MihrabMark } from "@/components/art/ornaments";
 import { BrandWordmark } from "@/components/brand/brand-wordmark";
@@ -27,7 +28,9 @@ import {
   type UsageDay,
   type UsageStats,
 } from "@/lib/usage";
-import type { GeoSummary } from "@/lib/geo";
+import type { AdminRange } from "@/lib/admin-range";
+import type { GeoDir, GeoSort, GeoSummary } from "@/lib/geo";
+import type { SignupCountrySummary } from "@/lib/signup-country";
 
 const METHODS: { id: SignInMethod; label: string }[] = [
   { id: "email_code", label: "Email code" },
@@ -40,11 +43,19 @@ export function UsageStatsView({
   stats,
   notice,
   geo,
+  signups = null,
+  statsRange,
+  sort = "visitors",
+  dir = "desc",
   inboxUnread = null,
 }: {
   stats: UsageStats | null;
   notice?: string;
   geo?: GeoSummary | null;
+  signups?: SignupCountrySummary | null;
+  statsRange?: AdminRange;
+  sort?: GeoSort;
+  dir?: GeoDir;
   inboxUnread?: number | null;
 }) {
   return (
@@ -71,11 +82,11 @@ export function UsageStatsView({
           <p className="qd-pad-sm rounded-2xl border border-gold/40 bg-highlight text-sm leading-6 text-ink">{notice}</p>
         ) : null}
         {stats ? (
-          <StatsBody stats={stats} geo={geo ?? null} />
+          <StatsBody stats={stats} geo={geo ?? null} signups={signups} statsRange={statsRange} sort={sort} dir={dir} />
         ) : (
           <>
             <p className="text-base text-ink-soft">Usage counts are unavailable right now.</p>
-            <GeoDashboard summary={geo ?? null} />
+            <CountryPanels geo={geo ?? null} signups={signups} statsRange={statsRange} sort={sort} dir={dir} />
           </>
         )}
       </main>
@@ -83,7 +94,45 @@ export function UsageStatsView({
   );
 }
 
-function StatsBody({ stats, geo }: { stats: UsageStats; geo: GeoSummary | null }) {
+function CountryPanels({
+  geo,
+  signups,
+  statsRange,
+  sort,
+  dir,
+}: {
+  geo: GeoSummary | null;
+  signups: SignupCountrySummary | null;
+  statsRange?: AdminRange;
+  sort: GeoSort;
+  dir: GeoDir;
+}) {
+  return (
+    <div className="flex flex-col gap-4">
+      {statsRange ? <GeoRangeNav range={statsRange} sort={geo?.sort ?? sort} dir={geo?.dir ?? dir} /> : null}
+      <div className="grid items-start gap-4 xl:grid-cols-2">
+        <GeoDashboard summary={geo} showRange={false} statsRange={statsRange} />
+        <SignupCountries summary={signups} />
+      </div>
+    </div>
+  );
+}
+
+function StatsBody({
+  stats,
+  geo,
+  signups,
+  statsRange,
+  sort,
+  dir,
+}: {
+  stats: UsageStats;
+  geo: GeoSummary | null;
+  signups: SignupCountrySummary | null;
+  statsRange?: AdminRange;
+  sort: GeoSort;
+  dir: GeoDir;
+}) {
   return (
     <>
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -94,7 +143,7 @@ function StatsBody({ stats, geo }: { stats: UsageStats; geo: GeoSummary | null }
       </div>
 
       <Activity stats={stats} />
-      <GeoDashboard summary={geo ?? null} />
+      <CountryPanels geo={geo} signups={signups} statsRange={statsRange} sort={sort} dir={dir} />
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
         <section className="qd-pad rounded-3xl border border-line bg-surface">

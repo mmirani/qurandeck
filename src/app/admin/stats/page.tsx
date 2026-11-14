@@ -3,8 +3,11 @@ import { notFound } from "next/navigation";
 import { auth } from "@/auth";
 import { UsageStatsView } from "@/components/admin/usage-stats";
 import { countUnreadFeedback } from "@/lib/feedback-store";
+import { countWindow, parseAdminRange } from "@/lib/admin-range";
 import { loadGeoSnapshot } from "@/lib/geo-store";
-import { parseGeoDir, parseGeoRange, parseGeoSort, summarizeGeo } from "@/lib/geo";
+import { parseGeoDir, parseGeoSort, summarizeGeo } from "@/lib/geo";
+import { loadSignupCountries } from "@/lib/signup-country-store";
+import { summarizeSignups } from "@/lib/signup-country";
 import { adminStatsStatus } from "@/lib/usage";
 import { loadUsageStats } from "@/lib/usage-store";
 
@@ -18,7 +21,13 @@ export const metadata: Metadata = {
 export default async function AdminStatsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ range?: string | string[]; sort?: string | string[]; dir?: string | string[] }>;
+  searchParams: Promise<{
+    range?: string | string[];
+    from?: string | string[];
+    to?: string | string[];
+    sort?: string | string[];
+    dir?: string | string[];
+  }>;
 }) {
   const query = await searchParams;
   let email: string | null = null;
@@ -31,11 +40,12 @@ export default async function AdminStatsPage({
   }
   if (adminStatsStatus(email) === 404) notFound();
 
-  const range = parseGeoRange(query.range);
+  const statsRange = parseAdminRange(query);
+  const window = countWindow(statsRange);
   const sort = parseGeoSort(query.sort);
   const dir = parseGeoDir(query.dir);
 
-  const [stats, geo, inboxUnread] = await Promise.all([
+  const [stats, geo, signups, inboxUnread] = await Promise.all([
     loadUsageStats().then(
       (value) => value,
       () => {
@@ -44,9 +54,15 @@ export default async function AdminStatsPage({
       },
     ),
     loadGeoSnapshot()
-      .then((snapshot) => summarizeGeo(snapshot, range, sort, dir))
+      .then((snapshot) => summarizeGeo(snapshot, "all", sort, dir, new Date(), window))
       .catch(() => {
         console.error("Country stats failed");
+        return null;
+      }),
+    loadSignupCountries()
+      .then((rows) => summarizeSignups(rows, "all", new Date(), window))
+      .catch(() => {
+        console.error("Signup country stats failed");
         return null;
       }),
     countUnreadFeedback().then(
@@ -57,5 +73,7 @@ export default async function AdminStatsPage({
       },
     ),
   ]);
-  return <UsageStatsView stats={stats} geo={geo} inboxUnread={inboxUnread} />;
+  return (
+    <UsageStatsView stats={stats} geo={geo} signups={signups} statsRange={statsRange} sort={sort} dir={dir} inboxUnread={inboxUnread} />
+  );
 }

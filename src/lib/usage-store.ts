@@ -1,5 +1,6 @@
 import { getSql } from "@/lib/db";
 import { geoSchemaStatements } from "@/lib/geo";
+import { signupCountrySchemaStatements } from "@/lib/signup-country";
 import {
   USAGE_RETENTION_MONTHS,
   accountUsageSubject,
@@ -82,6 +83,9 @@ async function run() {
   for (const statement of geoSchemaStatements()) {
     await sql.query(statement);
   }
+  for (const statement of signupCountrySchemaStatements()) {
+    await sql.query(statement);
+  }
   // Raw rows are kept for about 13 months, then removed on the next cold start.
   await sql`
     DELETE FROM usage_events
@@ -93,6 +97,10 @@ async function run() {
   `;
   await sql`
     DELETE FROM usage_geo_daily
+    WHERE day < (timezone('UTC', now()))::date - make_interval(months => ${USAGE_RETENTION_MONTHS}::int)
+  `;
+  await sql`
+    DELETE FROM signup_country_daily
     WHERE day < (timezone('UTC', now()))::date - make_interval(months => ${USAGE_RETENTION_MONTHS}::int)
   `;
 }
@@ -178,8 +186,10 @@ async function withStore(runInsert: (store: UsageInserter) => Promise<unknown>) 
   await runInsert(sqlInserter);
 }
 
-export function recordSignIn(email: string, provider: string | null | undefined) {
-  return withStore((store) => recordAuthEvents(store, email, provider));
+export async function recordSignIn(email: string, provider: string | null | undefined) {
+  if (!usageRecordingEnabled()) return;
+  await prepareUsageStore();
+  return recordAuthEvents(sqlInserter, email, provider);
 }
 
 export function recordGuestStarted(anonId: string) {
