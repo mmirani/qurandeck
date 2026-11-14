@@ -90,12 +90,22 @@ import {
   DEFAULT_SWATCH_ID,
   defaultSwatches,
   paintArabicRange,
+  paintAyahHighlight,
   clearVerseHighlights as dropVerseHighlights,
+  recolorHighlight as recolorHighlightMark,
   removeHighlight,
   removeHighlights,
   toggleAyahHighlight,
   toggleArabicWord,
 } from "@/lib/highlights";
+import { noteAfterEdit } from "@/lib/notes";
+import {
+  applySwatchDeletion,
+  normalizeHex,
+  reorderSwatch,
+  swatchNameError,
+  type SwatchDeleteAction,
+} from "@/lib/swatch-palette";
 import { wordByWordAudioUrl } from "@/lib/quran/sources";
 import { validateAvatar } from "@/lib/avatar";
 import { LibrarySync } from "@/components/providers/library-sync";
@@ -170,10 +180,13 @@ type MushafContextValue = {
   toggleBookmarkVerse: (verse: Verse) => void;
   bookmarkWord: (verse: Verse, word: Word) => void;
   saveNote: (verseKey: string, body: string) => void;
+  restoreNote: (note: Note) => void;
   setHighlighting: (value: boolean) => void;
   setVisibleVerseKeys: (keys: string[]) => void;
   setActiveSwatch: (id: string) => void;
   highlightAyah: (verse: Verse, swatchId?: string) => void;
+  applyAyahColor: (verse: Verse, swatchId: string) => void;
+  recolorHighlight: (id: string, swatchId: string) => void;
   highlightWords: (verse: Verse, startWord: number, endWord: number, swatchId?: string) => void;
   toggleWordHighlight: (verse: Verse, word: Word, swatchId?: string) => void;
   highlightText: (
@@ -187,8 +200,10 @@ type MushafContextValue = {
   deleteHighlight: (id: string) => void;
   deleteHighlights: (ids: string[]) => void;
   clearVerseHighlights: (verseKey: string) => void;
-  addSwatch: (name: string, color: string) => void;
+  addSwatch: (name: string, color: string) => HighlightSwatch | null;
   updateSwatch: (id: string, patch: Partial<Pick<HighlightSwatch, "name" | "color">>) => void;
+  moveSwatch: (id: string, direction: -1 | 1) => void;
+  deleteSwatch: (id: string, action: SwatchDeleteAction) => void;
   removeSwatch: (id: string) => void;
   signOut: () => void;
   applyLibrary: (library: LibrarySnapshot) => void;
@@ -922,23 +937,30 @@ export function MushafProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const saveNote = useCallback((verseKey: string, body: string) => {
+    const trimmed = body.trim();
     setNotes((current) => {
-      const trimmed = body.trim();
       const existing = current.find((item) => item.verseKey === verseKey);
       if (trimmed && !existing) trackUsage({ name: "feature", feature: "note_added" });
-      const next = !trimmed
-        ? current.filter((item) => item.verseKey !== verseKey)
-        : existing
-          ? current.map((item) =>
-              item.verseKey === verseKey
-                ? { ...item, body: trimmed, updatedAt: new Date().toISOString() }
-                : item,
-            )
-          : [...current, { id: crypto.randomUUID(), verseKey, body: trimmed, updatedAt: new Date().toISOString() }];
+      const now = new Date().toISOString();
+      const edited = noteAfterEdit(existing, verseKey, trimmed, now, crypto.randomUUID());
+      if (edited === undefined || edited === existing) return current;
+      const next = edited
+        ? existing
+          ? current.map((item) => (item.verseKey === verseKey ? edited : item))
+          : [...current, edited]
+        : current.filter((item) => item.verseKey !== verseKey);
       saveNotes(next);
       return next;
     });
-    if (body.trim()) setProgress((current) => saveReadingPlace(markVerseRead(current, verseKey), verseKey));
+    if (trimmed) setProgress((current) => saveReadingPlace(markVerseRead(current, verseKey), verseKey));
+  }, []);
+
+  const restoreNote = useCallback((note: Note) => {
+    setNotes((current) => {
+      const next = [...current.filter((item) => item.verseKey !== note.verseKey), note];
+      saveNotes(next);
+      return next;
+    });
   }, []);
 
   const commitHighlights = useCallback((next: Highlight[]) => {
@@ -1011,6 +1033,25 @@ export function MushafProvider({ children }: { children: ReactNode }) {
     [commitHighlights, highlights, preferences.activeSwatchId],
   );
 
+  const applyAyahColor = useCallback(
+    (verse: Verse, swatchId: string) => {
+      setActiveSwatch(swatchId);
+      commitHighlights(
+        paintAyahHighlight(highlights, verse.verseKey, swatchId, verse.translation || verse.verseKey),
+      );
+      setProgress((current) => saveReadingPlace(markVerseRead(current, verse.verseKey), verse.verseKey));
+    },
+    [commitHighlights, highlights, setActiveSwatch],
+  );
+
+  const recolorHighlight = useCallback(
+    (id: string, swatchId: string) => {
+      setActiveSwatch(swatchId);
+      commitHighlights(recolorHighlightMark(highlights, id, swatchId));
+    },
+    [commitHighlights, highlights, setActiveSwatch],
+  );
+
   const highlightWords = useCallback(
     (verse: Verse, startWord: number, endWord: number, swatchId?: string) => {
       const color = swatchId ?? preferences.activeSwatchId ?? DEFAULT_SWATCH_ID;
@@ -1070,38 +1111,67 @@ export function MushafProvider({ children }: { children: ReactNode }) {
     [commitHighlights, highlights],
   );
 
-  const addSwatch = useCallback((name: string, color: string) => {
-    setSwatches((current) => {
-      const next = [
-        ...current,
-        { id: crypto.randomUUID(), name: name.trim() || "Pen", color },
-      ];
-      saveSwatches(next);
-      return next;
-    });
-  }, []);
+  const addSwatch = useCallback(
+    (name: string, color: string) => {
+      const hex = normalizeHex(color);
+      const trimmed = name.trim();
+      if (!hex || swatchNameError(swatches, trimmed)) return null;
+      const created: HighlightSwatch = { id: crypto.randomUUID(), name: trimmed, color: hex };
+      setSwatches((current) => {
+        if (swatchNameError(current, trimmed)) return current;
+        const next = [...current, created];
+        saveSwatches(next);
+        return next;
+      });
+      setActiveSwatch(created.id);
+      return created;
+    },
+    [setActiveSwatch, swatches],
+  );
 
   const updateSwatch = useCallback((id: string, patch: Partial<Pick<HighlightSwatch, "name" | "color">>) => {
     setSwatches((current) => {
-      const next = current.map((item) => (item.id === id ? { ...item, ...patch } : item));
+      const name = patch.name?.trim();
+      if (name !== undefined && swatchNameError(current, name, id)) return current;
+      const color = patch.color === undefined ? undefined : normalizeHex(patch.color);
+      if (patch.color !== undefined && !color) return current;
+      const next = current.map((item) =>
+        item.id === id
+          ? { ...item, ...patch, ...(name !== undefined ? { name } : {}), ...(color ? { color } : {}) }
+          : item,
+      );
       saveSwatches(next);
       return next;
     });
   }, []);
 
-  const removeSwatch = useCallback(
-    (id: string) => {
-      if (id === DEFAULT_SWATCH_ID) return;
-      setSwatches((current) => {
-        const next = current.filter((item) => item.id !== id);
-        saveSwatches(next.length ? next : defaultSwatches);
-        return next.length ? next : defaultSwatches;
-      });
+  const moveSwatch = useCallback((id: string, direction: -1 | 1) => {
+    setSwatches((current) => {
+      const next = reorderSwatch(current, id, direction);
+      if (next !== current) saveSwatches(next);
+      return next;
+    });
+  }, []);
+
+  const deleteSwatch = useCallback(
+    (id: string, action: SwatchDeleteAction) => {
+      const result = applySwatchDeletion(highlights, swatches, id, action);
+      if (result.swatches === swatches && result.highlights === highlights) return;
+      setSwatches(result.swatches);
+      saveSwatches(result.swatches);
+      commitHighlights(result.highlights);
       if (preferences.activeSwatchId === id) {
-        setPreferences((current) => ({ ...current, activeSwatchId: DEFAULT_SWATCH_ID }));
+        setActiveSwatch(result.swatches[0]?.id ?? DEFAULT_SWATCH_ID);
       }
     },
-    [preferences.activeSwatchId],
+    [commitHighlights, highlights, preferences.activeSwatchId, setActiveSwatch, swatches],
+  );
+
+  const removeSwatch = useCallback(
+    (id: string) => {
+      deleteSwatch(id, { kind: "remove" });
+    },
+    [deleteSwatch],
   );
 
   const signOut = useCallback(() => {
@@ -1253,10 +1323,13 @@ export function MushafProvider({ children }: { children: ReactNode }) {
       toggleBookmarkVerse,
       bookmarkWord,
       saveNote,
+      restoreNote,
       setHighlighting,
       setVisibleVerseKeys,
       setActiveSwatch,
       highlightAyah,
+      applyAyahColor,
+      recolorHighlight,
       highlightWords,
       toggleWordHighlight,
       highlightText,
@@ -1265,6 +1338,8 @@ export function MushafProvider({ children }: { children: ReactNode }) {
       clearVerseHighlights,
       addSwatch,
       updateSwatch,
+      moveSwatch,
+      deleteSwatch,
       removeSwatch,
       signOut,
       applyLibrary,
@@ -1278,6 +1353,8 @@ export function MushafProvider({ children }: { children: ReactNode }) {
     }),
     [
       addSwatch,
+      deleteSwatch,
+      moveSwatch,
       adoptSurahSeed,
       appendSurahVerses,
       loadSurah,
@@ -1299,7 +1376,11 @@ export function MushafProvider({ children }: { children: ReactNode }) {
       duration,
       declineStillReading,
       error,
+      applyAyahColor,
       highlightAyah,
+      recolorHighlight,
+      restoreNote,
+      saveNote,
       highlightText,
       highlightWords,
       highlighting,

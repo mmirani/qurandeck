@@ -570,9 +570,17 @@ export function pieceAyahRange(piece: number, pieceCount = COMPLETION_PIECES) {
   return { start: ayahAtIndex(start), end: ayahAtIndex(Math.max(start, end)) };
 }
 
-export function announce(message: string, text?: string) {
+export function announce(
+  message: string,
+  text?: string,
+  action?: { label: string; onAction: () => void },
+) {
   if (typeof window === "undefined") return;
-  window.dispatchEvent(new CustomEvent("qurandeck-toast", { detail: { message, text } }));
+  window.dispatchEvent(
+    new CustomEvent("qurandeck-toast", {
+      detail: { message, text, actionLabel: action?.label, onAction: action?.onAction },
+    }),
+  );
 }
 
 export async function shareOrCopy(title: string, text: string) {

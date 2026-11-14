@@ -5,7 +5,8 @@ import { Copy, Eraser, Highlighter, MoreHorizontal, NotebookPen, Play, Share2, S
 import { VerseActionSheet } from "@/components/reader/verse-action-sheet";
 import { useMushaf } from "@/components/providers/mushaf-provider";
 import { CornerFrame } from "@/components/art/ornaments";
-import { HighlightPopover, MarkedText } from "@/components/reader/marked-text";
+import { MarkedText } from "@/components/reader/marked-text";
+import { anchorBox, HighlightPopover } from "@/components/reader/swatch-row";
 import { VerseTafsir } from "@/components/reader/tafsir-panel";
 import {
   ayahHighlight,
@@ -57,7 +58,9 @@ export function VerseCard({
     toggleWordHighlight,
     highlightWords,
     highlightText,
-    highlightAyah,
+    applyAyahColor,
+    recolorHighlight,
+    setActiveSwatch,
     deleteHighlight,
     deleteHighlights,
     clearVerseHighlights,
@@ -95,6 +98,24 @@ export function VerseCard({
   } | null>(null);
   const paint = useRef<{ start: number; last: number } | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [colorMenu, setColorMenu] = useState<null | {
+    kind: "mark" | "recolor";
+    anchor: ReturnType<typeof anchorBox>;
+    trigger: HTMLElement;
+    highlightId?: string;
+    activeId: string;
+  }>(null);
+
+  const openRecolor = (highlight: Highlight, el: HTMLElement) => {
+    setPicker(null);
+    setColorMenu({
+      kind: "recolor",
+      anchor: anchorBox(el),
+      trigger: el,
+      highlightId: highlight.id,
+      activeId: highlight.swatchId,
+    });
+  };
 
   const onAyahClick = () => {
     selectVerse(verse.verseKey);
@@ -122,6 +143,11 @@ export function VerseCard({
         } ${
           active ? "ring-2 ring-gold/40" : reciting ? "ring-1 ring-accent/40" : ""
         } ${wash && !ayahFocus ? "border-transparent" : ayahFocus ? "" : "border-line"}`}
+        onClick={(event) => {
+          if (!wash || event.target !== event.currentTarget) return;
+          event.stopPropagation();
+          openRecolor(wash, event.currentTarget);
+        }}
         style={
           washColor
             ? {
@@ -133,7 +159,7 @@ export function VerseCard({
       >
         {!ayahFocus ? (
         <div className="verse-head flex items-start justify-between gap-3">
-          <div className="relative">
+          <div className="relative flex items-center">
             <button
               type="button"
               onClick={(event) => {
@@ -148,6 +174,7 @@ export function VerseCard({
             {note ? (
               <span className="sr-only">Has a note</span>
             ) : null}
+            {wash ? <WashChip wash={wash} swatches={swatches} onOpen={(el) => openRecolor(wash, el)} /> : null}
           </div>
           <div className="flex shrink-0 items-center gap-1 md:hidden" data-tour={tourAnchor ? "ayah-mobile" : undefined}>
             <button
@@ -206,8 +233,24 @@ export function VerseCard({
               <span className="pr-1 text-xs font-medium">Star</span>
             </IconAction>
             <IconAction
-              label={wash ? "Remove ayah highlight" : "Highlight this whole ayah"}
-              onClick={() => highlightAyah(verse)}
+              label="Choose a highlight colour"
+              menuTrigger
+              expanded={colorMenu?.kind === "mark"}
+              controls="highlight-color-menu"
+              onClick={(event) => {
+                const el = event.currentTarget;
+                setPicker(null);
+                setColorMenu((current) =>
+                  current?.kind === "mark"
+                    ? null
+                    : {
+                        kind: "mark",
+                        anchor: anchorBox(el),
+                        trigger: el,
+                        activeId: preferences.activeSwatchId,
+                      },
+                );
+              }}
             >
               <Highlighter className={`h-4 w-4 ${wash ? "text-gold" : ""}`} />
               <span className="pr-1 text-xs font-medium">Mark</span>
@@ -238,6 +281,12 @@ export function VerseCard({
         </div>
         ) : null}
 
+        {ayahFocus && wash ? (
+          <div className="flex justify-end">
+            <WashChip wash={wash} swatches={swatches} onOpen={(el) => openRecolor(wash, el)} />
+          </div>
+        ) : null}
+
         {ayahFocus ? (
           <AyahFocusBody
             verse={verse}
@@ -255,7 +304,7 @@ export function VerseCard({
             playWord={playWord}
             highlightWords={highlightWords}
             toggleWordHighlight={toggleWordHighlight}
-            deleteHighlight={deleteHighlight}
+            onRecolor={openRecolor}
             setPicker={setPicker}
             paint={paint}
           />
@@ -294,7 +343,7 @@ export function VerseCard({
                         if (!primary) return;
                         setPicker({ x, y, layer: "translation", start, end, text });
                       }}
-                      onRemove={primary ? (id) => deleteHighlight(id) : undefined}
+                      onRecolor={primary ? openRecolor : undefined}
                     />
                   </div>
                 );
@@ -314,6 +363,7 @@ export function VerseCard({
                   playWord={playWord}
                   highlightWords={highlightWords}
                   toggleWordHighlight={toggleWordHighlight}
+                  onRecolor={openRecolor}
                   paint={paint}
                 />
                 </div>
@@ -332,7 +382,7 @@ export function VerseCard({
                   onSelect={(start, end, text, x, y) =>
                     setPicker({ x, y, layer: "transliteration", start, end, text })
                   }
-                  onRemove={(id) => deleteHighlight(id)}
+                  onRecolor={openRecolor}
                 />
               ) : null}
             </div>
@@ -357,17 +407,24 @@ export function VerseCard({
 
       {picker ? (
         <HighlightPopover
-          x={picker.x}
-          y={picker.y}
+          anchor={{ left: picker.x, top: picker.y, width: 0, height: 0 }}
           swatches={swatches}
           activeId={preferences.activeSwatchId}
+          preserveSelection
+          showClose
           onPick={(swatchId) => {
+            setActiveSwatch(swatchId);
             highlightText(verse, picker.layer, picker.start, picker.end, picker.text, swatchId);
             window.getSelection()?.removeAllRanges();
             setPicker(null);
           }}
+          onMark={() => {
+            highlightText(verse, picker.layer, picker.start, picker.end, picker.text, preferences.activeSwatchId);
+            window.getSelection()?.removeAllRanges();
+            setPicker(null);
+          }}
           onAyah={() => {
-            highlightAyah(verse, preferences.activeSwatchId);
+            applyAyahColor(verse, preferences.activeSwatchId);
             setPicker(null);
           }}
           onErase={(() => {
@@ -384,6 +441,36 @@ export function VerseCard({
             };
           })()}
           onClose={() => setPicker(null)}
+        />
+      ) : null}
+      {colorMenu ? (
+        <HighlightPopover
+          key={colorMenu.highlightId ?? "mark"}
+          menuId="highlight-color-menu"
+          anchor={colorMenu.anchor}
+          returnFocus={colorMenu.trigger}
+          swatches={swatches}
+          activeId={colorMenu.activeId}
+          eraseLabel={colorMenu.kind === "mark" ? "Erase" : "Remove"}
+          onPick={(swatchId) => {
+            if (colorMenu.kind === "mark") applyAyahColor(verse, swatchId);
+            else if (colorMenu.highlightId) recolorHighlight(colorMenu.highlightId, swatchId);
+            setColorMenu(null);
+          }}
+          onErase={
+            colorMenu.kind === "mark"
+              ? wash
+                ? () => {
+                    deleteHighlight(wash.id);
+                    setColorMenu(null);
+                  }
+                : undefined
+              : () => {
+                  if (colorMenu.highlightId) deleteHighlight(colorMenu.highlightId);
+                  setColorMenu(null);
+                }
+          }
+          onClose={() => setColorMenu(null)}
         />
       ) : null}
     </article>
@@ -406,7 +493,7 @@ function AyahFocusBody({
   playWord,
   highlightWords,
   toggleWordHighlight,
-  deleteHighlight,
+  onRecolor,
   setPicker,
   paint,
 }: {
@@ -425,7 +512,7 @@ function AyahFocusBody({
   playWord: (word: Word) => void;
   highlightWords: (verse: Verse, start: number, end: number) => void;
   toggleWordHighlight: (verse: Verse, word: Word) => void;
-  deleteHighlight: (id: string) => void;
+  onRecolor: (highlight: Highlight, anchor: HTMLElement) => void;
   setPicker: (value: {
     x: number;
     y: number;
@@ -461,6 +548,7 @@ function AyahFocusBody({
               playWord={playWord}
               highlightWords={highlightWords}
               toggleWordHighlight={toggleWordHighlight}
+              onRecolor={onRecolor}
               paint={paint}
               tapMode="armed"
             />
@@ -476,7 +564,7 @@ function AyahFocusBody({
               onSelect={(start, end, text, x, y) =>
                 setPicker({ x, y, layer: "translation", start, end, text })
               }
-              onRemove={(id) => deleteHighlight(id)}
+              onRecolor={onRecolor}
             />
           </div>
         ) : null}
@@ -497,6 +585,7 @@ function ArabicBlock({
   playWord,
   highlightWords,
   toggleWordHighlight,
+  onRecolor,
   paint,
   tapMode = "immediate",
 }: {
@@ -511,6 +600,7 @@ function ArabicBlock({
   playWord: (word: Word) => void;
   highlightWords: (verse: Verse, start: number, end: number) => void;
   toggleWordHighlight: (verse: Verse, word: Word) => void;
+  onRecolor?: (highlight: Highlight, anchor: HTMLElement) => void;
   paint: React.MutableRefObject<{ start: number; last: number } | null>;
   tapMode?: "immediate" | "armed";
 }) {
@@ -569,14 +659,20 @@ function ArabicBlock({
                     else toggleWordHighlight(verse, word);
                     return;
                   }
+                  if (!highlighting && marked && onRecolor) {
+                    onRecolor(marked, event.currentTarget);
+                    return;
+                  }
                   if (!highlighting && wordTapShouldPlay(tapMode, alreadySelected)) void playWord(word);
                 }}
+                data-highlight-trigger={marked ? "" : undefined}
                 className={`mx-[2px] inline cursor-pointer rounded-md px-1 leading-[2.25] ${
                   on ? "bg-gold/25" : "hover:bg-gold/10"
                 }`}
-                style={pen ? { background: `color-mix(in srgb, ${pen.color} 62%, transparent)` } : undefined}
+                style={pen ? { background: `color-mix(in srgb, ${pen.color} 40%, transparent)` } : undefined}
               >
                 {word.textUthmani}
+                {marked ? <span className="sr-only">. Change colour</span> : null}
               </button>
             );
           })
@@ -592,25 +688,61 @@ function ArabicBlock({
   );
 }
 
+function WashChip({
+  wash,
+  swatches,
+  onOpen,
+}: {
+  wash: Highlight;
+  swatches: HighlightSwatch[];
+  onOpen: (el: HTMLElement) => void;
+}) {
+  const pen = swatchById(swatches, wash.swatchId);
+  return (
+    <button
+      type="button"
+      data-highlight-trigger=""
+      aria-label={`Change ${pen.name} highlight`}
+      onClick={(event) => {
+        event.stopPropagation();
+        onOpen(event.currentTarget);
+      }}
+      className="inline-flex h-11 w-11 cursor-pointer items-center justify-center rounded-full"
+    >
+      <span aria-hidden="true" className="h-4 w-4 rounded-full border border-line" style={{ background: pen.color }} />
+    </button>
+  );
+}
+
 function IconAction({
   children,
   label,
   onClick,
   tour,
+  menuTrigger,
+  expanded,
+  controls,
 }: {
   children: React.ReactNode;
   label: string;
-  onClick: () => void;
+  onClick: (event: React.MouseEvent<HTMLButtonElement>) => void;
   tour?: string;
+  menuTrigger?: boolean;
+  expanded?: boolean;
+  controls?: string;
 }) {
   return (
     <button
       type="button"
       data-tour={tour}
+      data-highlight-trigger={menuTrigger ? "" : undefined}
       aria-label={label}
+      aria-haspopup={menuTrigger ? "dialog" : undefined}
+      aria-expanded={expanded}
+      aria-controls={controls}
       onClick={(event) => {
         event.stopPropagation();
-        onClick();
+        onClick(event);
       }}
       className="group/action relative inline-flex min-h-11 min-w-11 cursor-pointer items-center justify-center gap-1 rounded-full border border-gold/30 px-1.5 text-ink-soft hover:bg-accent-soft hover:text-gold-deep"
     >
