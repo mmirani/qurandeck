@@ -112,7 +112,7 @@ function csvEscape(value: string | number | null | undefined) {
 export function buildStatsCsv(input: LibraryExportInput): string {
   const stats = buildExportStats(input);
   const lines: string[] = [
-    "section,key,value",
+    "section,key,value,created_at,updated_at",
     `summary,verses_read,${stats.versesRead}`,
     `summary,verses_total,${stats.versesTotal}`,
     `summary,surahs_finished,${stats.surahsFinished}`,
@@ -139,7 +139,9 @@ export function buildStatsCsv(input: LibraryExportInput): string {
   }
 
   for (const note of input.notes) {
-    lines.push(`note,${csvEscape(note.verseKey)},${csvEscape(note.body)}`);
+    lines.push(
+      `note,${csvEscape(note.verseKey)},${csvEscape(note.body)},${csvEscape(note.createdAt)},${csvEscape(note.updatedAt)}`,
+    );
   }
 
   return `${lines.join("\n")}\n`;

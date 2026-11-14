@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-type Toast = { message: string; text?: string };
+type Toast = { message: string; text?: string; actionLabel?: string; onAction?: () => void };
 
 export function ToastHost() {
   const [toast, setToast] = useState<Toast | null>(null);
@@ -14,7 +14,7 @@ export function ToastHost() {
       if (!detail?.message) return;
       setToast(detail);
       window.clearTimeout(timer);
-      if (!detail.text) timer = window.setTimeout(() => setToast(null), 2400);
+      if (!detail.text) timer = window.setTimeout(() => setToast(null), detail.actionLabel ? 6000 : 2400);
     };
     window.addEventListener("qurandeck-toast", onToast);
     return () => {
@@ -38,9 +38,23 @@ export function ToastHost() {
             <textarea readOnly value={toast.text} rows={4} className="mt-1 w-full resize-none rounded-xl border border-line bg-canvas p-2 text-sm text-ink" />
           </label>
         ) : null}
-        <button type="button" className="mt-2 text-xs font-medium text-gold-deep" onClick={() => setToast(null)}>
-          Dismiss
-        </button>
+        <div className="mt-2 flex items-center gap-3">
+          {toast.actionLabel && toast.onAction ? (
+            <button
+              type="button"
+              className="inline-flex min-h-11 items-center text-sm font-medium text-gold-deep"
+              onClick={() => {
+                toast.onAction?.();
+                setToast(null);
+              }}
+            >
+              {toast.actionLabel}
+            </button>
+          ) : null}
+          <button type="button" className="inline-flex min-h-11 items-center text-xs font-medium text-gold-deep" onClick={() => setToast(null)}>
+            Dismiss
+          </button>
+        </div>
       </div>
     </div>
   );

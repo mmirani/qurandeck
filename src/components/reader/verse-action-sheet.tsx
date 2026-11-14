@@ -1,9 +1,10 @@
 "use client";
 
-import { Copy, Highlighter, NotebookPen, Play, Share2, Star } from "lucide-react";
+import { Copy, NotebookPen, Play, Share2, Star } from "lucide-react";
 import { BottomSheet } from "@/components/shell/bottom-sheet";
 import { useMushaf } from "@/components/providers/mushaf-provider";
 import { ayahHighlight, verseHighlights } from "@/lib/highlights";
+import { SwatchRow } from "@/components/reader/swatch-row";
 import { PRODUCT_NAME } from "@/lib/brand";
 import { focusOpenNote } from "@/lib/note-composer";
 import { shareOrCopy, verseShareText } from "@/lib/reading";
@@ -22,13 +23,14 @@ export function VerseActionSheet({
     bookmarks,
     notes,
     highlights,
+    swatches,
     mode,
     playVerse,
     playFrom,
     selectVerse,
     toggleBookmarkVerse,
-    highlightAyah,
-    clearVerseHighlights,
+    applyAyahColor,
+    deleteHighlight,
     updatePreferences,
     preferences,
   } = useMushaf();
@@ -85,11 +87,20 @@ export function VerseActionSheet({
           label={favorited ? "Remove bookmark" : "Bookmark ayah"}
           onClick={() => run(() => toggleBookmarkVerse(verse))}
         />
-        <SheetAction
-          icon={<Highlighter className={`h-5 w-5 ${wash ? "text-gold" : ""}`} />}
-          label={wash ? "Clear ayah highlight" : "Highlight ayah"}
-          onClick={() => run(() => (wash ? clearVerseHighlights(verse.verseKey) : highlightAyah(verse)))}
-        />
+        <div className="rounded-2xl px-3 py-2">
+          <p id="ayah-highlight-label" tabIndex={-1} className="px-1 text-sm font-medium text-ink outline-none">
+            Highlight ayah
+          </p>
+          <SwatchRow
+            swatches={swatches}
+            activeId={wash?.swatchId ?? preferences.activeSwatchId}
+            label="Highlight ayah colours"
+            eraseLabel="Erase"
+            onPick={(swatchId) => applyAyahColor(verse, swatchId)}
+            onErase={wash ? () => deleteHighlight(wash.id) : undefined}
+            onClose={() => document.getElementById("ayah-highlight-label")?.focus()}
+          />
+        </div>
         <SheetAction
           icon={<Share2 className="h-5 w-5" />}
           label="Share ayah"

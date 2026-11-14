@@ -7,8 +7,8 @@ function library(patch: Partial<LibrarySnapshot>): LibrarySnapshot {
   return { ...emptyLibrary(), ...patch };
 }
 
-function note(verseKey: string, body: string, updatedAt: string): Note {
-  return { id: `${verseKey}-${updatedAt}`, verseKey, body, updatedAt };
+function note(verseKey: string, body: string, updatedAt: string, createdAt = updatedAt): Note {
+  return { id: `${verseKey}-${updatedAt}`, verseKey, body, createdAt, updatedAt };
 }
 
 function verseBookmark(verseKey: string, createdAt: string): Bookmark {

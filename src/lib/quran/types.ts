@@ -138,6 +138,8 @@ export type Note = {
   id: string;
   verseKey: string;
   body: string;
+  /** When the note was first saved. Older notes may omit this until load. */
+  createdAt: string;
   updatedAt: string;
 };
 

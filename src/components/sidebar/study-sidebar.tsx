@@ -3,19 +3,20 @@
 import { useEffect, useMemo, useState } from "react";
 import { useMushaf } from "@/components/providers/mushaf-provider";
 import { ArabesqueDivider } from "@/components/art/ornaments";
-import { highlightListCopy } from "@/lib/highlights";
-import type { Highlight } from "@/lib/quran/types";
 import { AccountRailCard } from "@/components/account/account-dashboard";
+import { VerseNotePanel } from "@/components/reader/verse-note-panel";
+import { anchorBox, HighlightPopover } from "@/components/reader/swatch-row";
+import { highlightListCopy } from "@/lib/highlights";
+import { verseRangeLabel } from "@/lib/verse-range";
+import type { Highlight } from "@/lib/quran/types";
 
 export function StudySidebar() {
   const {
     selectedVerseKey,
     selectedWord,
     verses,
-    notes,
     highlights,
     visibleVerseKeys,
-    saveNote,
     playWord,
     bookmarkWord,
     openModal,
@@ -23,22 +24,11 @@ export function StudySidebar() {
     preferences,
   } = useMushaf();
   const verse = verses.find((item) => item.verseKey === selectedVerseKey) ?? verses[0];
-  const note = notes.find((item) => item.verseKey === verse?.verseKey);
   const viewKeys = visibleVerseKeys.length ? visibleVerseKeys : selectedVerseKey ? [selectedVerseKey] : [];
   const viewMarks = useMemo(() => {
     const keys = visibleVerseKeys.length ? visibleVerseKeys : selectedVerseKey ? [selectedVerseKey] : [];
     return keys.flatMap((key) => highlights.filter((item) => item.verseKey === key));
   }, [highlights, selectedVerseKey, visibleVerseKeys]);
-  const noteKey = `${verse?.verseKey ?? ""}\0${note?.body ?? ""}`;
-  const [draftKey, setDraftKey] = useState(noteKey);
-  const [draft, setDraft] = useState(note?.body ?? "");
-  const [savedAgo, setSavedAgo] = useState(note ? "Saved" : "Unsaved");
-  if (noteKey !== draftKey) {
-    setDraftKey(noteKey);
-    setDraft(note?.body ?? "");
-    setSavedAgo(note ? "Saved" : "Unsaved");
-  }
-
   const words = verse?.words.filter((item) => item.charType === "word") ?? [];
 
   return (
@@ -46,35 +36,7 @@ export function StudySidebar() {
       <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto overscroll-contain">
       <AccountRailCard />
       <section className="rail-card qd-card rounded-2xl">
-        <h2 className="section-heading text-gold">Notes</h2>
-        <p className="text-base leading-6">Ayah {verse?.verseKey ?? "—"}</p>
-        {note ? (
-          <p className="rounded-xl bg-gold/15 px-3 py-2 text-xs leading-5 text-gold">This ayah has a saved note</p>
-        ) : (
-          <p className="text-xs text-muted">{savedAgo}</p>
-        )}
-        <label htmlFor="verse-note" className="text-sm font-medium text-ink">
-          Note on {verse?.verseKey ?? "—"}
-        </label>
-        <textarea
-          id="verse-note"
-          value={draft}
-          onChange={(event) => setDraft(event.target.value)}
-          placeholder="Write a personal note about this ayah…"
-          className="h-28 w-full resize-none rounded-2xl border border-gold/20 bg-transparent p-[var(--space-3)] text-base text-ink"
-        />
-        <button
-          type="button"
-          disabled={!verse}
-          onClick={() => {
-            if (!verse) return;
-            saveNote(verse.verseKey, draft);
-            setSavedAgo("Saved just now");
-          }}
-          className="h-11 w-full cursor-pointer rounded-full bg-gold/20 text-base text-gold"
-        >
-          Save note
-        </button>
+        <VerseNotePanel verseKey={verse?.verseKey} fieldId="verse-note" variant="rail" />
       </section>
       <section className="rail-card qd-card rounded-2xl">
         <div className="flex items-center justify-between gap-2">
@@ -94,7 +56,7 @@ export function StudySidebar() {
             </button>
           </div>
         </div>
-        <p className="text-sm leading-6 text-ink-soft">{rangeLabel(viewKeys)}</p>
+        <p className="text-sm leading-6 text-ink-soft">{verseRangeLabel(viewKeys)}</p>
         <HighlightFeed marks={viewMarks} />
       </section>
       {preferences.showWordByWord ? (
@@ -139,14 +101,14 @@ export function StudySidebar() {
   );
 }
 
-function rangeLabel(keys: string[]) {
-  if (keys.length === 0) return "Scroll the mushaf";
-  if (keys.length === 1) return `In view · ${keys[0]}`;
-  return `In view · ${keys[0]} – ${keys[keys.length - 1]}`;
-}
-
 function HighlightFeed({ marks }: { marks: Highlight[] }) {
-  const { swatches, jumpToHit, verses, chapters, deleteHighlight } = useMushaf();
+  const { swatches, jumpToHit, verses, chapters, deleteHighlight, recolorHighlight } = useMushaf();
+  const [menu, setMenu] = useState<null | {
+    id: string;
+    activeId: string;
+    anchor: ReturnType<typeof anchorBox>;
+    trigger: HTMLElement;
+  }>(null);
   const [shown, setShown] = useState(marks);
   const [updating, setUpdating] = useState(false);
 
@@ -174,6 +136,7 @@ function HighlightFeed({ marks }: { marks: Highlight[] }) {
   }
 
   return (
+    <>
     <ul className={`highlight-feed flex flex-col gap-2 ${updating ? "is-updating" : ""}`}>
       {shown.map((item) => {
         const pen = swatches.find((swatch) => swatch.id === item.swatchId);
@@ -186,7 +149,22 @@ function HighlightFeed({ marks }: { marks: Highlight[] }) {
         });
         return (
           <li key={item.id} className="qd-pad-sm flex items-start gap-2 rounded-2xl bg-surface">
-            <span className="mt-1 h-3 w-3 shrink-0 rounded-full" style={{ background: pen?.color ?? "#F5D76E" }} />
+            <button
+              type="button"
+              data-highlight-trigger=""
+              aria-label={`Change ${pen?.name ?? "highlight"} colour`}
+              onClick={(event) => {
+                const el = event.currentTarget;
+                setMenu((current) =>
+                  current?.id === item.id
+                    ? null
+                    : { id: item.id, activeId: item.swatchId, anchor: anchorBox(el), trigger: el },
+                );
+              }}
+              className="inline-flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full"
+            >
+              <span aria-hidden="true" className="h-3 w-3 rounded-full" style={{ background: pen?.color ?? "#F5D76E" }} />
+            </button>
             <button
               type="button"
               className="min-h-11 min-w-0 flex-1 cursor-pointer py-1 text-left"
@@ -217,5 +195,26 @@ function HighlightFeed({ marks }: { marks: Highlight[] }) {
         );
       })}
     </ul>
+    {menu ? (
+      <HighlightPopover
+        key={menu.id}
+        menuId="sidebar-highlight-color-menu"
+        anchor={menu.anchor}
+        returnFocus={menu.trigger}
+        swatches={swatches}
+        activeId={menu.activeId}
+        eraseLabel="Remove"
+        onPick={(swatchId) => {
+          recolorHighlight(menu.id, swatchId);
+          setMenu(null);
+        }}
+        onErase={() => {
+          deleteHighlight(menu.id);
+          setMenu(null);
+        }}
+        onClose={() => setMenu(null)}
+      />
+    ) : null}
+    </>
   );
 }

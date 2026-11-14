@@ -4,6 +4,7 @@ import { DEFAULT_RECITATION_ID, DEFAULT_TAFSIR_ID, DEFAULT_TRANSLATION_ID } from
 import { DEFAULT_SWATCH_ID, defaultSwatches } from "./highlights";
 import { defaultReadingProgress, normalizeVerseVisits, normalizeSurahCompletions, syncSurahsRead, type ReadingProgress } from "./reading";
 import { mergeStudyCards } from "./study-cards";
+import { normalizeNotes, notesMissingCreatedAt } from "./notes";
 import type {
   Bookmark,
   Highlight,
@@ -110,7 +111,9 @@ export function saveBookmarks(value: Bookmark[]) {
 
 export function loadNotes(): Note[] {
   const value = parse(KEYS.notes);
-  return Array.isArray(value) ? (value as Note[]) : [];
+  const notes = normalizeNotes(value);
+  if (notesMissingCreatedAt(value)) saveNotes(notes);
+  return notes;
 }
 
 export function saveNotes(value: Note[]) {

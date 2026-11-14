@@ -101,6 +101,38 @@ function nextId() {
   return crypto.randomUUID();
 }
 
+/** Set the whole-ayah colour. Same pen again keeps the mark; Erase is a separate action. */
+export function paintAyahHighlight(
+  highlights: Highlight[],
+  verseKey: string,
+  swatchId: string,
+  text: string,
+): Highlight[] {
+  const existing = ayahHighlight(highlights, verseKey);
+  if (existing) {
+    if (existing.swatchId === swatchId) return highlights;
+    return highlights.map((item) => (item.id === existing.id ? { ...item, swatchId } : item));
+  }
+  return [
+    ...highlights,
+    {
+      id: nextId(),
+      verseKey,
+      layer: "ayah",
+      swatchId,
+      text,
+      createdAt: new Date().toISOString(),
+    },
+  ];
+}
+
+/** Change one mark's colour. Range, text, id, and createdAt stay. */
+export function recolorHighlight(highlights: Highlight[], id: string, swatchId: string): Highlight[] {
+  const existing = highlights.find((item) => item.id === id);
+  if (!existing || existing.swatchId === swatchId) return highlights;
+  return highlights.map((item) => (item.id === id ? { ...item, swatchId } : item));
+}
+
 export function toggleAyahHighlight(
   highlights: Highlight[],
   verseKey: string,

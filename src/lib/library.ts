@@ -10,6 +10,7 @@ import {
   syncSurahsRead,
   type ReadingProgress,
 } from "@/lib/reading";
+import { normalizeNote, normalizeNotes } from "@/lib/notes";
 import type { Bookmark, Highlight, HighlightSwatch, Note, Preferences } from "@/lib/quran/types";
 
 export type LibrarySnapshot = {
@@ -59,7 +60,9 @@ function laterIso(a?: string, b?: string) {
 
 export function mergeLibraries(local: LibrarySnapshot, remote: LibrarySnapshot): LibrarySnapshot {
   const notes = new Map<string, Note>();
-  for (const note of [...remote.notes, ...local.notes]) {
+  for (const raw of [...remote.notes, ...local.notes]) {
+    const note = normalizeNote(raw);
+    if (!note) continue;
     const current = notes.get(note.verseKey);
     if (!current || (note.updatedAt ?? "") >= (current.updatedAt ?? "")) notes.set(note.verseKey, note);
   }
@@ -157,7 +160,9 @@ export function normalizeLibrary(value: unknown): LibrarySnapshot | null {
   return {
     preferences: preferencesFromUnknown(raw.preferences),
     bookmarks: Array.isArray(raw.bookmarks) ? raw.bookmarks : [],
-    notes: Array.isArray(raw.notes) ? raw.notes : [],
+    // Notes are fields inside the sealed library JSON, not their own columns.
+    // createdAt is filled from updatedAt when an older library omits it.
+    notes: normalizeNotes(raw.notes),
     highlights: Array.isArray(raw.highlights) ? raw.highlights : [],
     swatches: Array.isArray(raw.swatches) ? raw.swatches : base.swatches,
     progress: (() => {
