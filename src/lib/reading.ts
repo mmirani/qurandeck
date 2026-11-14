@@ -96,6 +96,11 @@ export function shiftDayKey(day: string, delta: number): string {
   return todayKey(date);
 }
 
+/** True when `day` is after the local calendar day of `now`. Day keys are local, not UTC. */
+export function isFutureDay(day: string, now = new Date()) {
+  return isDayKey(day) && day > todayKey(now);
+}
+
 export function lastDayKeyOfMonth(month: string): string {
   if (!isMonthKey(month)) return month;
   const [year, monthIndex] = month.split("-").map(Number);
@@ -232,7 +237,7 @@ export function normalizeReadingProgress(raw: unknown): ReadingProgress {
 
 export function bumpStreak(progress: ReadingProgress, day = todayKey()): ReadingProgress {
   if (progress.lastReadDay === day) return progress;
-  const yesterday = todayKey(new Date(Date.now() - 86400000));
+  const yesterday = shiftDayKey(day, -1);
   return {
     ...progress,
     lastReadDay: day,

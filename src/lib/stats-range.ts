@@ -120,6 +120,8 @@ export function resolveStatsRange(
   }
   let start = asDayKey(prefs.statsRangeStart);
   let end = asDayKey(prefs.statsRangeEnd);
+  if (start && start > today) start = today;
+  if (end && end > today) end = today;
   if (start && end && start > end) {
     const swap = start;
     start = end;

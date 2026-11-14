@@ -3,7 +3,7 @@
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { dialogFocusables, trapTabIndex } from "@/lib/dialog-focus";
-import { parseDayKey, todayKey } from "@/lib/reading";
+import { isFutureDay, parseDayKey, todayKey } from "@/lib/reading";
 import { formatDay, formatSpan, monthMatrix, moveCalendarDay, weekStartsOn } from "@/lib/stats-range";
 import { useMediaQuery } from "@/lib/use-media-query";
 
@@ -27,7 +27,7 @@ export function RangeCalendar({
   const weekStart = weekStartsOn(typeof navigator === "undefined" ? "en-US" : navigator.language);
   const initial = parseDayKey(end || start || today) ?? new Date();
   const [visible, setVisible] = useState(() => new Date(initial.getFullYear(), initial.getMonth(), 1));
-  const [focused, setFocused] = useState(end || start || today);
+  const [focused, setFocused] = useState(end && end <= today ? end : start && start <= today ? start : today);
   const [anchor, setAnchor] = useState<string | null>(null);
   const [rangeStart, setRangeStart] = useState(start);
   const [rangeEnd, setRangeEnd] = useState(end);
@@ -50,7 +50,7 @@ export function RangeCalendar({
   };
 
   const pick = (day: string) => {
-    if (day > today) return;
+    if (isFutureDay(day)) return;
     if (!anchor) {
       setAnchor(day);
       setRangeStart(day);
@@ -96,7 +96,7 @@ export function RangeCalendar({
     const target = event.target instanceof HTMLElement ? event.target : null;
     if (!target?.dataset.calDay) return;
     const next = moveCalendarDay(focused, event.key, weekStart);
-    if (!next) return;
+    if (!next || isFutureDay(next)) return;
     event.preventDefault();
     setFocused(next);
     const date = parseDayKey(next);
@@ -235,13 +235,14 @@ function MonthGrid({
               <tr key={row.join("-")}>
                 {row.map((day) => {
                   const date = parseDayKey(day);
-                  const future = day > today;
+                  const future = isFutureDay(day);
                   const outside = !day.startsWith(monthKey);
                   const endpoint = day === rangeStart || day === rangeEnd;
                   const inRange = Boolean(rangeStart && rangeEnd && day >= rangeStart && day <= rangeEnd);
                   const name = date ? long.format(date) : day;
                   let accessible = name;
                   if (day === today) accessible += ", today";
+                  if (future) accessible += ", unavailable";
                   if (endpoint && rangeStart === rangeEnd) accessible += ", selected";
                   else if (day === rangeStart) accessible += ", start of range";
                   else if (day === rangeEnd) accessible += ", end of range";
@@ -250,23 +251,25 @@ function MonthGrid({
                     <td key={day} role="gridcell" className="p-0 text-center" aria-selected={endpoint || undefined}>
                       <button
                         type="button"
-                        data-cal-day={day}
-                        tabIndex={day === focused ? 0 : -1}
+                        data-cal-day={future ? undefined : day}
+                        tabIndex={day === focused && !future ? 0 : -1}
+                        disabled={future}
                         aria-disabled={future || undefined}
+                        aria-current={day === today ? "date" : undefined}
                         aria-pressed={endpoint || undefined}
                         aria-label={accessible}
                         onClick={() => onPick(day)}
                         onFocus={() => onFocusDay(day)}
-                        className={`mx-auto flex h-11 w-11 cursor-pointer items-center justify-center rounded-full text-sm tabular-nums focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold ${
-                          endpoint
-                            ? "bg-gold font-semibold text-on-gold"
-                            : inRange
-                              ? "bg-highlight text-ink"
-                              : future
-                                ? "cursor-default text-muted"
+                        className={`mx-auto flex h-11 w-11 items-center justify-center rounded-full text-sm tabular-nums focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold disabled:cursor-not-allowed ${
+                          future
+                            ? "text-muted opacity-40"
+                            : endpoint
+                              ? "bg-gold font-semibold text-on-gold"
+                              : inRange
+                                ? "bg-highlight text-ink"
                                 : outside
-                                  ? "text-muted"
-                                  : "text-ink hover:bg-highlight"
+                                  ? "cursor-pointer text-muted"
+                                  : "cursor-pointer text-ink hover:bg-highlight"
                         } ${day === today && !endpoint ? "ring-1 ring-gold" : ""}`}
                       >
                         {date?.getDate()}

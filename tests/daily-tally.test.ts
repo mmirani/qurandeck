@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import { describe, it } from "node:test";
+import { fileURLToPath } from "node:url";
 import { accountCreatedKinds } from "../src/lib/account-created";
 import { buildLibraryExport, buildStatsCsv } from "../src/lib/export-library";
 import { emptyLibrary, mergeLibraries, normalizeLibrary } from "../src/lib/library";
@@ -318,6 +320,51 @@ describe("stats range labels and preferences", () => {
     assert.equal(moveCalendarDay("2026-11-14", "ArrowDown"), "2026-11-21");
     assert.equal(moveCalendarDay("2026-11-14", "Home"), "2026-11-08");
     assert.equal(moveCalendarDay("2026-11-14", "PageUp"), "2026-10-14");
+  });
+
+  it("uses the local calendar when UTC is already the next day", () => {
+    const root = fileURLToPath(new URL("..", import.meta.url));
+    const result = spawnSync(
+      process.execPath,
+      [
+        "--import",
+        "tsx",
+        "--input-type=module",
+        "--eval",
+        `
+          import { addReadingSeconds, defaultReadingProgress, isFutureDay, todayKey } from "./src/lib/reading.ts";
+          import { activityDay, resolveStatsRange } from "./src/lib/stats-range.ts";
+          const instant = new Date("2026-11-14T07:30:00.000Z");
+          const local = todayKey(instant);
+          const utc = instant.toISOString().slice(0, 10);
+          if (utc !== "2026-11-14") throw new Error("expected UTC day 2026-11-14, got " + utc);
+          if (local !== "2026-11-13") throw new Error("expected local day 2026-11-13, got " + local);
+          const week = resolveStatsRange({ statsRange: "7d" }, instant, "en-US");
+          if (week.end !== "2026-11-13" || week.start !== "2026-11-07") {
+            throw new Error("7d range used " + week.start + " to " + week.end);
+          }
+          const year = resolveStatsRange({ statsRange: "year" }, instant, "en-US");
+          if (year.start !== "2026-01-01" || year.end !== "2026-11-13") {
+            throw new Error("year range used " + year.start + " to " + year.end);
+          }
+          const noted = activityDay({ createdAt: "2026-11-14T07:30:00.000Z" });
+          if (noted !== "2026-11-13") throw new Error("note day " + noted);
+          const progress = addReadingSeconds(defaultReadingProgress, 15, local);
+          if (!progress.daily["2026-11-13"] || progress.daily["2026-11-14"]) {
+            throw new Error("daily keys " + Object.keys(progress.daily).join(","));
+          }
+          if (!isFutureDay("2026-11-14", instant) || isFutureDay("2026-11-13", instant)) {
+            throw new Error("future check did not follow the local day");
+          }
+        `,
+      ],
+      {
+        cwd: root,
+        env: { ...process.env, TZ: "America/Los_Angeles" },
+        encoding: "utf8",
+      },
+    );
+    assert.equal(result.status, 0, result.stderr || result.stdout);
   });
 });
 
