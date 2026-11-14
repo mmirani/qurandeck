@@ -96,6 +96,8 @@ export function mergeLibraries(local: LibrarySnapshot, remote: LibrarySnapshot):
   const localActive = local.progress.lastActiveAt ?? 0;
   const remoteActive = remote.progress.lastActiveAt ?? 0;
   const preferences = localActive >= remoteActive ? local.preferences : remote.preferences;
+  // Place follows whoever was reading more recently. A newer ayah with an
+  // older stamp loses, so every place change has to bump lastActiveAt.
   const lastVerseKey = localActive >= remoteActive ? local.progress.lastVerseKey : remote.progress.lastVerseKey;
   const localNameAt = local.displayNameUpdatedAt ?? "";
   const remoteNameAt = remote.displayNameUpdatedAt ?? "";

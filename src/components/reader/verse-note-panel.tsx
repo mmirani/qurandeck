@@ -51,6 +51,7 @@ export function VerseNotePanel({
     setStatus("idle");
     setMenuOpen(false);
     setMode("edit");
+    if (verseKey) saveNote(verseKey, note?.body ?? "");
   };
 
   useEffect(() => {
