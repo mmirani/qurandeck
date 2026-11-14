@@ -64,11 +64,10 @@ export function VerseNotePanel({
         setMenuOpen(false);
         setMode("edit");
       });
-      if (verseKey) saveNote(verseKey, note?.body ?? "");
     };
     node.addEventListener("qurandeck-note-edit", onEdit);
     return () => node.removeEventListener("qurandeck-note-edit", onEdit);
-  }, [note?.body, saveNote, variant, verseKey]);
+  }, [note?.body, variant]);
 
   useEffect(() => {
     if (mode !== "edit" || !verseKey) return;
