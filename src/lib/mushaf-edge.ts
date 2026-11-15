@@ -61,6 +61,8 @@ export type EdgeCluster = {
   items: EdgeItem[];
   /** "+N" when several marks share one tab. Empty for a single mark. */
   label: string;
+  /** Most-used highlight on these ayahs, for a coloured tab. Null stays cream. */
+  accent: string | null;
   tooltip: TooltipCopy;
   /** Set when a click can open one place. Null when the reader should choose. */
   direct: EdgeChoice | null;
@@ -253,6 +255,7 @@ export function clusterByPosition(
     position: clusterPosition(group),
     items: group,
     label: group.length > 1 ? `+${group.length}` : "",
+    accent: null,
     tooltip: { title: "", lines: [], preview: "" },
     direct: null,
     choices: [],
@@ -353,11 +356,22 @@ function finishClusters(
     const direct = choices.length <= 1 ? (choices[0] ?? null) : null;
     return {
       ...cluster,
+      accent: clusterAccent(cluster, highlights, swatches),
       tooltip: clusterTooltip(cluster, highlights, swatches, names),
       direct,
       choices: direct ? [] : choices,
     };
   });
+}
+
+function clusterAccent(
+  cluster: EdgeCluster,
+  highlights: readonly Highlight[],
+  swatches: readonly HighlightSwatch[],
+): string | null {
+  const keys = new Set(cluster.items.map((item) => item.verseKey));
+  const related = highlights.filter((item) => keys.has(item.verseKey));
+  return colorsFromHighlights(related, swatches)[0]?.color ?? null;
 }
 
 function choicesFromCluster(cluster: EdgeCluster, names: (id: number) => string): EdgeChoice[] {

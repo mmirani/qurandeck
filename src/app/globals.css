@@ -2132,7 +2132,16 @@ html[data-focus="on"] .sana-dock {
 
 @keyframes mushaf-flag-rise {
   from {
-    transform: translateY(10px);
+    transform: translateX(-10px);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes mushaf-ribbon-drop {
+  from {
+    transform: translateY(-12px);
   }
   to {
     transform: translateY(0);
@@ -2141,107 +2150,105 @@ html[data-focus="on"] .sana-dock {
 
 .mushaf-edge-lines {
   background-image: repeating-linear-gradient(
-    to bottom,
-    transparent 0 3px,
-    color-mix(in srgb, var(--mushaf-script) 18%, transparent) 3px 4px
+    to right,
+    transparent 0 2px,
+    rgba(28, 20, 12, 0.18) 2px 3px
   );
 }
 
 .mushaf-scene {
-  perspective: 1200px;
-  perspective-origin: 50% 42%;
-  padding: 3.5rem 0.25rem 0.5rem;
+  perspective: 1800px;
+  perspective-origin: 40% 42%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  padding: 1.5rem 4.5rem 0.5rem 0.5rem;
+}
+
+.mushaf-float {
+  width: min(30rem, 100%);
 }
 
 .mushaf-book {
-  display: grid;
-  grid-template-columns: 2rem minmax(0, 1fr) 2.25rem;
-  grid-template-rows: 5.75rem minmax(13.5rem, auto);
-  width: min(44rem, 100%);
-  margin-inline: auto;
-  transform: rotateX(-9deg) rotateY(-17deg);
-  transform-origin: 50% 58%;
-  filter: drop-shadow(0 18px 14px color-mix(in srgb, var(--ink) 18%, transparent));
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  height: 34rem;
+  transform: rotateY(-28deg) rotateX(6deg);
+  transform-origin: 40% 100%;
+  transform-style: preserve-3d;
 }
 
 .mushaf-spine {
-  grid-column: 1;
-  grid-row: 1 / span 2;
   position: relative;
-  border-radius: 5px 0 0 7px;
+  z-index: 3;
+  flex: none;
+  width: 1.35rem;
+  border-radius: 0.85rem 0.15rem 0.15rem 0.85rem;
   background: linear-gradient(
     90deg,
-    color-mix(in srgb, var(--gold-deep) 62%, black) 0%,
-    var(--gold) 46%,
-    color-mix(in srgb, var(--gold) 78%, white) 100%
+    color-mix(in srgb, var(--mushaf-field) 35%, black) 0%,
+    color-mix(in srgb, var(--mushaf-field) 55%, black) 38%,
+    color-mix(in srgb, var(--gold) 42%, var(--mushaf-field)) 72%,
+    color-mix(in srgb, var(--mushaf-field) 40%, black) 100%
   );
+  box-shadow: inset -3px 0 4px rgba(0, 0, 0, 0.28);
 }
 
 .mushaf-headband {
   position: absolute;
-  top: 0.7rem;
-  right: 0.3rem;
-  left: 0.3rem;
+  top: 0.85rem;
+  right: 0.22rem;
+  left: 0.22rem;
   height: 0.28rem;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--on-gold) 62%, transparent);
+  background: color-mix(in srgb, var(--on-gold) 70%, transparent);
 }
 
 .mushaf-headband-2 {
-  top: 1.15rem;
-  opacity: 0.5;
-}
-
-.mushaf-head {
-  grid-column: 2 / span 2;
-  grid-row: 1;
-  position: relative;
-  z-index: 2;
-  overflow: visible;
-  border-radius: 2px 7px 0 0;
-  background: var(--mushaf-paper);
-  box-shadow:
-    inset 0 7px 8px color-mix(in srgb, var(--mushaf-script) 8%, transparent),
-    inset 0 -8px 10px color-mix(in srgb, var(--mushaf-script) 12%, transparent);
+  top: 1.3rem;
+  opacity: 0.55;
 }
 
 .mushaf-cover {
-  grid-column: 2;
-  grid-row: 2;
   position: relative;
-  z-index: 1;
-  min-height: 13.5rem;
+  z-index: 2;
+  flex: 1 1 auto;
   background: linear-gradient(
-    165deg,
-    color-mix(in srgb, var(--mushaf-field) 72%, white),
-    var(--mushaf-field) 42%,
-    color-mix(in srgb, var(--mushaf-field) 78%, black)
+    168deg,
+    color-mix(in srgb, var(--mushaf-field) 68%, white) 0%,
+    var(--mushaf-field) 46%,
+    color-mix(in srgb, var(--mushaf-field) 72%, black) 100%
   );
-  box-shadow: inset 0 1px 0 color-mix(in srgb, white 30%, transparent);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, white 32%, transparent),
+    10px 0 14px rgba(0, 0, 0, 0.12);
 }
 
 .mushaf-cover-frame {
   position: absolute;
-  inset: 1.15rem 1.4rem;
+  inset: 1.35rem 1.2rem;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.85rem;
+  gap: 0.9rem;
   border: 1px solid color-mix(in srgb, var(--on-gold) 58%, transparent);
 }
 
 .mushaf-cover-frame::before {
   content: "";
   position: absolute;
-  inset: 0.45rem;
+  inset: 0.5rem;
   border: 1px solid color-mix(in srgb, var(--on-gold) 30%, transparent);
 }
 
 .mushaf-corner {
   position: absolute;
-  width: 0.7rem;
-  height: 0.7rem;
+  width: 0.75rem;
+  height: 0.75rem;
   border-color: color-mix(in srgb, var(--on-gold) 88%, transparent);
   border-style: solid;
 }
@@ -2272,8 +2279,8 @@ html[data-focus="on"] .sana-dock {
 
 .mushaf-cover-mark {
   position: relative;
-  width: 0.55rem;
-  height: 0.55rem;
+  width: 0.6rem;
+  height: 0.6rem;
   border: 1px solid color-mix(in srgb, var(--on-gold) 75%, transparent);
   transform: rotate(45deg);
 }
@@ -2283,24 +2290,56 @@ html[data-focus="on"] .sana-dock {
   margin: 0;
   color: var(--on-gold);
   font-family: var(--font-display), system-ui, sans-serif;
-  font-size: clamp(1.35rem, 2.2vw, 1.85rem);
+  font-size: clamp(1.5rem, 2.4vw, 2rem);
   font-weight: 600;
   letter-spacing: -0.02em;
   line-height: 1.15;
   text-align: center;
 }
 
+.mushaf-pages {
+  position: relative;
+  z-index: 1;
+  flex: none;
+  width: 7.25rem;
+  margin-block: 0.85rem;
+  margin-left: -0.45rem;
+  border-radius: 0 4px 4px 0;
+  background: #f4efe4;
+  box-shadow:
+    inset 6px 0 8px rgba(28, 20, 12, 0.08),
+    inset -10px 0 12px rgba(28, 20, 12, 0.16);
+}
+
 .mushaf-fore {
-  grid-column: 3;
-  grid-row: 2;
-  border-radius: 0 3px 5px 0;
-  background-color: var(--mushaf-paper);
-  background-image: repeating-linear-gradient(
-    to bottom,
-    color-mix(in srgb, var(--mushaf-paper) 65%, white) 0 2px,
-    color-mix(in srgb, var(--mushaf-script) 30%, var(--mushaf-paper)) 2px 3px
+  position: relative;
+  height: 100%;
+  overflow: visible;
+  border-radius: inherit;
+  background: #f4efe4;
+}
+
+.mushaf-satin {
+  display: block;
+  width: 0.9rem;
+  height: 4.6rem;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--gold-deep) 78%, black) 0%,
+    color-mix(in srgb, var(--gold) 55%, white) 42%,
+    var(--gold-deep) 58%,
+    color-mix(in srgb, var(--gold-deep) 70%, black) 100%
   );
-  box-shadow: inset -7px 0 8px color-mix(in srgb, var(--mushaf-script) 24%, transparent);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 84%, 0 100%);
+  box-shadow: 0 6px 8px rgba(28, 20, 12, 0.18);
+}
+
+.mushaf-ground {
+  width: min(18rem, 62%);
+  height: 1.35rem;
+  margin-top: 0.85rem;
+  margin-bottom: 3.75rem;
+  background: radial-gradient(ellipse at center, color-mix(in srgb, var(--ink) 32%, transparent) 0%, transparent 72%);
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -2308,25 +2347,23 @@ html[data-focus="on"] .sana-dock {
     animation: mushaf-flag-rise 560ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
   }
 
-  .mushaf-edge-lift {
+  .mushaf-ribbon-drop {
+    animation: mushaf-ribbon-drop 640ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  }
+
+  .mushaf-tab-face,
+  .mushaf-satin {
     transition: transform 180ms ease;
   }
 
-  .mushaf-edge-lift:hover,
-  .mushaf-edge-lift:focus-visible {
-    transform: translateY(-4px);
+  .mushaf-tab:hover .mushaf-tab-face,
+  .mushaf-tab:focus-visible .mushaf-tab-face {
+    transform: translateX(10px);
   }
 
-  .mushaf-book {
-    transition: transform 480ms ease;
-  }
-
-  .mushaf-scene:hover .mushaf-book {
-    transform: rotateX(-5deg) rotateY(-9deg);
-  }
-
-  .mushaf-scene:has(button:hover, button:focus-visible) .mushaf-book {
-    transform: rotateX(-9deg) rotateY(-17deg);
+  .mushaf-ribbon:hover .mushaf-satin,
+  .mushaf-ribbon:focus-visible .mushaf-satin {
+    transform: translateY(8px);
   }
 }
 
