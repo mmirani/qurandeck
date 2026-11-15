@@ -26,7 +26,7 @@ import {
   searchQuran,
 } from "@/lib/quran/client";
 import { groupForId, translationQuery, withTranslationIds } from "@/lib/quran/languages";
-import { mergeVerses, type SurahSeed } from "@/lib/quran/surah-reading";
+import { mergeVerses, requestedAyahNumber, type SurahSeed } from "@/lib/quran/surah-reading";
 import { searchGenerationWins, shouldCountSearch, shouldLiveSearch } from "@/lib/search-status";
 import { mergeStudyCards } from "@/lib/study-cards";
 import type {
@@ -700,10 +700,15 @@ export function MushafProvider({ children }: { children: ReactNode }) {
         const data = await getJuz(n, preferences.translationIds);
         setVerses(data.verses);
         const first = data.verses[0];
-        setChapter(chapters.find((item) => item.id === first?.chapterId) ?? null);
+        const verseNumber = requestedAyahNumber(window.location.hash, null);
+        const named = verseNumber ? data.verses.find((item) => item.verseNumber === verseNumber) : undefined;
+        const target = named ?? first;
+        setChapter(chapters.find((item) => item.id === target?.chapterId) ?? null);
         setIntroduction("");
         setIntroductionSource("");
-        setSelectedVerseKey(first?.verseKey ?? null);
+        setSelectedVerseKey(target?.verseKey ?? null);
+        setPendingScrollVerseKey(named?.verseKey ?? null);
+        if (named) engageVerse(named.verseKey);
         setSelectedWord(null);
       } catch (err: unknown) {
         setError(err instanceof Error ? err.message : "Could not load juz");
@@ -711,7 +716,7 @@ export function MushafProvider({ children }: { children: ReactNode }) {
         setLoading(false);
       }
     },
-    [chapters, preferences.translationIds],
+    [chapters, engageVerse, preferences.translationIds],
   );
 
   const openSurah = useCallback(

@@ -18,6 +18,7 @@ import { defaultCorner, loadCompanionPose, saveCompanionPose } from "@/lib/compa
 import { downloadLibraryJson, downloadStatsCsv } from "@/lib/export-library";
 import { sanaCommandName } from "@/lib/usage-catalog";
 import { focusOpenNote } from "@/lib/note-composer";
+import { scrollVerseIntoPane } from "@/lib/reader-scroll";
 import { trackUsage } from "@/lib/usage-client";
 
 type GuideKind = "welcome" | "lesson" | null;
@@ -222,10 +223,11 @@ export function GuideProvider({ children }: { children: ReactNode }) {
       },
       reveal: (verseNumber) => {
         window.setTimeout(() => {
-          document.getElementById(`ayah-${verseNumber}`)?.scrollIntoView({
-            block: "center",
-            behavior: reduce ? "auto" : "smooth",
-          });
+          const node = document.getElementById(`ayah-${verseNumber}`);
+          const pane = document.getElementById("main-reader");
+          if (node instanceof HTMLElement && pane instanceof HTMLElement) {
+            scrollVerseIntoPane(pane, node, reduce ? "auto" : "smooth", "center");
+          }
         }, 60);
       },
     });

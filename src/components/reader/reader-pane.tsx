@@ -14,6 +14,7 @@ import { SurahPager } from "@/components/reader/next-surah-link";
 import { VerseCard } from "@/components/reader/verse-card";
 import { MobileReadingProgress, PaneReadingProgress } from "@/components/reader/reading-progress";
 import { introductionCredit } from "@/lib/quran/chapter-info";
+import { scrollVerseIntoPane } from "@/lib/reader-scroll";
 import { useMobileReader } from "@/lib/use-media-query";
 
 export function ReaderPane() {
@@ -41,8 +42,9 @@ export function ReaderPane() {
 
   useEffect(() => {
     if (ayahMode || !playingVerseKey || !preferences.autoFollow) return;
-    const node = scroller.current?.querySelector(`[data-verse-key="${playingVerseKey}"]`);
-    node?.scrollIntoView({ behavior: "smooth", block: "start" });
+    const root = scroller.current;
+    const node = root?.querySelector(`[data-verse-key="${playingVerseKey}"]`);
+    if (root && node instanceof HTMLElement) scrollVerseIntoPane(root, node, "smooth", "start");
   }, [ayahMode, playingVerseKey, preferences.autoFollow]);
 
   useEffect(() => {
@@ -59,7 +61,7 @@ export function ReaderPane() {
       if (cancelled) return false;
       const node = root.querySelector(`[data-verse-key="${pendingScrollVerseKey}"]`);
       if (!node) return false;
-      node.scrollIntoView({ behavior: "smooth", block: "start" });
+      if (node instanceof HTMLElement) scrollVerseIntoPane(root, node, "smooth", "start");
       clearPendingScrollVerse();
       return true;
     };
