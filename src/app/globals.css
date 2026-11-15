@@ -2130,6 +2130,378 @@ html[data-focus="on"] .sana-dock {
   }
 }
 
+@keyframes mushaf-flag-rise {
+  from {
+    transform: translateY(8px);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes mushaf-ribbon-drop {
+  from {
+    transform: translateY(-12px);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.mushaf-edge-lines {
+  background-image: repeating-linear-gradient(
+    to right,
+    transparent 0 2px,
+    rgba(28, 20, 12, 0.22) 2px 3px
+  );
+}
+
+.mushaf-edge-lines-top {
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0 2px,
+    rgba(28, 20, 12, 0.2) 2px 3px
+  );
+}
+
+#your-mushaf {
+  padding-bottom: 2.75rem;
+}
+
+.mushaf-scene {
+  perspective: 1600px;
+  perspective-origin: 46% 36%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  padding: 0.75rem 3.5rem 0 0.25rem;
+}
+
+.mushaf-float {
+  --w: 14.5rem;
+  --h: 17.25rem;
+  --d: calc(var(--w) * 0.24);
+  --board: 4px;
+  --inset: 4px;
+  --page-d: calc(var(--d) - (var(--board) * 2));
+  --page-h: calc(var(--h) - (var(--inset) * 2));
+  position: relative;
+  width: var(--w);
+  padding-top: 2.5rem;
+  padding-bottom: 3.2rem;
+}
+
+.mushaf-book {
+  position: relative;
+  z-index: 1;
+  width: var(--w);
+  height: var(--h);
+  transform: rotateY(-40deg) rotateX(-8deg);
+  transform-origin: center center;
+  transform-style: preserve-3d;
+}
+
+.mushaf-front,
+.mushaf-back,
+.mushaf-spine,
+.mushaf-page-top,
+.mushaf-fore,
+.mushaf-board-top,
+.mushaf-board-fore {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform-style: preserve-3d;
+}
+
+.mushaf-front,
+.mushaf-back,
+.mushaf-spine,
+.mushaf-page-top,
+.mushaf-board-top,
+.mushaf-board-fore {
+  pointer-events: none;
+}
+
+.mushaf-front,
+.mushaf-back {
+  width: var(--w);
+  height: var(--h);
+  margin-left: calc(var(--w) / -2);
+  margin-top: calc(var(--h) / -2);
+  background: linear-gradient(
+    168deg,
+    color-mix(in srgb, var(--mushaf-field) 68%, white) 0%,
+    var(--mushaf-field) 46%,
+    color-mix(in srgb, var(--mushaf-field) 72%, black) 100%
+  );
+}
+
+.mushaf-front {
+  transform: translateZ(calc(var(--d) / 2));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, black 18%, transparent);
+}
+
+.mushaf-back {
+  transform: rotateY(180deg) translateZ(calc(var(--d) / 2));
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--mushaf-field) 78%, black),
+    color-mix(in srgb, var(--mushaf-field) 55%, black)
+  );
+}
+
+.mushaf-spine {
+  width: var(--d);
+  height: var(--h);
+  margin-left: calc(var(--d) / -2);
+  margin-top: calc(var(--h) / -2);
+  transform: rotateY(-90deg) translateZ(calc(var(--w) / 2));
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--mushaf-field) 30%, black) 0%,
+    color-mix(in srgb, var(--mushaf-field) 62%, black) 28%,
+    color-mix(in srgb, var(--gold) 35%, var(--mushaf-field)) 62%,
+    color-mix(in srgb, var(--mushaf-field) 40%, black) 100%
+  );
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, black 25%, transparent);
+}
+
+.mushaf-headband {
+  position: absolute;
+  top: 0.85rem;
+  right: 0.22rem;
+  left: 0.22rem;
+  height: 0.28rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--on-gold) 70%, transparent);
+}
+
+.mushaf-headband-2 {
+  top: 1.3rem;
+  opacity: 0.55;
+}
+
+.mushaf-board-top,
+.mushaf-board-fore {
+  background: color-mix(in srgb, var(--mushaf-field) 72%, black);
+}
+
+.mushaf-board-top {
+  width: var(--w);
+  height: var(--board);
+  margin-left: calc(var(--w) / -2);
+  margin-top: calc(var(--board) / -2);
+}
+
+.mushaf-board-top-front {
+  transform: rotateX(90deg) translateZ(calc(var(--h) / 2)) translateY(calc(var(--d) / 2 - var(--board) / 2));
+}
+
+.mushaf-board-top-back {
+  transform: rotateX(90deg) translateZ(calc(var(--h) / 2)) translateY(calc((var(--d) / 2 - var(--board) / 2) * -1));
+  background: color-mix(in srgb, var(--mushaf-field) 48%, black);
+}
+
+.mushaf-board-fore {
+  width: var(--board);
+  height: var(--h);
+  margin-left: calc(var(--board) / -2);
+  margin-top: calc(var(--h) / -2);
+}
+
+.mushaf-board-fore-front {
+  transform: rotateY(90deg) translateZ(calc(var(--w) / 2)) translateX(calc((var(--d) / 2 - var(--board) / 2) * -1));
+}
+
+.mushaf-board-fore-back {
+  transform: rotateY(90deg) translateZ(calc(var(--w) / 2)) translateX(calc(var(--d) / 2 - var(--board) / 2));
+  background: color-mix(in srgb, var(--mushaf-field) 48%, black);
+}
+
+.mushaf-page-top {
+  width: calc(var(--w) - var(--inset));
+  height: var(--page-d);
+  margin-left: -50%;
+  margin-top: calc(var(--page-d) / -2);
+  transform: rotateX(90deg) translateZ(calc(var(--h) / 2 - var(--inset)));
+  overflow: hidden;
+  background-color: #efe6d4;
+  box-shadow: inset 0 0 0 1px rgba(28, 20, 12, 0.12);
+}
+
+.mushaf-cover-frame {
+  position: absolute;
+  inset: 1.35rem 1.2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.9rem;
+  border: 1px solid color-mix(in srgb, var(--on-gold) 58%, transparent);
+}
+
+.mushaf-cover-frame::before {
+  content: "";
+  position: absolute;
+  inset: 0.5rem;
+  border: 1px solid color-mix(in srgb, var(--on-gold) 30%, transparent);
+}
+
+.mushaf-corner {
+  position: absolute;
+  width: 0.75rem;
+  height: 0.75rem;
+  border-color: color-mix(in srgb, var(--on-gold) 88%, transparent);
+  border-style: solid;
+}
+
+.mushaf-corner[data-corner="tl"] {
+  top: -1px;
+  left: -1px;
+  border-width: 2px 0 0 2px;
+}
+
+.mushaf-corner[data-corner="tr"] {
+  top: -1px;
+  right: -1px;
+  border-width: 2px 2px 0 0;
+}
+
+.mushaf-corner[data-corner="bl"] {
+  bottom: -1px;
+  left: -1px;
+  border-width: 0 0 2px 2px;
+}
+
+.mushaf-corner[data-corner="br"] {
+  right: -1px;
+  bottom: -1px;
+  border-width: 0 2px 2px 0;
+}
+
+.mushaf-cover-mark {
+  position: relative;
+  width: 0.6rem;
+  height: 0.6rem;
+  border: 1px solid color-mix(in srgb, var(--on-gold) 75%, transparent);
+  transform: rotate(45deg);
+}
+
+.mushaf-cover-title {
+  position: relative;
+  margin: 0;
+  color: var(--on-gold);
+  font-family: var(--font-display), system-ui, sans-serif;
+  font-size: clamp(1.15rem, 1.7vw, 1.5rem);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  text-align: center;
+}
+
+.mushaf-fore {
+  width: var(--page-d);
+  height: var(--page-h);
+  margin-left: calc(var(--page-d) / -2);
+  margin-top: calc(var(--page-h) / -2);
+  overflow: hidden;
+  transform: rotateY(90deg) translateZ(calc(var(--w) / 2 - var(--inset)));
+  background-color: #f4efe4;
+  box-shadow:
+    inset 3px 0 4px rgba(28, 20, 12, 0.22),
+    inset -3px 0 4px rgba(28, 20, 12, 0.16);
+}
+
+.mushaf-tab-anchor {
+  top: var(--inset);
+  pointer-events: auto;
+}
+
+.mushaf-ribbon-anchor {
+  top: calc(100% - var(--inset));
+  pointer-events: auto;
+}
+
+.mushaf-float,
+.mushaf-book,
+.mushaf-fore {
+  pointer-events: none;
+}
+
+.mushaf-fore button,
+.mushaf-tab,
+.mushaf-ribbon {
+  pointer-events: auto;
+}
+
+.mushaf-satin {
+  display: block;
+  width: 0.9rem;
+  height: 3.1rem;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--gold-deep) 78%, black) 0%,
+    color-mix(in srgb, var(--gold) 55%, white) 42%,
+    var(--gold-deep) 58%,
+    color-mix(in srgb, var(--gold-deep) 70%, black) 100%
+  );
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 84%, 0 100%);
+  box-shadow: 0 6px 8px rgba(28, 20, 12, 0.18);
+}
+
+.mushaf-ground {
+  position: absolute;
+  z-index: 0;
+  left: 50%;
+  top: calc(2.5rem + var(--h));
+  width: 92%;
+  height: 0.7rem;
+  transform: translate(-48%, -20%);
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse at 38% 0%,
+    color-mix(in srgb, var(--ink) 40%, transparent) 0%,
+    transparent 72%
+  );
+}
+
+.mushaf-ground::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: -10%;
+  left: 6%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--ink) 22%, var(--line)) 40%, transparent);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .mushaf-flag-rise {
+    animation: mushaf-flag-rise 560ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  }
+
+  .mushaf-ribbon-drop {
+    animation: mushaf-ribbon-drop 640ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  }
+
+  .mushaf-tab-face,
+  .mushaf-satin {
+    transition: transform 180ms ease;
+  }
+
+  .mushaf-tab:hover .mushaf-tab-face,
+  .mushaf-tab:focus-visible .mushaf-tab-face {
+    transform: translateY(-6px);
+  }
+
+  .mushaf-ribbon:hover .mushaf-satin,
+  .mushaf-ribbon:focus-visible .mushaf-satin {
+    transform: translateY(8px);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
