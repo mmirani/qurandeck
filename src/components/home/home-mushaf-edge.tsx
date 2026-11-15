@@ -135,7 +135,7 @@ function MushafEdgeBook() {
         versesRead: progress.versesRead,
         names,
         minShare: minShareForWidth(width),
-        minFlagGap: width > 0 ? Math.max(0.04, 20 / width) : undefined,
+        minFlagGap: width > 0 ? Math.max(0.04, 6 / width) : undefined,
       }),
     [bookmarks, highlights, names, notes, progress.versesRead, swatches, width],
   );
@@ -336,38 +336,38 @@ function MushafEdgeBook() {
                 <p className="mushaf-cover-title">Your Mushaf</p>
               </div>
             </div>
+            <div className="mushaf-board-top mushaf-board-top-front" aria-hidden="true" />
+            <div className="mushaf-board-top mushaf-board-top-back" aria-hidden="true" />
+            <div className="mushaf-board-fore mushaf-board-fore-front" aria-hidden="true" />
+            <div className="mushaf-board-fore mushaf-board-fore-back" aria-hidden="true" />
             <div className="mushaf-page-top" aria-hidden="true">
               <PageStripes bands={edge.bands} empty={edge.empty} along="top" />
               <div className="mushaf-edge-lines mushaf-edge-lines-top pointer-events-none absolute inset-0" />
             </div>
-            <div className="mushaf-right">
-              <div className="mushaf-board-edge" aria-hidden="true" />
-              <div ref={pagesRef} className="mushaf-fore">
-                <PageStripes bands={edge.bands} empty={edge.empty} along="fore" />
-                <div className="mushaf-edge-lines pointer-events-none absolute inset-0" aria-hidden="true" />
-                <div className="absolute inset-0 flex flex-row" role="group" aria-label="Page edge, Al-Fatihah at the front cover to An-Nas at the back">
-                  {edge.buckets.map((bucket) => {
-                    const id = `pages-${bucket.id}`;
-                    const open = menu?.id === id;
-                    return (
-                      <button
-                        key={bucket.id}
-                        type="button"
-                        data-testid="mushaf-edge-slice"
-                        className="h-full min-w-0 cursor-pointer hover:bg-[color-mix(in_srgb,white_18%,transparent)]"
-                        style={{ flex: `${bucket.ayahCount} 1 0%` }}
-                        aria-label={`Pages, ${bucket.name}`}
-                        aria-describedby={tip?.id === id ? tipId : undefined}
-                        aria-expanded={bucket.choices.length > 0 ? open : undefined}
-                        aria-haspopup={bucket.choices.length > 0 ? "dialog" : undefined}
-                        aria-controls={open ? menuId : undefined}
-                        {...handlers(id, bucket.tooltip, bucket.direct, bucket.choices)}
-                      />
-                    );
-                  })}
-                </div>
+            <div ref={pagesRef} className="mushaf-fore">
+              <PageStripes bands={edge.bands} empty={edge.empty} along="fore" />
+              <div className="mushaf-edge-lines pointer-events-none absolute inset-0" aria-hidden="true" />
+              <div className="absolute inset-0 flex flex-row" role="group" aria-label="Page edge, Al-Fatihah at the front cover to An-Nas at the back">
+                {edge.buckets.map((bucket) => {
+                  const id = `pages-${bucket.id}`;
+                  const open = menu?.id === id;
+                  return (
+                    <button
+                      key={bucket.id}
+                      type="button"
+                      data-testid="mushaf-edge-slice"
+                      className="h-full min-w-0 cursor-pointer hover:bg-[color-mix(in_srgb,white_18%,transparent)]"
+                      style={{ flex: `${bucket.ayahCount} 1 0%` }}
+                      aria-label={`Pages, ${bucket.name}`}
+                      aria-describedby={tip?.id === id ? tipId : undefined}
+                      aria-expanded={bucket.choices.length > 0 ? open : undefined}
+                      aria-haspopup={bucket.choices.length > 0 ? "dialog" : undefined}
+                      aria-controls={open ? menuId : undefined}
+                      {...handlers(id, bucket.tooltip, bucket.direct, bucket.choices)}
+                    />
+                  );
+                })}
               </div>
-              <div className="mushaf-board-edge mushaf-board-edge-back" aria-hidden="true" />
             </div>
             {edge.noteFlags.map((flag, index) => {
               const id = `note-${flag.id}`;
@@ -377,13 +377,16 @@ function MushafEdgeBook() {
                 <span
                   key={flag.id}
                   className="mushaf-tab-anchor absolute z-20"
-                  style={{ transform: depthShift(flag.position, "translate(-40%, -8%)") }}
+                  style={{
+                    left: `${20 + Math.min(1, Math.max(0, flag.position)) * 62}%`,
+                    transform: depthShift(flag.position, "translate(-50%, -74%)"),
+                  }}
                 >
                   <span className="mushaf-flag-rise block" style={{ animationDelay: `${Math.min(index, 12) * 40}ms` }}>
                     <button
                       type="button"
                       data-testid="mushaf-edge-flag"
-                      className="mushaf-tab relative flex h-11 min-w-11 cursor-pointer items-end justify-center bg-transparent p-0"
+                      className="mushaf-tab relative flex h-9 min-w-9 cursor-pointer items-end justify-center bg-transparent p-0"
                       aria-label={controlName("Note", flag.tooltip.title, flag.tooltip.lines[0] ?? "", flag.label)}
                       aria-describedby={tip?.id === id ? tipId : undefined}
                       aria-expanded={flag.choices.length > 0 ? open : undefined}
@@ -414,13 +417,16 @@ function MushafEdgeBook() {
                 <span
                   key={ribbon.id}
                   className="mushaf-ribbon-anchor absolute z-20"
-                  style={{ transform: depthShift(ribbon.position, "translateX(-50%)") }}
+                  style={{
+                    left: `${18 + Math.min(1, Math.max(0, ribbon.position)) * 58}%`,
+                    transform: depthShift(ribbon.position, "translateX(-50%)"),
+                  }}
                 >
                   <span className="mushaf-ribbon-drop block" style={{ animationDelay: `${160 + Math.min(index, 8) * 40}ms` }}>
                     <button
                       type="button"
                       data-testid="mushaf-edge-ribbon"
-                      className="mushaf-ribbon flex h-14 w-8 cursor-pointer items-start justify-center bg-transparent p-0"
+                      className="mushaf-ribbon flex h-14 w-6 cursor-pointer items-start justify-center bg-transparent p-0"
                       aria-label={controlName("Bookmark", ribbon.tooltip.title, ribbon.tooltip.lines[0] ?? "", ribbon.label)}
                       aria-describedby={tip?.id === id ? tipId : undefined}
                       aria-expanded={ribbon.choices.length > 0 ? open : undefined}

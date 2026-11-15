@@ -2169,8 +2169,8 @@ html[data-focus="on"] .sana-dock {
 }
 
 .mushaf-scene {
-  perspective: 980px;
-  perspective-origin: 34% 0%;
+  perspective: 1600px;
+  perspective-origin: 46% 36%;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -2179,26 +2179,26 @@ html[data-focus="on"] .sana-dock {
 }
 
 .mushaf-float {
+  --w: 14.5rem;
+  --h: 17.25rem;
+  --d: calc(var(--w) * 0.24);
+  --board: 4px;
+  --inset: 4px;
+  --page-d: calc(var(--d) - (var(--board) * 2));
+  --page-h: calc(var(--h) - (var(--inset) * 2));
   position: relative;
-  width: min(13.5rem, 100%);
-  /* Tabs rise off the top edge. Ribbons hang past the shelf. */
-  padding-top: 2.4rem;
-  padding-bottom: 3.15rem;
+  width: var(--w);
+  padding-top: 2.5rem;
+  padding-bottom: 3.2rem;
 }
 
 .mushaf-book {
-  --page-d: 8.25rem;
-  --board: 0.55rem;
-  --overhang: 4px;
-  --depth: calc(var(--page-d) + (var(--board) * 2));
-  --half-w: 6.75rem;
-  --half-h: 8.25rem;
   position: relative;
   z-index: 1;
-  width: 100%;
-  height: 16.5rem;
-  transform: rotateY(-40deg) rotateX(12deg);
-  transform-origin: center bottom;
+  width: var(--w);
+  height: var(--h);
+  transform: rotateY(-40deg) rotateX(-8deg);
+  transform-origin: center center;
   transform-style: preserve-3d;
 }
 
@@ -2206,7 +2206,9 @@ html[data-focus="on"] .sana-dock {
 .mushaf-back,
 .mushaf-spine,
 .mushaf-page-top,
-.mushaf-right {
+.mushaf-fore,
+.mushaf-board-top,
+.mushaf-board-fore {
   position: absolute;
   top: 50%;
   left: 50%;
@@ -2217,16 +2219,17 @@ html[data-focus="on"] .sana-dock {
 .mushaf-back,
 .mushaf-spine,
 .mushaf-page-top,
-.mushaf-board-edge {
+.mushaf-board-top,
+.mushaf-board-fore {
   pointer-events: none;
 }
 
 .mushaf-front,
 .mushaf-back {
-  width: 100%;
-  height: 100%;
-  margin-left: -50%;
-  margin-top: -50%;
+  width: var(--w);
+  height: var(--h);
+  margin-left: calc(var(--w) / -2);
+  margin-top: calc(var(--h) / -2);
   background: linear-gradient(
     168deg,
     color-mix(in srgb, var(--mushaf-field) 68%, white) 0%,
@@ -2236,12 +2239,12 @@ html[data-focus="on"] .sana-dock {
 }
 
 .mushaf-front {
-  transform: translateZ(calc(var(--depth) / 2));
+  transform: translateZ(calc(var(--d) / 2));
   box-shadow: inset 0 0 0 1px color-mix(in srgb, black 18%, transparent);
 }
 
 .mushaf-back {
-  transform: rotateY(180deg) translateZ(calc(var(--depth) / 2));
+  transform: rotateY(180deg) translateZ(calc(var(--d) / 2));
   background: linear-gradient(
     180deg,
     color-mix(in srgb, var(--mushaf-field) 78%, black),
@@ -2250,11 +2253,11 @@ html[data-focus="on"] .sana-dock {
 }
 
 .mushaf-spine {
-  width: var(--depth);
-  height: 100%;
-  margin-left: calc(var(--depth) / -2);
-  margin-top: -50%;
-  transform: rotateY(-90deg) translateZ(var(--half-w));
+  width: var(--d);
+  height: var(--h);
+  margin-left: calc(var(--d) / -2);
+  margin-top: calc(var(--h) / -2);
+  transform: rotateY(-90deg) translateZ(calc(var(--w) / 2));
   background: linear-gradient(
     90deg,
     color-mix(in srgb, var(--mushaf-field) 30%, black) 0%,
@@ -2280,51 +2283,52 @@ html[data-focus="on"] .sana-dock {
   opacity: 0.55;
 }
 
-.mushaf-page-top {
-  width: calc(100% - 1.25rem);
-  height: var(--page-d);
-  margin-left: calc(-50% + 0.35rem);
-  margin-top: calc(var(--page-d) / -2);
-  transform: rotateX(90deg) translateZ(calc(var(--half-h) - 1.35rem));
-  overflow: hidden;
-  background:
-    linear-gradient(to top, rgba(255, 250, 240, 0.2), rgba(28, 20, 12, 0.14)),
-    linear-gradient(to right, rgba(28, 20, 12, 0.16), transparent 28%),
-    #efe6d4;
-  box-shadow:
-    inset 0 0 0 1px rgba(28, 20, 12, 0.16),
-    inset 6px 0 7px rgba(28, 20, 12, 0.12);
+.mushaf-board-top,
+.mushaf-board-fore {
+  background: color-mix(in srgb, var(--mushaf-field) 72%, black);
 }
 
-.mushaf-right {
-  display: flex;
-  width: var(--depth);
-  height: 100%;
-  margin-left: calc(var(--depth) / -2);
-  margin-top: -50%;
-  transform: rotateY(90deg) translateZ(var(--half-w));
-  transform-style: preserve-3d;
+.mushaf-board-top {
+  width: var(--w);
+  height: var(--board);
+  margin-left: calc(var(--w) / -2);
+  margin-top: calc(var(--board) / -2);
 }
 
-.mushaf-board-edge {
-  flex: none;
+.mushaf-board-top-front {
+  transform: rotateX(90deg) translateZ(calc(var(--h) / 2)) translateY(calc(var(--d) / 2 - var(--board) / 2));
+}
+
+.mushaf-board-top-back {
+  transform: rotateX(90deg) translateZ(calc(var(--h) / 2)) translateY(calc((var(--d) / 2 - var(--board) / 2) * -1));
+  background: color-mix(in srgb, var(--mushaf-field) 48%, black);
+}
+
+.mushaf-board-fore {
   width: var(--board);
-  height: 100%;
-  background: linear-gradient(
-    90deg,
-    color-mix(in srgb, var(--mushaf-field) 55%, black),
-    var(--mushaf-field) 55%,
-    color-mix(in srgb, var(--mushaf-field) 70%, black)
-  );
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, black 22%, transparent);
+  height: var(--h);
+  margin-left: calc(var(--board) / -2);
+  margin-top: calc(var(--h) / -2);
 }
 
-.mushaf-board-edge-back {
-  background: linear-gradient(
-    90deg,
-    color-mix(in srgb, var(--mushaf-field) 45%, black),
-    color-mix(in srgb, var(--mushaf-field) 70%, black)
-  );
+.mushaf-board-fore-front {
+  transform: rotateY(90deg) translateZ(calc(var(--w) / 2)) translateX(calc((var(--d) / 2 - var(--board) / 2) * -1));
+}
+
+.mushaf-board-fore-back {
+  transform: rotateY(90deg) translateZ(calc(var(--w) / 2)) translateX(calc(var(--d) / 2 - var(--board) / 2));
+  background: color-mix(in srgb, var(--mushaf-field) 48%, black);
+}
+
+.mushaf-page-top {
+  width: calc(var(--w) - var(--inset));
+  height: var(--page-d);
+  margin-left: -50%;
+  margin-top: calc(var(--page-d) / -2);
+  transform: rotateX(90deg) translateZ(calc(var(--h) / 2 - var(--inset)));
+  overflow: hidden;
+  background-color: #efe6d4;
+  box-shadow: inset 0 0 0 1px rgba(28, 20, 12, 0.12);
 }
 
 .mushaf-cover-frame {
@@ -2398,38 +2402,30 @@ html[data-focus="on"] .sana-dock {
 }
 
 .mushaf-fore {
-  position: relative;
-  flex: none;
   width: var(--page-d);
-  height: calc(100% - (var(--overhang) * 2));
-  margin-block: var(--overhang);
+  height: var(--page-h);
+  margin-left: calc(var(--page-d) / -2);
+  margin-top: calc(var(--page-h) / -2);
   overflow: hidden;
-  transform-style: preserve-3d;
-  background:
-    linear-gradient(to right, rgba(255, 250, 240, 0.16), rgba(28, 20, 12, 0.18)),
-    #f4efe4;
+  transform: rotateY(90deg) translateZ(calc(var(--w) / 2 - var(--inset)));
+  background-color: #f4efe4;
   box-shadow:
-    inset 4px 0 6px rgba(28, 20, 12, 0.28),
-    inset -4px 0 6px rgba(28, 20, 12, 0.22),
-    inset 0 4px 5px rgba(28, 20, 12, 0.18),
-    inset 0 -5px 6px rgba(28, 20, 12, 0.22);
+    inset 3px 0 4px rgba(28, 20, 12, 0.22),
+    inset -3px 0 4px rgba(28, 20, 12, 0.16);
 }
 
 .mushaf-tab-anchor {
-  top: 0;
-  left: 92%;
+  top: var(--inset);
   pointer-events: auto;
 }
 
 .mushaf-ribbon-anchor {
-  top: calc(100% - var(--overhang));
-  left: 58%;
+  top: calc(100% - var(--inset));
   pointer-events: auto;
 }
 
 .mushaf-float,
 .mushaf-book,
-.mushaf-right,
 .mushaf-fore {
   pointer-events: none;
 }
@@ -2458,41 +2454,27 @@ html[data-focus="on"] .sana-dock {
 .mushaf-ground {
   position: absolute;
   z-index: 0;
-  left: 46%;
-  top: calc(2.4rem + 16.5rem);
-  width: 19rem;
-  height: 4.2rem;
-  transform: translate(-34%, 6%);
+  left: 50%;
+  top: calc(2.5rem + var(--h));
+  width: 92%;
+  height: 0.7rem;
+  transform: translate(-48%, -20%);
   pointer-events: none;
-  background:
-    linear-gradient(
-      to bottom,
-      color-mix(in srgb, var(--ink) 84%, transparent) 0 6px,
-      color-mix(in srgb, var(--ink) 50%, transparent) 18%,
-      transparent 52%
-    ),
-    radial-gradient(
-      ellipse 170% 110% at 78% 0%,
-      color-mix(in srgb, var(--ink) 30%, transparent) 0%,
-      transparent 70%
-    );
+  background: radial-gradient(
+    ellipse at 38% 0%,
+    color-mix(in srgb, var(--ink) 40%, transparent) 0%,
+    transparent 72%
+  );
 }
 
 .mushaf-ground::after {
   content: "";
   position: absolute;
-  right: -2%;
   top: 0;
-  left: 4%;
-  height: 2px;
-  border-radius: 999px;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    color-mix(in srgb, var(--gold) 42%, var(--line)) 16%,
-    color-mix(in srgb, var(--ink) 35%, var(--line)) 58%,
-    transparent 100%
-  );
+  right: -10%;
+  left: 6%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--ink) 22%, var(--line)) 40%, transparent);
 }
 
 @media (prefers-reduced-motion: no-preference) {
