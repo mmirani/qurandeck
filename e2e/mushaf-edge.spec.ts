@@ -163,6 +163,7 @@ test("the edge is hidden on a phone", async ({ page }) => {
   await page.goto("/", { waitUntil: "domcontentloaded" });
   await expect(page.getByTestId("mushaf-edge-hint")).toBeVisible({ timeout: 30_000 });
   await expect(page.getByTestId("mushaf-edge-book")).toBeHidden();
+  await expect(page.getByTestId("mushaf-edge-explore")).toHaveCount(0);
 });
 
 test("an empty mushaf invites the reader to highlight", async ({ page }) => {
@@ -173,6 +174,85 @@ test("an empty mushaf invites the reader to highlight", async ({ page }) => {
   await expect(page.getByRole("link", { name: "Start highlighting" })).toHaveAttribute("href", "/read");
   await expect(page.getByTestId("mushaf-edge-flag")).toHaveCount(0);
   await expect(page.getByTestId("mushaf-edge-ribbon")).toHaveCount(0);
+});
+
+test("explore opens a close-up, zooms, turns, and returns focus", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await seed(page, "iris", denseLibrary());
+  await openEdge(page);
+
+  const explore = page.getByTestId("mushaf-edge-explore");
+  await explore.click();
+  const dialog = page.getByTestId("mushaf-explore-dialog");
+  const book = page.getByTestId("mushaf-explore-book");
+  await expect(dialog).toBeVisible();
+  await expect(book).toHaveAttribute("data-angle", "three-quarter");
+  await expect(book).toHaveAttribute("data-zoom", "1.00");
+  await expect(book).toHaveAttribute("data-yaw", "-40");
+
+  await dialog.getByRole("button", { name: "Zoom in" }).click();
+  await expect(book).toHaveAttribute("data-zoom", "1.25");
+  await page.keyboard.press("Equal");
+  await expect(book).toHaveAttribute("data-zoom", "1.50");
+  await page.keyboard.press("Minus");
+  await expect(book).toHaveAttribute("data-zoom", "1.25");
+  await page.keyboard.press("ArrowLeft");
+  await expect(book).toHaveAttribute("data-yaw", "-48");
+
+  await dialog.getByRole("button", { name: "Fore-edge" }).click();
+  await expect(book).toHaveAttribute("data-angle", "fore-edge");
+  await expect(book).toHaveAttribute("data-yaw", "-90");
+  await expect(book).toHaveAttribute("data-pitch", "0");
+  await expect(book).toHaveAttribute("data-zoom", "1.25");
+
+  await dialog.getByRole("button", { name: "Three-quarter" }).click();
+  await expect(book).toHaveAttribute("data-angle", "three-quarter");
+  await dialog.getByRole("button", { name: "Reset zoom" }).click();
+  await expect(book).toHaveAttribute("data-zoom", "1.00");
+
+  const honey = dialog.getByRole("button", { name: /^Honey,/ });
+  await expect(honey).toHaveAttribute("aria-pressed", "true");
+  await honey.click();
+  await expect(honey).toHaveAttribute("aria-pressed", "false");
+  await dialog.getByRole("button", { name: "Notes", exact: true }).click();
+  await expect(dialog.getByTestId("mushaf-edge-flag")).toHaveCount(0);
+  await dialog.getByRole("button", { name: "Bookmarks", exact: true }).click();
+  await expect(dialog.getByTestId("mushaf-edge-ribbon")).toHaveCount(0);
+
+  await page.getByRole("slider", { name: "Surah along the page edge" }).fill("1000");
+  await expect(dialog.getByText("An-Nas · 114:1 – 114:6")).toBeVisible();
+
+  await page.keyboard.press("Escape");
+  await expect(dialog).toHaveCount(0);
+  await expect(explore).toBeFocused();
+});
+
+test("clicking the book opens the same close-up", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await seed(page, "obsidian", denseLibrary());
+  await openEdge(page);
+  const scene = page.getByTestId("mushaf-edge-book");
+  const box = await scene.boundingBox();
+  if (!box) throw new Error("missing book");
+  await page.mouse.click(box.x + box.width * 0.32, box.y + box.height * 0.42);
+  await expect(page.getByTestId("mushaf-explore-dialog")).toBeVisible();
+  await expect(page.getByTestId("mushaf-explore-book")).toHaveAttribute("data-angle", "three-quarter");
+});
+
+test("a ribbon in the close-up names its place and opens that ayah", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await seed(page, "iris", denseLibrary());
+  await openEdge(page);
+  await page.getByTestId("mushaf-edge-explore").click();
+  const dialog = page.getByTestId("mushaf-explore-dialog");
+  await dialog.getByRole("button", { name: "Fore-edge" }).click();
+  await dialog.getByRole("button", { name: "Zoom in" }).click();
+  const ribbon = dialog.getByRole("button", { name: /Bookmark,.*, 36:1/ });
+  await ribbon.hover();
+  await expect(page.getByRole("tooltip")).toContainText("36:1");
+  await expect(page.getByRole("tooltip")).toContainText("Ya-Sin");
+  await ribbon.click();
+  await expect(page).toHaveURL(/\/surah\/36#ayah-1/);
 });
 
 test("signed-out homepage does not mount the edge", async ({ page }) => {
