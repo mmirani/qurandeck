@@ -58,7 +58,7 @@ type MenuState = {
 };
 
 /**
- * Signed-in fore-edge of the reader's own mushaf.
+ * Signed-in closed mushaf: cover, spine, and the stained top of the pages.
  * Mark text stays in this component: nothing here is sent or logged.
  */
 export function HomeMushafEdge() {
@@ -95,12 +95,9 @@ export function HomeMushafEdge() {
       <p className="max-w-2xl text-sm leading-6 text-ink-soft lg:hidden" data-testid="mushaf-edge-hint">
         See your marked-up Mushaf on desktop.
       </p>
-      <p className="hidden max-w-2xl text-sm leading-6 text-ink-soft lg:block">
-        The closed edge of your copy, from Al-Fatihah to An-Nas. Colour is a highlight in a colour you named, a flag is
-        a note, a ribbon is a bookmark, and a soft shade is where you have already read.
-      </p>
-      <div className="hidden min-h-[22rem] lg:block">
-        {desktop && near ? <MushafEdgeBook /> : <div className="min-h-[22rem]" aria-hidden="true" />}
+      <p className="hidden text-sm leading-6 text-ink-soft lg:block">Each slice is a surah, Al-Fatihah to An-Nas.</p>
+      <div className="hidden min-h-[30rem] lg:block">
+        {desktop && near ? <MushafEdgeBook /> : <div className="min-h-[30rem]" aria-hidden="true" />}
       </div>
     </section>
   );
@@ -317,152 +314,147 @@ function MushafEdgeBook() {
 
   return (
     <div data-empty={edge.empty ? "true" : "false"}>
-      <div data-testid="mushaf-edge-book" className="relative">
-        <div
-          className="rounded-l-md rounded-r-lg border border-line shadow-[var(--shadow)]"
-          style={{ background: "color-mix(in srgb, var(--gold) 16%, var(--surface))" }}
-        >
-          <div className="flex items-stretch p-2 pl-0">
-            <div aria-hidden="true" className="relative w-9 shrink-0 rounded-l-md bg-gold">
-              <span className="absolute inset-x-2 top-3 h-1 rounded-full bg-on-gold/45" />
-              <span className="absolute inset-x-2 top-5 h-1 rounded-full bg-on-gold/25" />
-            </div>
-            <div className="relative min-w-0 flex-1 px-2 py-2">
-              <div className="pb-16 pt-14">
-                <div ref={pagesRef} className="relative h-40">
-                  <div
-                    className="flex h-full overflow-hidden rounded-r-sm"
-                    style={{
-                      background: "var(--mushaf-paper)",
-                      boxShadow: "inset -16px 0 18px color-mix(in srgb, var(--mushaf-script) 16%, transparent)",
-                    }}
+      <div data-testid="mushaf-edge-book" className="mushaf-scene">
+        <div className="mushaf-book">
+          <div className="mushaf-spine" aria-hidden="true">
+            <span className="mushaf-headband" />
+            <span className="mushaf-headband mushaf-headband-2" />
+          </div>
+          <div className="mushaf-head">
+            <div ref={pagesRef} className="relative h-full">
+              <div className="flex h-full overflow-hidden rounded-tr-md" style={{ background: "var(--mushaf-paper)" }}>
+                {edge.bands.map((band) => (
+                  <span
+                    key={band.chapterId}
+                    aria-hidden="true"
+                    className="relative h-full min-w-0"
+                    style={{ flex: `${band.ayahCount} 1 0%` }}
                   >
-                    {edge.bands.map((band) => (
+                    {!edge.empty && band.readRatio > 0 ? (
                       <span
-                        key={band.chapterId}
-                        aria-hidden="true"
-                        className="relative h-full min-w-0"
-                        style={{ flex: `${band.ayahCount} 1 0%` }}
-                      >
-                        {!edge.empty && band.readRatio > 0 ? (
-                          <span
-                            className="absolute inset-x-0 bottom-0"
-                            style={{
-                              height: `${Math.max(2, Math.round(band.readRatio * 100))}%`,
-                              background: "color-mix(in srgb, var(--mushaf-script) 18%, transparent)",
-                            }}
-                          />
-                        ) : null}
-                        {band.colors.length > 0 ? (
-                          <span className="absolute inset-x-0 bottom-[18%] top-[14%] flex flex-col overflow-hidden">
-                            {band.colors.map((color) => (
-                              <span key={color.id} style={{ flexGrow: color.count, backgroundColor: color.color }} />
-                            ))}
-                          </span>
-                        ) : null}
+                        className="absolute inset-y-0 right-0"
+                        style={{
+                          width: `${Math.max(18, Math.round(band.readRatio * 100))}%`,
+                          background: "color-mix(in srgb, var(--mushaf-script) 20%, transparent)",
+                        }}
+                      />
+                    ) : null}
+                    {band.colors.length > 0 ? (
+                      <span className="absolute inset-y-[12%] left-[8%] right-[16%] flex overflow-hidden">
+                        {band.colors.map((color) => (
+                          <span key={color.id} className="h-full min-w-0" style={{ flexGrow: color.count, backgroundColor: color.color }} />
+                        ))}
                       </span>
-                    ))}
-                  </div>
-                  <div className="mushaf-edge-lines pointer-events-none absolute inset-0" aria-hidden="true" />
-                  <div className="absolute inset-0 flex" role="group" aria-label="Page edge, Al-Fatihah to An-Nas">
-                    {edge.buckets.map((bucket) => {
-                      const id = `pages-${bucket.id}`;
-                      const open = menu?.id === id;
-                      return (
-                        <button
-                          key={bucket.id}
-                          type="button"
-                          data-testid="mushaf-edge-slice"
-                          className="h-full min-h-11 min-w-0 cursor-pointer rounded-sm hover:bg-[color-mix(in_srgb,var(--gold)_16%,transparent)]"
-                          style={{ flex: `${bucket.ayahCount} 1 0%` }}
-                          aria-label={`Pages, ${bucket.name}`}
-                          aria-describedby={tip?.id === id ? tipId : undefined}
-                          aria-expanded={bucket.choices.length > 0 ? open : undefined}
-                          aria-haspopup={bucket.choices.length > 0 ? "dialog" : undefined}
-                          aria-controls={open ? menuId : undefined}
-                          {...handlers(id, bucket.tooltip, bucket.direct, bucket.choices)}
-                        />
-                      );
-                    })}
-                  </div>
-                  {edge.noteFlags.map((flag, index) => {
-                    const id = `note-${flag.id}`;
-                    const open = menu?.id === id;
-                    return (
-                      <span
-                        key={flag.id}
-                        className="absolute bottom-[calc(100%+6px)] z-20 -translate-x-1/2"
-                        style={{ left: edgeLeft(flag.position) }}
-                      >
-                        <span className="mushaf-flag-rise block" style={{ animationDelay: `${Math.min(index, 12) * 40}ms` }}>
-                          <button
-                            type="button"
-                            data-testid="mushaf-edge-flag"
-                            className="mushaf-edge-lift relative flex h-11 min-w-8 cursor-pointer items-center justify-center whitespace-nowrap rounded-t-md rounded-b-sm border border-[#c4b48a] bg-[#fff8e7] px-1.5 text-xs font-semibold text-[#1c140c] shadow-[var(--shadow)]"
-                            aria-label={controlName("Note", flag.tooltip.title, flag.tooltip.lines[0] ?? "", flag.label)}
-                            aria-describedby={tip?.id === id ? tipId : undefined}
-                            aria-expanded={flag.choices.length > 0 ? open : undefined}
-                            aria-haspopup={flag.choices.length > 0 ? "dialog" : undefined}
-                            aria-controls={open ? menuId : undefined}
-                            {...handlers(id, flag.tooltip, flag.direct, flag.choices)}
-                          >
-                            <span
-                              aria-hidden="true"
-                              className="pointer-events-none absolute right-0 top-0 h-2.5 w-2.5 bg-[#e4d3a8]"
-                              style={{ clipPath: "polygon(100% 0, 0 0, 100% 100%)" }}
-                            />
-                            <span aria-hidden="true">{flag.label}</span>
-                          </button>
-                        </span>
-                      </span>
-                    );
-                  })}
-                  {edge.ribbons.map((ribbon, index) => {
-                    const id = `mark-${ribbon.id}`;
-                    const open = menu?.id === id;
-                    return (
-                      <span
-                        key={ribbon.id}
-                        className="absolute top-full z-20 -translate-x-1/2"
-                        style={{ left: edgeLeft(ribbon.position) }}
+                    ) : null}
+                  </span>
+                ))}
+              </div>
+              <div className="mushaf-edge-lines pointer-events-none absolute inset-0" aria-hidden="true" />
+              <div className="absolute inset-0 flex" role="group" aria-label="Page edge, Al-Fatihah to An-Nas">
+                {edge.buckets.map((bucket) => {
+                  const id = `pages-${bucket.id}`;
+                  const open = menu?.id === id;
+                  return (
+                    <button
+                      key={bucket.id}
+                      type="button"
+                      data-testid="mushaf-edge-slice"
+                      className="h-full min-h-11 min-w-0 cursor-pointer hover:bg-[color-mix(in_srgb,var(--gold)_16%,transparent)]"
+                      style={{ flex: `${bucket.ayahCount} 1 0%` }}
+                      aria-label={`Pages, ${bucket.name}`}
+                      aria-describedby={tip?.id === id ? tipId : undefined}
+                      aria-expanded={bucket.choices.length > 0 ? open : undefined}
+                      aria-haspopup={bucket.choices.length > 0 ? "dialog" : undefined}
+                      aria-controls={open ? menuId : undefined}
+                      {...handlers(id, bucket.tooltip, bucket.direct, bucket.choices)}
+                    />
+                  );
+                })}
+              </div>
+              {edge.noteFlags.map((flag, index) => {
+                const id = `note-${flag.id}`;
+                const open = menu?.id === id;
+                return (
+                  <span
+                    key={flag.id}
+                    className="absolute bottom-[calc(100%+6px)] z-20 -translate-x-1/2"
+                    style={{ left: edgeLeft(flag.position) }}
+                  >
+                    <span className="mushaf-flag-rise block" style={{ animationDelay: `${Math.min(index, 12) * 40}ms` }}>
+                      <button
+                        type="button"
+                        data-testid="mushaf-edge-flag"
+                        className="mushaf-edge-lift relative flex h-11 min-w-8 cursor-pointer items-center justify-center whitespace-nowrap rounded-t-md rounded-b-sm border border-[#c4b48a] bg-[#fff8e7] px-1.5 text-xs font-semibold text-[#1c140c] shadow-[var(--shadow)]"
+                        aria-label={controlName("Note", flag.tooltip.title, flag.tooltip.lines[0] ?? "", flag.label)}
+                        aria-describedby={tip?.id === id ? tipId : undefined}
+                        aria-expanded={flag.choices.length > 0 ? open : undefined}
+                        aria-haspopup={flag.choices.length > 0 ? "dialog" : undefined}
+                        aria-controls={open ? menuId : undefined}
+                        {...handlers(id, flag.tooltip, flag.direct, flag.choices)}
                       >
                         <span
-                          className="mushaf-flag-rise block"
-                          style={{ animationDelay: `${160 + Math.min(index, 8) * 40}ms` }}
-                        >
-                          <button
-                            type="button"
-                            data-testid="mushaf-edge-ribbon"
-                            className="mushaf-edge-lift flex h-14 w-8 cursor-pointer items-start justify-center pt-0.5"
-                            aria-label={controlName("Bookmark", ribbon.tooltip.title, ribbon.tooltip.lines[0] ?? "", ribbon.label)}
-                            aria-describedby={tip?.id === id ? tipId : undefined}
-                            aria-expanded={ribbon.choices.length > 0 ? open : undefined}
-                            aria-haspopup={ribbon.choices.length > 0 ? "dialog" : undefined}
-                            aria-controls={open ? menuId : undefined}
-                            {...handlers(id, ribbon.tooltip, ribbon.direct, ribbon.choices)}
-                          >
-                            <span
-                              aria-hidden="true"
-                              className="relative block h-11 w-3.5"
-                              style={{
-                                background: "color-mix(in srgb, var(--gold-deep) 72%, var(--ink))",
-                                clipPath: "polygon(0 0, 100% 0, 100% 100%, 50% 78%, 0 100%)",
-                              }}
-                            />
-                            {ribbon.label ? (
-                              <span className="absolute -top-1 left-1/2 -translate-x-1/2 rounded-full bg-[var(--mushaf-paper)] px-1 text-[10px] font-semibold leading-4 text-[var(--mushaf-script)] ring-1 ring-line">
-                                {ribbon.label}
-                              </span>
-                            ) : null}
-                          </button>
-                        </span>
-                      </span>
-                    );
-                  })}
-                </div>
-              </div>
+                          aria-hidden="true"
+                          className="pointer-events-none absolute right-0 top-0 h-2.5 w-2.5 bg-[#e4d3a8]"
+                          style={{ clipPath: "polygon(100% 0, 0 0, 100% 100%)" }}
+                        />
+                        <span aria-hidden="true">{flag.label}</span>
+                      </button>
+                    </span>
+                  </span>
+                );
+              })}
+              {edge.ribbons.map((ribbon, index) => {
+                const id = `mark-${ribbon.id}`;
+                const open = menu?.id === id;
+                return (
+                  <span
+                    key={ribbon.id}
+                    className="absolute top-[calc(100%+2px)] z-20 -translate-x-1/2"
+                    style={{ left: edgeLeft(ribbon.position) }}
+                  >
+                    <span className="mushaf-flag-rise block" style={{ animationDelay: `${160 + Math.min(index, 8) * 40}ms` }}>
+                      <button
+                        type="button"
+                        data-testid="mushaf-edge-ribbon"
+                        className="mushaf-edge-lift flex h-24 w-8 cursor-pointer items-start justify-center"
+                        aria-label={controlName("Bookmark", ribbon.tooltip.title, ribbon.tooltip.lines[0] ?? "", ribbon.label)}
+                        aria-describedby={tip?.id === id ? tipId : undefined}
+                        aria-expanded={ribbon.choices.length > 0 ? open : undefined}
+                        aria-haspopup={ribbon.choices.length > 0 ? "dialog" : undefined}
+                        aria-controls={open ? menuId : undefined}
+                        {...handlers(id, ribbon.tooltip, ribbon.direct, ribbon.choices)}
+                      >
+                        <span
+                          aria-hidden="true"
+                          className="block h-[4.75rem] w-3.5 rounded-b-sm"
+                          style={{
+                            background: "color-mix(in srgb, var(--gold-deep) 72%, var(--ink))",
+                            clipPath: "polygon(0 0, 100% 0, 100% 100%, 50% 84%, 0 100%)",
+                          }}
+                        />
+                        {ribbon.label ? (
+                          <span className="absolute top-0 left-1/2 -translate-x-1/2 rounded-full bg-[#fff8e7] px-1 text-[10px] font-semibold leading-4 text-[#1c140c] ring-1 ring-[#c4b48a]">
+                            {ribbon.label}
+                          </span>
+                        ) : null}
+                      </button>
+                    </span>
+                  </span>
+                );
+              })}
             </div>
           </div>
+          <div className="mushaf-cover" aria-hidden="true">
+            <div className="mushaf-cover-frame">
+              <span className="mushaf-corner" data-corner="tl" />
+              <span className="mushaf-corner" data-corner="tr" />
+              <span className="mushaf-corner" data-corner="bl" />
+              <span className="mushaf-corner" data-corner="br" />
+              <span className="mushaf-cover-mark" />
+              <p className="mushaf-cover-title">Your Mushaf</p>
+            </div>
+          </div>
+          <div className="mushaf-fore" aria-hidden="true" />
         </div>
       </div>
       {edge.empty ? (
@@ -478,20 +470,44 @@ function MushafEdgeBook() {
           </Link>
         </div>
       ) : (
-        <ul className="flex flex-wrap gap-x-4 gap-y-2 text-sm text-ink" aria-label="Marks on this edge">
-          {edge.legend.map((color) => (
-            <li key={color.id} className="inline-flex items-center gap-2">
-              <span aria-hidden="true" className="h-3 w-3 rounded-full ring-1 ring-line" style={{ backgroundColor: color.color }} />
-              <span>
-                {color.name} {color.count}
-              </span>
-            </li>
-          ))}
-          {edge.totals.read > 0 ? <li>Shade · read</li> : null}
-          {edge.totals.notes > 0 ? <li>Flag · note</li> : null}
-          {edge.totals.bookmarks > 0 ? <li>Ribbon · bookmark</li> : null}
-        </ul>
+        edge.legend.length > 0 ? (
+          <ul className="flex flex-wrap gap-x-4 gap-y-2 text-sm text-ink-soft" aria-label="Highlight colours">
+            {edge.legend.map((color) => (
+              <li key={color.id} className="inline-flex items-center gap-2">
+                <span aria-hidden="true" className="h-3 w-3 rounded-full ring-1 ring-line" style={{ backgroundColor: color.color }} />
+                <span>
+                  {color.name} {color.count}
+                </span>
+              </li>
+            ))}
+          </ul>
+        ) : null
       )}
+      <ul className="flex flex-wrap gap-x-4 gap-y-2 text-sm text-ink" aria-label="How to read this book">
+        <li className="inline-flex items-center gap-2">
+          <span aria-hidden="true" className="h-3 w-3 rounded-sm bg-gold" />
+          Highlights
+        </li>
+        <li className="inline-flex items-center gap-2">
+          <span aria-hidden="true" className="h-3 w-3.5 rounded-t-sm border border-[#c4b48a] bg-[#fff8e7]" />
+          Notes
+        </li>
+        <li className="inline-flex items-center gap-2">
+          <span
+            aria-hidden="true"
+            className="h-3.5 w-2"
+            style={{
+              background: "color-mix(in srgb, var(--gold-deep) 72%, var(--ink))",
+              clipPath: "polygon(0 0, 100% 0, 100% 100%, 50% 72%, 0 100%)",
+            }}
+          />
+          Bookmarks
+        </li>
+        <li className="inline-flex items-center gap-2">
+          <span aria-hidden="true" className="h-3 w-3 rounded-sm bg-[color-mix(in_srgb,var(--mushaf-script)_28%,var(--mushaf-paper))] ring-1 ring-line" />
+          Read
+        </li>
+      </ul>
       {tip
         ? createPortal(
             <div

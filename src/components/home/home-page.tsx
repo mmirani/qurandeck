@@ -210,11 +210,8 @@ function HomeMushafEdgeFallback() {
       <p className="kufic-label text-gold-deep">Marked pages</p>
       <h2 className="font-display text-3xl font-semibold tracking-tight text-ink">Your Mushaf</h2>
       <p className="max-w-2xl text-sm leading-6 text-ink-soft lg:hidden">See your marked-up Mushaf on desktop.</p>
-      <p className="hidden max-w-2xl text-sm leading-6 text-ink-soft lg:block">
-        The closed edge of your copy, from Al-Fatihah to An-Nas. Colour is a highlight in a colour you named, a flag is
-        a note, a ribbon is a bookmark, and a soft shade is where you have already read.
-      </p>
-      <div className="hidden min-h-[22rem] lg:block" />
+      <p className="hidden text-sm leading-6 text-ink-soft lg:block">Each slice is a surah, Al-Fatihah to An-Nas.</p>
+      <div className="hidden min-h-[30rem] lg:block" />
     </section>
   );
 }
