@@ -48,7 +48,7 @@ export type EdgeItem = {
   endVerseKey?: string;
   chapterId: number;
   verseNumber: number;
-  /** 0–1 along the mushaf, from Al-Fatihah toward An-Nas. */
+  /** 0–1 through the thickness, Al-Fatihah behind the front cover toward An-Nas at the back. */
   position: number;
   preview: string;
   label: string;

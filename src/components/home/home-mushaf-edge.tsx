@@ -25,6 +25,7 @@ import {
   placeFloating,
   type EdgeChoice,
   type FloatingBox,
+  type SurahBand,
   type TooltipCopy,
 } from "@/lib/mushaf-edge";
 
@@ -58,7 +59,8 @@ type MenuState = {
 };
 
 /**
- * Signed-in closed mushaf: cover, spine, and the stained top of the pages.
+ * Signed-in closed mushaf. The pages are vertical sheets hinged at the spine:
+ * Al-Fatihah sits behind the front cover, An-Nas in front of the back cover.
  * Mark text stays in this component: nothing here is sent or logged.
  */
 export function HomeMushafEdge() {
@@ -95,7 +97,7 @@ export function HomeMushafEdge() {
       <p className="max-w-2xl text-sm leading-6 text-ink-soft lg:hidden" data-testid="mushaf-edge-hint">
         See your marked-up Mushaf on desktop.
       </p>
-      <p className="hidden text-sm leading-6 text-ink-soft lg:block">Each slice is a surah, Al-Fatihah to An-Nas.</p>
+      <p className="hidden text-sm leading-6 text-ink-soft lg:block">Front cover to back: Al-Fatihah to An-Nas.</p>
       <div className="hidden lg:block">
         {desktop && near ? <MushafEdgeBook /> : <div className="min-h-[28rem]" aria-hidden="true" />}
       </div>
@@ -133,7 +135,7 @@ function MushafEdgeBook() {
         versesRead: progress.versesRead,
         names,
         minShare: minShareForWidth(width),
-        minFlagGap: width > 0 ? Math.max(0.045, 56 / width) : undefined,
+        minFlagGap: width > 0 ? Math.max(0.04, 20 / width) : undefined,
       }),
     [bookmarks, highlights, names, notes, progress.versesRead, swatches, width],
   );
@@ -142,7 +144,7 @@ function MushafEdgeBook() {
     const node = pagesRef.current;
     if (!node) return;
     const measure = () => {
-      const next = node.clientHeight;
+      const next = Math.round(node.getBoundingClientRect().width);
       setWidth((current) => (current === next ? current : next));
     };
     measure();
@@ -317,6 +319,7 @@ function MushafEdgeBook() {
     <div data-empty={edge.empty ? "true" : "false"}>
       <div data-testid="mushaf-edge-book" className="mushaf-scene">
         <div className="mushaf-float">
+          <div className="mushaf-ground" aria-hidden="true" />
           <div className="mushaf-book">
             <div className="mushaf-spine" aria-hidden="true">
               <span className="mushaf-headband" />
@@ -333,43 +336,16 @@ function MushafEdgeBook() {
                 <p className="mushaf-cover-title">Your Mushaf</p>
               </div>
             </div>
-            <div className="mushaf-page-top" aria-hidden="true" />
+            <div className="mushaf-page-top" aria-hidden="true">
+              <PageStripes bands={edge.bands} empty={edge.empty} along="top" />
+              <div className="mushaf-edge-lines mushaf-edge-lines-top pointer-events-none absolute inset-0" />
+            </div>
             <div className="mushaf-right">
               <div className="mushaf-board-edge" aria-hidden="true" />
               <div ref={pagesRef} className="mushaf-fore">
-                <div className="flex h-full flex-col overflow-hidden">
-                  {edge.bands.map((band) => (
-                    <span
-                      key={band.chapterId}
-                      aria-hidden="true"
-                      className="relative min-h-0 w-full"
-                      style={{ flex: `${band.ayahCount} 1 0%` }}
-                    >
-                      {!edge.empty && band.readRatio > 0 ? (
-                        <span
-                          className="absolute inset-x-0 bottom-0"
-                          style={{
-                            height: `${Math.max(16, Math.round(band.readRatio * 100))}%`,
-                            background: "rgba(28, 20, 12, 0.16)",
-                          }}
-                        />
-                      ) : null}
-                      {band.colors.length > 0 ? (
-                        <span className="absolute inset-x-0 inset-y-[10%] flex">
-                          {band.colors.map((color) => (
-                            <span
-                              key={color.id}
-                              className="h-full min-w-0"
-                              style={{ flexGrow: color.count, backgroundColor: color.color }}
-                            />
-                          ))}
-                        </span>
-                      ) : null}
-                    </span>
-                  ))}
-                </div>
+                <PageStripes bands={edge.bands} empty={edge.empty} along="fore" />
                 <div className="mushaf-edge-lines pointer-events-none absolute inset-0" aria-hidden="true" />
-                <div className="absolute inset-0 flex flex-col" role="group" aria-label="Page edge, Al-Fatihah to An-Nas">
+                <div className="absolute inset-0 flex flex-row" role="group" aria-label="Page edge, Al-Fatihah at the front cover to An-Nas at the back">
                   {edge.buckets.map((bucket) => {
                     const id = `pages-${bucket.id}`;
                     const open = menu?.id === id;
@@ -378,7 +354,7 @@ function MushafEdgeBook() {
                         key={bucket.id}
                         type="button"
                         data-testid="mushaf-edge-slice"
-                        className="min-h-0 w-full cursor-pointer hover:bg-[color-mix(in_srgb,white_18%,transparent)]"
+                        className="h-full min-w-0 cursor-pointer hover:bg-[color-mix(in_srgb,white_18%,transparent)]"
                         style={{ flex: `${bucket.ayahCount} 1 0%` }}
                         aria-label={`Pages, ${bucket.name}`}
                         aria-describedby={tip?.id === id ? tipId : undefined}
@@ -390,55 +366,55 @@ function MushafEdgeBook() {
                     );
                   })}
                 </div>
-                {edge.noteFlags.map((flag, index) => {
-                  const id = `note-${flag.id}`;
-                  const open = menu?.id === id;
-                  const ink = tabInk(flag.accent);
-                  return (
-                    <span
-                      key={flag.id}
-                      className="mushaf-tab-anchor absolute z-20 -translate-y-1/2"
-                      style={{ top: edgeAlong(flag.position) }}
-                    >
-                      <span className="mushaf-flag-rise block" style={{ animationDelay: `${Math.min(index, 12) * 40}ms` }}>
-                        <button
-                          type="button"
-                          data-testid="mushaf-edge-flag"
-                          className="mushaf-tab relative flex h-11 min-w-11 cursor-pointer items-stretch bg-transparent p-0"
-                          aria-label={controlName("Note", flag.tooltip.title, flag.tooltip.lines[0] ?? "", flag.label)}
-                          aria-describedby={tip?.id === id ? tipId : undefined}
-                          aria-expanded={flag.choices.length > 0 ? open : undefined}
-                          aria-haspopup={flag.choices.length > 0 ? "dialog" : undefined}
-                          aria-controls={open ? menuId : undefined}
-                          {...handlers(id, flag.tooltip, flag.direct, flag.choices)}
-                        >
-                          <span
-                            className="mushaf-tab-face relative flex h-11 min-w-9 items-center justify-center whitespace-nowrap rounded-r-md rounded-l-sm px-1.5 text-xs font-semibold shadow-[var(--shadow)]"
-                            style={{ background: ink.background, color: ink.color, border: `1px solid ${ink.border}` }}
-                          >
-                            <span
-                              aria-hidden="true"
-                              className="pointer-events-none absolute top-0 right-0 h-2.5 w-2.5"
-                              style={{ background: ink.color, opacity: 0.28, clipPath: "polygon(100% 0, 0 0, 100% 100%)" }}
-                            />
-                            <span aria-hidden="true">{flag.label}</span>
-                          </span>
-                        </button>
-                      </span>
-                    </span>
-                  );
-                })}
               </div>
               <div className="mushaf-board-edge mushaf-board-edge-back" aria-hidden="true" />
             </div>
+            {edge.noteFlags.map((flag, index) => {
+              const id = `note-${flag.id}`;
+              const open = menu?.id === id;
+              const ink = tabInk(flag.accent);
+              return (
+                <span
+                  key={flag.id}
+                  className="mushaf-tab-anchor absolute z-20"
+                  style={{ transform: depthShift(flag.position, "translate(-40%, -8%)") }}
+                >
+                  <span className="mushaf-flag-rise block" style={{ animationDelay: `${Math.min(index, 12) * 40}ms` }}>
+                    <button
+                      type="button"
+                      data-testid="mushaf-edge-flag"
+                      className="mushaf-tab relative flex h-11 min-w-11 cursor-pointer items-end justify-center bg-transparent p-0"
+                      aria-label={controlName("Note", flag.tooltip.title, flag.tooltip.lines[0] ?? "", flag.label)}
+                      aria-describedby={tip?.id === id ? tipId : undefined}
+                      aria-expanded={flag.choices.length > 0 ? open : undefined}
+                      aria-haspopup={flag.choices.length > 0 ? "dialog" : undefined}
+                      aria-controls={open ? menuId : undefined}
+                      {...handlers(id, flag.tooltip, flag.direct, flag.choices)}
+                    >
+                      <span
+                        className="mushaf-tab-face relative flex h-9 min-w-9 items-center justify-center whitespace-nowrap rounded-t-md rounded-b-sm px-1.5 text-xs font-semibold shadow-[var(--shadow)]"
+                        style={{ background: ink.background, color: ink.color, border: `1px solid ${ink.border}` }}
+                      >
+                        <span
+                          aria-hidden="true"
+                          className="pointer-events-none absolute top-0 right-0 h-2.5 w-2.5"
+                          style={{ background: ink.color, opacity: 0.28, clipPath: "polygon(100% 0, 0 0, 100% 100%)" }}
+                        />
+                        <span aria-hidden="true">{flag.label}</span>
+                      </span>
+                    </button>
+                  </span>
+                </span>
+              );
+            })}
             {edge.ribbons.map((ribbon, index) => {
               const id = `mark-${ribbon.id}`;
               const open = menu?.id === id;
               return (
                 <span
                   key={ribbon.id}
-                  className="mushaf-ribbon-anchor absolute z-20 -translate-x-1/2"
-                  style={{ left: edgeAlong(ribbon.position) }}
+                  className="mushaf-ribbon-anchor absolute z-20"
+                  style={{ transform: depthShift(ribbon.position, "translateX(-50%)") }}
                 >
                   <span className="mushaf-ribbon-drop block" style={{ animationDelay: `${160 + Math.min(index, 8) * 40}ms` }}>
                     <button
@@ -465,7 +441,6 @@ function MushafEdgeBook() {
             })}
           </div>
         </div>
-        <div className="mushaf-ground" aria-hidden="true" />
       </div>
       {edge.empty ? (
         <div className="flex flex-col items-start gap-3" data-testid="mushaf-edge-empty">
@@ -598,9 +573,38 @@ function controlName(kind: string, title: string, range: string, extra: string) 
   return [kind, title, range, extra].filter(Boolean).join(", ");
 }
 
-function edgeAlong(position: number) {
+/** Shift a mark through the page block: 0 is just behind the front cover. */
+function depthShift(position: number, place: string) {
   const safe = Math.min(1, Math.max(0, position));
-  return `clamp(1.4rem, ${safe * 100}%, calc(100% - 1.4rem))`;
+  const towardFront = (0.5 - safe).toFixed(4);
+  return `${place} translateZ(calc(var(--page-d) * ${towardFront}))`;
+}
+
+function PageStripes({ bands, empty, along }: { bands: SurahBand[]; empty: boolean; along: "fore" | "top" }) {
+  const fore = along === "fore";
+  return (
+    <div className={fore ? "flex h-full w-full flex-row overflow-hidden" : "flex h-full w-full flex-col-reverse overflow-hidden"}>
+      {bands.map((band) => (
+        <span
+          key={band.chapterId}
+          aria-hidden="true"
+          className={fore ? "relative h-full min-w-0" : "relative min-h-0 w-full"}
+          style={{ flex: `${band.ayahCount} 1 0%` }}
+        >
+          {!empty && band.readRatio > 0 ? (
+            <span className="absolute inset-0" style={{ background: "rgba(28, 20, 12, 0.2)", opacity: Math.max(0.35, band.readRatio) }} />
+          ) : null}
+          {band.colors.length > 0 ? (
+            <span className="absolute inset-0 flex flex-col">
+              {band.colors.map((color) => (
+                <span key={color.id} className="min-h-0 w-full" style={{ flexGrow: color.count, backgroundColor: color.color }} />
+              ))}
+            </span>
+          ) : null}
+        </span>
+      ))}
+    </div>
+  );
 }
 
 function tabInk(hex: string | null): { background: string; color: string; border: string } {
