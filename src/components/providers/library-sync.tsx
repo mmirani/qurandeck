@@ -36,12 +36,18 @@ function localLibrary(email?: string): LibrarySnapshot {
   };
 }
 
-async function pullLibrary() {
+/** Ask other devices' saves on demand, e.g. when the idle prompt opens. */
+export const LIBRARY_PULL_EVENT = "qurandeck:library-pull";
+
+type Pulled = { library: LibrarySnapshot | null; updatedAt: string | null };
+
+async function pullLibrary(): Promise<Pulled | undefined> {
   const response = await fetch("/api/library", { cache: "no-store" });
   if (!response.ok) return undefined;
-  const body = (await response.json()) as { library?: unknown };
-  if (!body.library) return null;
-  return normalizeLibrary(body.library);
+  const body = (await response.json()) as { library?: unknown; updatedAt?: unknown };
+  const updatedAt = typeof body.updatedAt === "string" ? body.updatedAt : null;
+  if (!body.library) return { library: null, updatedAt };
+  return { library: normalizeLibrary(body.library), updatedAt };
 }
 
 async function recordGuestMerge() {
@@ -62,15 +68,31 @@ async function recordGuestMerge() {
   }
 }
 
-async function pushLibrary(library: LibrarySnapshot) {
+type Pushed = { ok: boolean; updatedAt: string | null; library: LibrarySnapshot | null };
+
+/**
+ * Sends this device's library with the row stamp it last saw. If another
+ * device saved in between, the server merges and returns the result.
+ */
+async function pushLibrary(library: LibrarySnapshot, baseUpdatedAt: string | null): Promise<Pushed> {
   const response = await fetch("/api/library", {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ library }),
+    body: JSON.stringify({ library, baseUpdatedAt }),
     keepalive: true,
   });
-  if (response.ok) await recordGuestMerge();
-  return response.ok;
+  if (!response.ok) return { ok: false, updatedAt: null, library: null };
+  await recordGuestMerge();
+  try {
+    const body = (await response.json()) as { updatedAt?: unknown; library?: unknown };
+    return {
+      ok: true,
+      updatedAt: typeof body.updatedAt === "string" ? body.updatedAt : null,
+      library: body.library ? normalizeLibrary(body.library) : null,
+    };
+  } catch {
+    return { ok: true, updatedAt: null, library: null };
+  }
 }
 
 export function LibrarySync({
@@ -94,6 +116,22 @@ export function LibrarySync({
   const lastPushAt = useRef(0);
   const lastPullAt = useRef(0);
   const emailRef = useRef(email);
+  const serverAt = useRef<string | null>(null);
+
+  /** Records a successful push and adopts anything the server merged in. */
+  const afterPush = useRef((sent: LibrarySnapshot, result: Pushed, normalized: string) => {
+    if (!result.ok) return false;
+    if (result.updatedAt) serverAt.current = result.updatedAt;
+    lastPushAt.current = Date.now();
+    pending.current = "none";
+    if (result.library) {
+      lastSent.current = result.library;
+      onApplyRef.current(mergeLibraries(localLibrary(normalized), result.library));
+    } else {
+      lastSent.current = sent;
+    }
+    return true;
+  });
 
   useEffect(() => {
     onApplyRef.current = onApply;
@@ -121,18 +159,17 @@ export function LibrarySync({
     lastPullAt.current = Date.now();
 
     void (async () => {
-      const remote = await pullLibrary();
-      if (cancelled || remote === undefined) return;
+      const pulled = await pullLibrary();
+      if (cancelled || pulled === undefined) return;
+      serverAt.current = pulled.updatedAt;
+      const remote = pulled.library;
       const local = localLibrary(normalized);
       const merged = remote ? mergeLibraries(local, remote) : local;
       if (!cancelled) onApplyRef.current(merged);
-      const pushed = await pushLibrary(remote ? merged : local);
+      const sent = remote ? merged : local;
+      const pushed = await pushLibrary(sent, serverAt.current);
       if (cancelled) return;
-      if (pushed) {
-        lastSent.current = remote ? merged : local;
-        lastPushAt.current = Date.now();
-        pending.current = "none";
-      }
+      afterPush.current(sent, pushed, normalized);
       readyEmail.current = normalized;
     })();
 
@@ -160,11 +197,9 @@ export function LibrarySync({
       const current = snapshotRef.current;
       if (readyEmail.current !== normalized) return;
       if (document.visibilityState === "hidden") return;
-      void pushLibrary(current).then((ok) => {
-        if (!ok || readyEmail.current !== normalized) return;
-        lastSent.current = current;
-        lastPushAt.current = Date.now();
-        pending.current = "none";
+      void pushLibrary(current, serverAt.current).then((result) => {
+        if (readyEmail.current !== normalized) return;
+        afterPush.current(current, result, normalized);
       });
     }, delay);
   }, [email, hydrated, snapshot]);
@@ -179,12 +214,23 @@ export function LibrarySync({
       dueAt.current = 0;
       const current = snapshotRef.current;
       if (libraryChangeKind(lastSent.current, current) === "none") return;
-      void pushLibrary(current).then((ok) => {
-        if (!ok) return;
-        lastSent.current = current;
-        lastPushAt.current = Date.now();
-        pending.current = "none";
+      const email = normalized();
+      void pushLibrary(current, serverAt.current).then((result) => {
+        afterPush.current(current, result, email);
       });
+    };
+
+    const pull = (force: boolean) => {
+      if (!hydrated || readyEmail.current !== normalized()) return;
+      if (!force && !shouldPullLibrary(Date.now(), lastPullAt.current)) return;
+      lastPullAt.current = Date.now();
+      void (async () => {
+        const pulled = await pullLibrary();
+        if (!pulled?.library || readyEmail.current !== normalized()) return;
+        serverAt.current = pulled.updatedAt;
+        const merged = mergeLibraries(localLibrary(normalized()), pulled.library);
+        onApplyRef.current(merged);
+      })();
     };
 
     const onVisibility = () => {
@@ -192,21 +238,21 @@ export function LibrarySync({
         flush();
         return;
       }
-      if (!hydrated || readyEmail.current !== normalized()) return;
-      if (!shouldPullLibrary(Date.now(), lastPullAt.current)) return;
-      lastPullAt.current = Date.now();
-      void (async () => {
-        const remote = await pullLibrary();
-        if (!remote || readyEmail.current !== normalized()) return;
-        const merged = mergeLibraries(localLibrary(normalized()), remote);
-        onApplyRef.current(merged);
-      })();
+      pull(false);
     };
+    // A desktop tab can stay visible while the reader moves to a phone, so
+    // window focus (clicking back into the browser) also checks for news.
+    const onFocus = () => pull(false);
+    const onPullRequest = () => pull(true);
 
     document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener("focus", onFocus);
+    window.addEventListener(LIBRARY_PULL_EVENT, onPullRequest);
     window.addEventListener("pagehide", flush);
     return () => {
       document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("focus", onFocus);
+      window.removeEventListener(LIBRARY_PULL_EVENT, onPullRequest);
       window.removeEventListener("pagehide", flush);
     };
   }, [hydrated]);

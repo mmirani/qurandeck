@@ -3,6 +3,7 @@ import { validateAvatar } from "@/lib/avatar";
 import { getSql } from "@/lib/db";
 import { validateDisplayName } from "@/lib/display-name";
 import { normalizeLibrary, type LibrarySnapshot } from "@/lib/library";
+import { resolveIncoming } from "@/lib/library-resolve";
 import { accountId, openLibrary, prepareLibraryStore, sealLibrary } from "@/lib/library-seal";
 import { applyReadingRankDeltas, visitDeltas } from "@/lib/reading-ranks";
 
@@ -48,7 +49,7 @@ export async function PUT(request: Request) {
     return Response.json({ error: "Library is too large to sync." }, { status: 413 });
   }
 
-  let body: { library?: unknown };
+  let body: { library?: unknown; baseUpdatedAt?: unknown };
   try {
     body = JSON.parse(rawText) as { library?: unknown };
   } catch {
@@ -72,11 +73,11 @@ export async function PUT(request: Request) {
     const sql = getSql();
     const id = accountId(email);
     const existing = (await sql`
-      SELECT sealed
+      SELECT sealed, updated_at
       FROM libraries
       WHERE account_id = ${id}
       LIMIT 1
-    `) as { sealed?: string }[];
+    `) as { sealed?: string; updated_at?: string | Date }[];
 
     let previous: LibrarySnapshot | null = null;
     if (existing[0]?.sealed) {
@@ -87,22 +88,27 @@ export async function PUT(request: Request) {
       }
     }
 
+    // Another device may have saved since this one last pulled. Merge rather
+    // than overwrite so a stale tab never drags the place (or new notes) back.
+    const stored = resolveIncoming(library, previous, existing[0]?.updated_at, body.baseUpdatedAt);
+
     const rows = (await sql`
       INSERT INTO libraries (account_id, sealed, updated_at)
-      VALUES (${id}, ${sealLibrary(library)}, now())
+      VALUES (${id}, ${sealLibrary(stored)}, now())
       ON CONFLICT (account_id) DO UPDATE
       SET sealed = EXCLUDED.sealed, updated_at = now()
       RETURNING updated_at
     `) as { updated_at?: string }[];
 
     try {
-      await applyReadingRankDeltas(id, visitDeltas(previous, library));
+      await applyReadingRankDeltas(id, visitDeltas(previous, stored));
     } catch {
       // Library sync already succeeded; ranks can catch up on a later put.
     }
 
     const updatedAt = rows[0]?.updated_at ?? null;
-    return Response.json({ ok: true, updatedAt });
+    // Send the result back only when it differs from what this device sent.
+    return Response.json({ ok: true, updatedAt, library: stored === library ? undefined : stored });
   } catch {
     return Response.json({ error: "Could not save library." }, { status: 503 });
   }

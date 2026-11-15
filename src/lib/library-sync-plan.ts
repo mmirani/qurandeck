@@ -4,8 +4,11 @@ import type { LibrarySnapshot } from "@/lib/library";
 export const DURABLE_PUSH_MS = 2_000;
 /** Reading seconds are a meter. They sync on a slow cadence and when the tab hides. */
 export const METER_PUSH_MS = 120_000;
-/** Other devices are pulled on focus, then not again until this backoff. */
-export const PULL_BACKOFF_MS = 5 * 60 * 1000;
+/**
+ * Other devices are pulled on focus, then not again until this backoff.
+ * Short enough that switching phone -> desktop shows the newer place.
+ */
+export const PULL_BACKOFF_MS = 60 * 1000;
 
 export type LibraryChange = "none" | "meter" | "durable";
 
