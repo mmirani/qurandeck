@@ -2150,9 +2150,9 @@ html[data-focus="on"] .sana-dock {
 
 .mushaf-edge-lines {
   background-image: repeating-linear-gradient(
-    to right,
+    to bottom,
     transparent 0 2px,
-    rgba(28, 20, 12, 0.18) 2px 3px
+    rgba(28, 20, 12, 0.2) 2px 3px
   );
 }
 
@@ -2171,36 +2171,87 @@ html[data-focus="on"] .sana-dock {
 }
 
 .mushaf-float {
-  width: min(22rem, 100%);
-  /* Ribbons hang out of the book. This padding keeps them inside the section. */
-  padding-bottom: 3.25rem;
+  width: min(18rem, 100%);
+  /* Ribbons leave the page block. This padding keeps them inside the section. */
+  padding-bottom: 3.5rem;
 }
 
 .mushaf-book {
+  --page-d: 3.6rem;
+  --board: 0.7rem;
+  --overhang: 4px;
+  --depth: calc(var(--page-d) + (var(--board) * 2));
+  --half-w: 9rem;
+  --half-h: 10rem;
   position: relative;
-  display: flex;
-  align-items: stretch;
   width: 100%;
-  height: 23rem;
-  transform: rotateY(-28deg) rotateX(6deg);
-  transform-origin: 40% 100%;
+  height: 20rem;
+  transform: rotateY(-32deg) rotateX(18deg);
+  transform-origin: center 80%;
   transform-style: preserve-3d;
 }
 
+.mushaf-front,
+.mushaf-back,
+.mushaf-spine,
+.mushaf-page-top,
+.mushaf-right {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform-style: preserve-3d;
+}
+
+.mushaf-front,
+.mushaf-back,
+.mushaf-spine,
+.mushaf-page-top,
+.mushaf-board-edge {
+  pointer-events: none;
+}
+
+.mushaf-front,
+.mushaf-back {
+  width: 100%;
+  height: 100%;
+  margin-left: -50%;
+  margin-top: -50%;
+  background: linear-gradient(
+    168deg,
+    color-mix(in srgb, var(--mushaf-field) 68%, white) 0%,
+    var(--mushaf-field) 46%,
+    color-mix(in srgb, var(--mushaf-field) 72%, black) 100%
+  );
+}
+
+.mushaf-front {
+  transform: translateZ(calc(var(--depth) / 2));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, black 18%, transparent);
+}
+
+.mushaf-back {
+  transform: rotateY(180deg) translateZ(calc(var(--depth) / 2));
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--mushaf-field) 78%, black),
+    color-mix(in srgb, var(--mushaf-field) 55%, black)
+  );
+}
+
 .mushaf-spine {
-  position: relative;
-  z-index: 3;
-  flex: none;
-  width: 1.35rem;
-  border-radius: 0.85rem 0.15rem 0.15rem 0.85rem;
+  width: var(--depth);
+  height: 100%;
+  margin-left: calc(var(--depth) / -2);
+  margin-top: -50%;
+  transform: rotateY(-90deg) translateZ(var(--half-w));
   background: linear-gradient(
     90deg,
-    color-mix(in srgb, var(--mushaf-field) 35%, black) 0%,
-    color-mix(in srgb, var(--mushaf-field) 55%, black) 38%,
-    color-mix(in srgb, var(--gold) 42%, var(--mushaf-field)) 72%,
+    color-mix(in srgb, var(--mushaf-field) 30%, black) 0%,
+    color-mix(in srgb, var(--mushaf-field) 62%, black) 28%,
+    color-mix(in srgb, var(--gold) 35%, var(--mushaf-field)) 62%,
     color-mix(in srgb, var(--mushaf-field) 40%, black) 100%
   );
-  box-shadow: inset -3px 0 4px rgba(0, 0, 0, 0.28);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, black 25%, transparent);
 }
 
 .mushaf-headband {
@@ -2218,19 +2269,52 @@ html[data-focus="on"] .sana-dock {
   opacity: 0.55;
 }
 
-.mushaf-cover {
-  position: relative;
-  z-index: 2;
-  flex: 1 1 auto;
-  background: linear-gradient(
-    168deg,
-    color-mix(in srgb, var(--mushaf-field) 68%, white) 0%,
-    var(--mushaf-field) 46%,
-    color-mix(in srgb, var(--mushaf-field) 72%, black) 100%
+.mushaf-page-top {
+  width: calc(100% - 0.9rem);
+  height: var(--page-d);
+  margin-left: calc(-50% + 0.2rem);
+  margin-top: calc(var(--page-d) / -2);
+  transform: rotateX(90deg) translateZ(calc(var(--half-h) - 1.15rem));
+  background-color: #efe6d4;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    #f7f1e4 0 2px,
+    #ddd2bc 2px 3px
   );
   box-shadow:
-    inset 0 1px 0 color-mix(in srgb, white 32%, transparent),
-    10px 0 14px rgba(0, 0, 0, 0.12);
+    inset 0 0 0 1px rgba(28, 20, 12, 0.18),
+    inset 0 5px 6px rgba(28, 20, 12, 0.16);
+}
+
+.mushaf-right {
+  display: flex;
+  width: var(--depth);
+  height: 100%;
+  margin-left: calc(var(--depth) / -2);
+  margin-top: -50%;
+  transform: rotateY(90deg) translateZ(var(--half-w));
+  transform-style: preserve-3d;
+}
+
+.mushaf-board-edge {
+  flex: none;
+  width: var(--board);
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--mushaf-field) 55%, black),
+    var(--mushaf-field) 55%,
+    color-mix(in srgb, var(--mushaf-field) 70%, black)
+  );
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, black 22%, transparent);
+}
+
+.mushaf-board-edge-back {
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--mushaf-field) 45%, black),
+    color-mix(in srgb, var(--mushaf-field) 70%, black)
+  );
 }
 
 .mushaf-cover-frame {
@@ -2303,26 +2387,46 @@ html[data-focus="on"] .sana-dock {
   text-align: center;
 }
 
-.mushaf-pages {
-  position: relative;
-  z-index: 1;
-  flex: none;
-  width: 7.25rem;
-  margin-block: 0.85rem;
-  margin-left: -0.45rem;
-  border-radius: 0 4px 4px 0;
-  background: #f4efe4;
-  box-shadow:
-    inset 6px 0 8px rgba(28, 20, 12, 0.08),
-    inset -10px 0 12px rgba(28, 20, 12, 0.16);
-}
-
 .mushaf-fore {
   position: relative;
-  height: 100%;
+  flex: none;
+  width: var(--page-d);
+  height: calc(100% - (var(--overhang) * 2));
+  margin-block: var(--overhang);
   overflow: visible;
-  border-radius: inherit;
-  background: #f4efe4;
+  transform-style: preserve-3d;
+  background:
+    linear-gradient(to right, rgba(28, 20, 12, 0.28), rgba(28, 20, 12, 0.06) 32%, rgba(255, 250, 240, 0.08)),
+    #f4efe4;
+  box-shadow:
+    inset 4px 0 5px rgba(28, 20, 12, 0.28),
+    inset -3px 0 4px rgba(28, 20, 12, 0.16),
+    inset 0 4px 5px rgba(28, 20, 12, 0.22),
+    inset 0 -4px 5px rgba(28, 20, 12, 0.2);
+}
+
+.mushaf-tab-anchor {
+  left: calc(100% - 6px);
+  transform: translateZ(7px);
+}
+
+.mushaf-ribbon-anchor {
+  top: calc(100% - var(--overhang));
+  transform: translateZ(0);
+  pointer-events: auto;
+}
+
+.mushaf-float,
+.mushaf-book,
+.mushaf-right,
+.mushaf-fore {
+  pointer-events: none;
+}
+
+.mushaf-fore button,
+.mushaf-tab,
+.mushaf-ribbon {
+  pointer-events: auto;
 }
 
 .mushaf-satin {

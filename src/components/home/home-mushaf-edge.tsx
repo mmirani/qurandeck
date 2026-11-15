@@ -322,7 +322,8 @@ function MushafEdgeBook() {
               <span className="mushaf-headband" />
               <span className="mushaf-headband mushaf-headband-2" />
             </div>
-            <div className="mushaf-cover" aria-hidden="true">
+            <div className="mushaf-back" aria-hidden="true" />
+            <div className="mushaf-front" aria-hidden="true">
               <div className="mushaf-cover-frame">
                 <span className="mushaf-corner" data-corner="tl" />
                 <span className="mushaf-corner" data-corner="tr" />
@@ -332,7 +333,9 @@ function MushafEdgeBook() {
                 <p className="mushaf-cover-title">Your Mushaf</p>
               </div>
             </div>
-            <div className="mushaf-pages">
+            <div className="mushaf-page-top" aria-hidden="true" />
+            <div className="mushaf-right">
+              <div className="mushaf-board-edge" aria-hidden="true" />
               <div ref={pagesRef} className="mushaf-fore">
                 <div className="flex h-full flex-col overflow-hidden">
                   {edge.bands.map((band) => (
@@ -394,7 +397,7 @@ function MushafEdgeBook() {
                   return (
                     <span
                       key={flag.id}
-                      className="absolute left-[calc(100%-0.4rem)] z-20 -translate-y-1/2"
+                      className="mushaf-tab-anchor absolute z-20 -translate-y-1/2"
                       style={{ top: edgeAlong(flag.position) }}
                     >
                       <span className="mushaf-flag-rise block" style={{ animationDelay: `${Math.min(index, 12) * 40}ms` }}>
@@ -426,6 +429,7 @@ function MushafEdgeBook() {
                   );
                 })}
               </div>
+              <div className="mushaf-board-edge mushaf-board-edge-back" aria-hidden="true" />
             </div>
             {edge.ribbons.map((ribbon, index) => {
               const id = `mark-${ribbon.id}`;
@@ -433,7 +437,7 @@ function MushafEdgeBook() {
               return (
                 <span
                   key={ribbon.id}
-                  className="absolute top-full z-20 -translate-x-1/2"
+                  className="mushaf-ribbon-anchor absolute z-20 -translate-x-1/2"
                   style={{ left: edgeAlong(ribbon.position) }}
                 >
                   <span className="mushaf-ribbon-drop block" style={{ animationDelay: `${160 + Math.min(index, 8) * 40}ms` }}>
