@@ -2104,7 +2104,7 @@ html[data-focus="on"] .sana-dock {
 .surah-art-photo {
   object-fit: cover;
   object-position: 40% 22%;
-  transform: scale(1.22);
+  transform: none;
   transform-origin: center;
   opacity: 0.78;
   filter: saturate(0.82) contrast(1.08);
