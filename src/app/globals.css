@@ -2156,6 +2156,10 @@ html[data-focus="on"] .sana-dock {
   );
 }
 
+#your-mushaf {
+  padding-bottom: 2.75rem;
+}
+
 .mushaf-scene {
   perspective: 1800px;
   perspective-origin: 40% 42%;
@@ -2163,11 +2167,13 @@ html[data-focus="on"] .sana-dock {
   flex-direction: column;
   align-items: center;
   width: 100%;
-  padding: 1.5rem 4.5rem 0.5rem 0.5rem;
+  padding: 0.75rem 3.5rem 0 0.25rem;
 }
 
 .mushaf-float {
-  width: min(30rem, 100%);
+  width: min(22rem, 100%);
+  /* Ribbons hang out of the book. This padding keeps them inside the section. */
+  padding-bottom: 3.25rem;
 }
 
 .mushaf-book {
@@ -2175,7 +2181,7 @@ html[data-focus="on"] .sana-dock {
   display: flex;
   align-items: stretch;
   width: 100%;
-  height: 34rem;
+  height: 23rem;
   transform: rotateY(-28deg) rotateX(6deg);
   transform-origin: 40% 100%;
   transform-style: preserve-3d;
@@ -2322,7 +2328,7 @@ html[data-focus="on"] .sana-dock {
 .mushaf-satin {
   display: block;
   width: 0.9rem;
-  height: 4.6rem;
+  height: 3.1rem;
   background: linear-gradient(
     90deg,
     color-mix(in srgb, var(--gold-deep) 78%, black) 0%,
@@ -2335,10 +2341,9 @@ html[data-focus="on"] .sana-dock {
 }
 
 .mushaf-ground {
-  width: min(18rem, 62%);
-  height: 1.35rem;
-  margin-top: 0.85rem;
-  margin-bottom: 3.75rem;
+  width: min(16rem, 70%);
+  height: 1rem;
+  margin-top: 0.15rem;
   background: radial-gradient(ellipse at center, color-mix(in srgb, var(--ink) 32%, transparent) 0%, transparent 72%);
 }
 

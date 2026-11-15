@@ -86,7 +86,7 @@ export function HomeMushafEdge() {
       id="your-mushaf"
       data-testid="mushaf-edge"
       aria-labelledby={headingId}
-      className="qd-card scroll-mt-24 rounded-3xl border border-line bg-surface"
+      className="qd-card scroll-mt-24 rounded-3xl border border-line bg-surface pb-10"
     >
       <p className="kufic-label text-gold-deep">Marked pages</p>
       <h2 id={headingId} className="font-display text-3xl font-semibold tracking-tight text-ink">
@@ -96,8 +96,8 @@ export function HomeMushafEdge() {
         See your marked-up Mushaf on desktop.
       </p>
       <p className="hidden text-sm leading-6 text-ink-soft lg:block">Each slice is a surah, Al-Fatihah to An-Nas.</p>
-      <div className="hidden min-h-[44rem] lg:block">
-        {desktop && near ? <MushafEdgeBook /> : <div className="min-h-[44rem]" aria-hidden="true" />}
+      <div className="hidden lg:block">
+        {desktop && near ? <MushafEdgeBook /> : <div className="min-h-[28rem]" aria-hidden="true" />}
       </div>
     </section>
   );
@@ -440,7 +440,7 @@ function MushafEdgeBook() {
                     <button
                       type="button"
                       data-testid="mushaf-edge-ribbon"
-                      className="mushaf-ribbon flex h-20 w-8 cursor-pointer items-start justify-center bg-transparent p-0"
+                      className="mushaf-ribbon flex h-14 w-8 cursor-pointer items-start justify-center bg-transparent p-0"
                       aria-label={controlName("Bookmark", ribbon.tooltip.title, ribbon.tooltip.lines[0] ?? "", ribbon.label)}
                       aria-describedby={tip?.id === id ? tipId : undefined}
                       aria-expanded={ribbon.choices.length > 0 ? open : undefined}
