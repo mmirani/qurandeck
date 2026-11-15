@@ -601,6 +601,17 @@ html[data-scroll="lock"],
 html[data-scroll="lock"] body {
   height: 100%;
   overflow: hidden;
+  overscroll-behavior: none;
+}
+
+/* overflow:hidden still makes a scroll container. A prerendered #ayah-N is in
+   the first HTML, so the browser scrolls this shell and the header leaves the
+   viewport. clip keeps the clipping and is not a scroll container. The hidden
+   line stays so an engine that does not know clip still clips. */
+#main-content {
+  overflow: hidden;
+  overflow: clip;
+  overscroll-behavior: none;
 }
 
 body {

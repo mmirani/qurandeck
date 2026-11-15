@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import { SurahSidebar } from "@/components/sidebar/surah-sidebar";
 import { StudySidebar } from "@/components/sidebar/study-sidebar";
@@ -17,6 +17,7 @@ import { SyncPrompt } from "@/components/account/sync-prompt";
 import { ReaderChromeProvider } from "@/components/shell/reader-chrome";
 import { NAV_SIDEBAR_QUERY, useMediaQuery, useMobileReader } from "@/lib/use-media-query";
 import { SurahSeedProvider } from "@/components/reader/reading-seed";
+import { resetOuterReaderScroll } from "@/lib/reader-scroll";
 import type { SurahSeed } from "@/lib/quran/surah-reading";
 
 const CALM = { type: "tween" as const, duration: 0.8, ease: [0.33, 0.05, 0.2, 1] as const };
@@ -61,6 +62,20 @@ function AppShellFrame() {
   useEffect(() => {
     if (book && isPlaying) togglePlay();
   }, [book, isPlaying, togglePlay]);
+
+  useLayoutEffect(() => {
+    const shell = document.getElementById("main-content");
+    const reset = () => resetOuterReaderScroll(shell);
+    reset();
+    shell?.addEventListener("scroll", reset);
+    window.addEventListener("hashchange", reset);
+    window.addEventListener("popstate", reset);
+    return () => {
+      shell?.removeEventListener("scroll", reset);
+      window.removeEventListener("hashchange", reset);
+      window.removeEventListener("popstate", reset);
+    };
+  }, []);
 
   const showMobileAudio = !focus && isPlaying && !audioDismissed;
   const mobileAyahMode = mobile && !focus && preferences.mobileReadingMode === "ayah";
