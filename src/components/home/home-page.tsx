@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import {
   Bookmark,
@@ -34,6 +35,11 @@ import { PRODUCT_NAME, PROMISE_LINE, PROMISE_STORY, WORK_TITLE } from "@/lib/bra
 import { QuranCredit } from "@/components/site/quran-credit";
 import { HOME_FEATURES, HOME_MORE, HOME_PROMISES, HOME_STARTS } from "@/lib/home";
 import { TOTAL_AYAHS, TOTAL_SURAHS, versePlaceLabel } from "@/lib/reading";
+
+const HomeMushafEdge = dynamic(
+  () => import("@/components/home/home-mushaf-edge").then((mod) => mod.HomeMushafEdge),
+  { ssr: false, loading: () => <HomeMushafEdgeFallback /> },
+);
 
 const FEATURE_ICONS = {
   search: Search,
@@ -193,6 +199,22 @@ function HomeSignedIn() {
         />
       </div>
       <CompletionMap />
+      <HomeMushafEdge />
+    </section>
+  );
+}
+
+function HomeMushafEdgeFallback() {
+  return (
+    <section aria-hidden="true" className="qd-card scroll-mt-24 rounded-3xl border border-line bg-surface">
+      <p className="kufic-label text-gold-deep">Marked pages</p>
+      <h2 className="font-display text-3xl font-semibold tracking-tight text-ink">Your Mushaf</h2>
+      <p className="max-w-2xl text-sm leading-6 text-ink-soft lg:hidden">See your marked-up Mushaf on desktop.</p>
+      <p className="hidden max-w-2xl text-sm leading-6 text-ink-soft lg:block">
+        The closed edge of your copy, from Al-Fatihah to An-Nas. Colour is a highlight in a colour you named, a flag is
+        a note, a ribbon is a bookmark, and a soft shade is where you have already read.
+      </p>
+      <div className="hidden min-h-[22rem] lg:block" />
     </section>
   );
 }
