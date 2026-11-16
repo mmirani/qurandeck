@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { ChevronLeft, ChevronRight, Minus, Plus, X } from "lucide-react";
 import { useMushafEdgeInteraction } from "@/components/home/mushaf-edge-interaction";
 import { MushafBook, MushafEdgeMagnifier } from "@/components/home/mushaf-book";
+import { useMushafOwnerTitle } from "@/components/home/use-mushaf-owner-title";
 import { dialogFocusables, initialDialogIndex, trapTabIndex } from "@/lib/dialog-focus";
 import { buildMushafEdge, minShareForWidth, type MushafEdgeInput } from "@/lib/mushaf-edge";
 import {
@@ -46,6 +47,7 @@ type MushafExploreDialogProps = {
 
 export function MushafExploreDialog({ input, jumpToHit, onClose, returnFocus }: MushafExploreDialogProps) {
   const titleId = useId();
+  const title = useMushafOwnerTitle();
   const dialogRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const pagesRef = useRef<HTMLDivElement>(null);
@@ -216,8 +218,8 @@ export function MushafExploreDialog({ input, jumpToHit, onClose, returnFocus }: 
         <div className="flex shrink-0 items-start justify-between gap-4 border-b border-line/50 px-5 py-4">
           <div className="min-w-0">
             <p className="kufic-label text-gold-deep">Close-up</p>
-            <h2 id={titleId} className="font-display text-3xl leading-tight font-semibold text-ink">
-              Your Mushaf
+            <h2 id={titleId} className="min-w-0 truncate font-display text-3xl leading-tight font-semibold text-ink" title={title}>
+              {title}
             </h2>
             <p className="mt-1 text-sm leading-6 text-ink-soft">
               Drag to turn. Scroll or + and − to zoom. Arrow keys turn the book.
@@ -279,7 +281,7 @@ export function MushafExploreDialog({ input, jumpToHit, onClose, returnFocus }: 
           ref={stageRef}
           tabIndex={0}
           data-testid="mushaf-explore-stage"
-          aria-label="Closed mushaf on the desk"
+          aria-label={`${title} on the desk`}
           className={`mushaf-explore-stage${angle === "fore-edge" ? " has-magnifier" : ""}`}
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}

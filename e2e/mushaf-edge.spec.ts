@@ -109,10 +109,23 @@ async function seed(page: Page, theme: "iris" | "obsidian", library: ReturnType<
   );
 }
 
-async function openEdge(page: Page) {
+async function stubSessionName(page: Page, name: string | null) {
+  await page.route("**/api/auth/session", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        user: name ? { name } : {},
+        expires: "2099-12-31T00:00:00.000Z",
+      }),
+    });
+  });
+}
+
+async function openEdge(page: Page, title = "Your Mushaf") {
   await page.goto("/", { waitUntil: "domcontentloaded" });
-  await expect(page.getByRole("heading", { name: "Your Mushaf" })).toBeVisible({ timeout: 30_000 });
-  await page.getByRole("heading", { name: "Your Mushaf" }).scrollIntoViewIfNeeded();
+  await expect(page.getByRole("heading", { name: title })).toBeVisible({ timeout: 30_000 });
+  await page.getByRole("heading", { name: title }).scrollIntoViewIfNeeded();
   await expect(page.getByTestId("mushaf-edge-book")).toBeVisible();
 }
 
@@ -270,4 +283,30 @@ test("signed-out homepage does not mount the edge", async ({ page }) => {
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Your Mushaf" })).toHaveCount(0);
   await expect(page.getByTestId("mushaf-edge")).toHaveCount(0);
+});
+
+test("the book heading uses the signed-in first name", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await stubSessionName(page, "Mansur Mirani");
+  await seed(page, "iris", denseLibrary());
+  await openEdge(page, "Mansur's Mushaf");
+
+  await expect(page.locator(".mushaf-cover-title")).toHaveText("Mansur's Mushaf");
+  await page.getByTestId("mushaf-edge-explore").click();
+  const dialog = page.getByTestId("mushaf-explore-dialog");
+  await expect(dialog.getByRole("heading", { name: "Mansur's Mushaf" })).toBeVisible();
+  await expect(dialog.getByLabel("Mansur's Mushaf on the desk")).toBeVisible();
+});
+
+test("the book heading falls back to Your Mushaf when the session has no name", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await stubSessionName(page, null);
+  await seed(page, "iris", denseLibrary());
+  await openEdge(page, "Your Mushaf");
+
+  await expect(page.locator(".mushaf-cover-title")).toHaveText("Your Mushaf");
+  await page.getByTestId("mushaf-edge-explore").click();
+  const dialog = page.getByTestId("mushaf-explore-dialog");
+  await expect(dialog.getByRole("heading", { name: "Your Mushaf" })).toBeVisible();
+  await expect(dialog.getByLabel("Your Mushaf on the desk")).toBeVisible();
 });

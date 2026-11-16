@@ -26,6 +26,7 @@ import { HomeStats } from "@/components/home/home-stats";
 import { AccountEntryLink, HeaderAccount } from "@/components/auth/header-account";
 import { BrandWordmark } from "@/components/brand/brand-wordmark";
 import { HomeSana } from "@/components/home/home-sana";
+import { useMushafOwnerTitle } from "@/components/home/use-mushaf-owner-title";
 import { AppModals } from "@/components/shell/app-modals";
 import { useMushaf } from "@/components/providers/mushaf-provider";
 import { UserMenu } from "@/components/user/user-menu";
@@ -205,10 +206,13 @@ function HomeSignedIn() {
 }
 
 function HomeMushafEdgeFallback() {
+  const title = useMushafOwnerTitle();
   return (
     <section aria-hidden="true" className="qd-card scroll-mt-24 rounded-3xl border border-line bg-surface">
       <p className="kufic-label text-gold-deep">Marked pages</p>
-      <h2 className="font-display text-3xl font-semibold tracking-tight text-ink">Your Mushaf</h2>
+      <h2 className="min-w-0 truncate font-display text-3xl font-semibold tracking-tight text-ink" title={title}>
+        {title}
+      </h2>
       <p className="max-w-2xl text-sm leading-6 text-ink-soft lg:hidden">See your marked-up Mushaf on desktop.</p>
       <p className="hidden text-sm leading-6 text-ink-soft lg:block">Front cover to back: Al-Fatihah to An-Nas.</p>
       <div className="hidden min-h-[28rem] lg:block" />
