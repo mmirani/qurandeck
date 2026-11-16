@@ -19,11 +19,25 @@ export const ZOOM_MAX = 2.6;
 export const ZOOM_FULLSCREEN_MAX = 4;
 export const ZOOM_STEP = 0.25;
 
-export const YAW_MIN = -98;
-export const YAW_MAX = 12;
-export const PITCH_MIN = -12;
-export const PITCH_MAX = 2;
+/**
+ * A believable turn, as if lifting the book in your hands on the desk: from a touch
+ * toward the spine, past the three-quarter view, to the fore-edge seen square on.
+ * Any further and the back board comes into view, so that is where it stops; no tilt
+ * shows the underside either.
+ */
+export const YAW_MIN = -90;
+export const YAW_MAX = 8;
+export const PITCH_MIN = -10;
+export const PITCH_MAX = 0;
 export const YAW_STEP = 8;
+/** While a drag is held past a limit, the book gives at most this much more, then stops. */
+export const YAW_GIVE = 1.5;
+export const PITCH_GIVE = 1.5;
+
+/** Share of the stage the fitted book fills along its tighter side. */
+export const FIT_SHARE = 0.88;
+export const FIT_MIN = 0.4;
+export const FIT_MAX = 6;
 
 /** Degrees the book turns per pixel of a horizontal drag. */
 export const DRAG_YAW_PER_PX = 0.4;
@@ -126,18 +140,55 @@ export function turnBy(pose: MushafPose, direction: -1 | 1, maxZoom = ZOOM_MAX):
 /**
  * Drag right turns the cover with the hand (yaw increases, toward a front-on view).
  * Drag down eases the lean back toward upright.
+ * The result is hard-clamped. During a held drag use `dragTurn` and `heldPose` instead.
  */
 export function dragPose(pose: MushafPose, dx: number, dy: number, maxZoom = ZOOM_MAX): MushafPose {
+  return clampPose({ ...pose, ...dragTurn(pose, dx, dy) }, maxZoom);
+}
+
+export type MushafTurn = { yaw: number; pitch: number };
+
+/** Unclamped turn that follows the hand. The drag keeps this and shows `heldPose`. */
+export function dragTurn(turn: MushafTurn, dx: number, dy: number): MushafTurn {
   const safeX = Number.isFinite(dx) ? dx : 0;
   const safeY = Number.isFinite(dy) ? dy : 0;
-  return clampPose(
-    {
-      ...pose,
-      yaw: pose.yaw + safeX * DRAG_YAW_PER_PX,
-      pitch: pose.pitch + safeY * DRAG_PITCH_PER_PX,
-    },
-    maxZoom,
-  );
+  const yaw = Number.isFinite(turn.yaw) ? turn.yaw : THREE_QUARTER.yaw;
+  const pitch = Number.isFinite(turn.pitch) ? turn.pitch : THREE_QUARTER.pitch;
+  return { yaw: yaw + safeX * DRAG_YAW_PER_PX, pitch: pitch + safeY * DRAG_PITCH_PER_PX };
+}
+
+/**
+ * Past a limit the book resists: it gives a little, easing toward `give`, and never more.
+ * Inside the range the value passes through unchanged.
+ */
+export function softLimit(value: number, min: number, max: number, give: number): number {
+  if (!Number.isFinite(value)) return min;
+  if (value > max) return max + give * (1 - Math.exp(-(value - max) / (give * 3)));
+  if (value < min) return min - give * (1 - Math.exp(-(min - value) / (give * 3)));
+  return value;
+}
+
+/** Pose shown while a turn is held. Release with `clampPose` and it settles to the limit. */
+export function heldPose(turn: MushafTurn, zoom: number, maxZoom = ZOOM_MAX): MushafPose {
+  return {
+    yaw: softLimit(turn.yaw, YAW_MIN, YAW_MAX, YAW_GIVE),
+    pitch: softLimit(turn.pitch, PITCH_MIN, PITCH_MAX, PITCH_GIVE),
+    zoom: roundZoom(clamp(zoom, ZOOM_MIN, maxZoom)),
+  };
+}
+
+/**
+ * Scale that fits the whole book, with its tabs and hanging ribbons, into the stage.
+ * `natural` is the book's untransformed box. Zoom 100% is this fitted size.
+ */
+export function fitScale(
+  stage: { width: number; height: number },
+  natural: { width: number; height: number },
+  share = FIT_SHARE,
+): number {
+  if (!(stage.width > 0 && stage.height > 0 && natural.width > 0 && natural.height > 0)) return 1;
+  const scale = Math.min((stage.width * share) / natural.width, (stage.height * share) / natural.height);
+  return Math.round(clamp(scale, FIT_MIN, FIT_MAX) * 1000) / 1000;
 }
 
 export function canPan(zoom: number): boolean {

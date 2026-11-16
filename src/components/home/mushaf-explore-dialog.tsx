@@ -21,7 +21,9 @@ import {
   clampPose,
   colourShown,
   defaultPose,
-  dragPose,
+  dragTurn,
+  fitScale,
+  heldPose,
   filterMushafInput,
   ignoresMushafKeys,
   keyboardPanDelta,
@@ -44,6 +46,7 @@ import {
   zoomLabel,
   type ExploreFilter,
   type MushafPan,
+  type MushafTurn,
   type MushafPose,
   type PanBounds,
 } from "@/lib/mushaf-explore";
@@ -63,6 +66,8 @@ type DragState = {
   originY: number;
   pointer: number;
   mode: "pending" | "pan" | "turn";
+  /** Where the hand has turned the book, before the limits push back. */
+  turn: MushafTurn;
 };
 
 function fullscreenElement(): Element | null {
@@ -105,6 +110,7 @@ export function MushafExploreDialog({ input, jumpToHit, onClose, returnFocus }: 
   const [dragging, setDragging] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
   const [cssFallback, setCssFallback] = useState(false);
+  const [fit, setFit] = useState(1);
   const poseRef = useRef(pose);
   const panRef = useRef(pan);
   const boundsRef = useRef<PanBounds>({ minX: 0, maxX: 0, minY: 0, maxY: 0 });
@@ -173,6 +179,30 @@ export function MushafExploreDialog({ input, jumpToHit, onClose, returnFocus }: 
 
   useLayoutEffect(() => {
     const stage = stageRef.current;
+    const scene = stage?.querySelector(".mushaf-scene");
+    if (!stage || !(scene instanceof HTMLElement)) return;
+    const measure = () => {
+      // offset sizes ignore transforms, so this is the book's own box at 100%.
+      const next = fitScale(
+        { width: stage.clientWidth, height: stage.clientHeight },
+        { width: scene.offsetWidth, height: scene.offsetHeight },
+      );
+      setFit((current) => (Math.abs(current - next) < 0.002 ? current : next));
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(stage);
+    observer.observe(scene);
+    window.addEventListener("orientationchange", measure);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("orientationchange", measure);
+    };
+  }, [fullscreen, angle]);
+
+  useLayoutEffect(() => {
+    const stage = stageRef.current;
+    const zoomBox = stage?.querySelector(".mushaf-zoom");
     const book = stage?.querySelector(".mushaf-float");
     if (!stage || !(book instanceof HTMLElement)) return;
     const measure = () => {
@@ -193,8 +223,13 @@ export function MushafExploreDialog({ input, jumpToHit, onClose, returnFocus }: 
     const observer = new ResizeObserver(measure);
     observer.observe(stage);
     observer.observe(book);
-    return () => observer.disconnect();
-  }, [angle, fullscreen, pose.pitch, pose.yaw, pose.zoom]);
+    // Zoom and fit animate, so measure again once the scale has settled.
+    zoomBox?.addEventListener("transitionend", measure);
+    return () => {
+      observer.disconnect();
+      zoomBox?.removeEventListener("transitionend", measure);
+    };
+  }, [angle, fit, fullscreen, pose.pitch, pose.yaw, pose.zoom]);
 
   useEffect(() => {
     onCloseRef.current = onClose;
@@ -236,14 +271,15 @@ export function MushafExploreDialog({ input, jumpToHit, onClose, returnFocus }: 
     };
   }, []);
 
+  // Entering or leaving full screen refits the book: 100% zoom, centred.
   useEffect(() => {
-    if (!fullscreen) {
-      setPose((current) => {
-        const next = clampPose(current, maxZoomForView(false));
-        poseRef.current = next;
-        return next;
-      });
-    }
+    setPose((current) => {
+      const next = clampPose({ ...current, zoom: ZOOM_MIN }, maxZoomForView(fullscreen));
+      poseRef.current = next;
+      return next;
+    });
+    panRef.current = PAN_ORIGIN;
+    setPan(PAN_ORIGIN);
   }, [fullscreen]);
 
   useEffect(() => {
@@ -366,6 +402,7 @@ export function MushafExploreDialog({ input, jumpToHit, onClose, returnFocus }: 
       originY: event.clientY,
       pointer: event.pointerId,
       mode: "pending",
+      turn: { yaw: poseRef.current.yaw, pitch: poseRef.current.pitch },
     };
     stageRef.current?.focus();
   };
@@ -389,14 +426,20 @@ export function MushafExploreDialog({ input, jumpToHit, onClose, returnFocus }: 
       return;
     }
     if (start.mode === "turn") {
-      applyPose(dragPose(poseRef.current, dx, dy, maxZoomRef.current));
+      start.turn = dragTurn(start.turn, dx, dy);
+      const held = heldPose(start.turn, poseRef.current.zoom, maxZoomRef.current);
+      poseRef.current = held;
+      setPose(held);
     }
   };
 
   const endDrag = (event: ReactPointerEvent<HTMLDivElement>) => {
-    if (drag.current?.pointer !== event.pointerId) return;
+    const start = drag.current;
+    if (start?.pointer !== event.pointerId) return;
     drag.current = null;
     setDragging(false);
+    // Let go past a limit and the book eases back to it.
+    if (start.mode === "turn") applyPose(poseRef.current);
   };
 
   const onDoubleClick = (event: ReactPointerEvent<HTMLDivElement>) => {
@@ -519,6 +562,7 @@ export function MushafExploreDialog({ input, jumpToHit, onClose, returnFocus }: 
             variant="explore"
             pose={pose}
             pan={pan}
+            fit={fit}
             dragging={dragging}
             spotlight={share}
             tipId={interaction.tipId}

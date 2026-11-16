@@ -21,6 +21,8 @@ type MushafBookProps = {
   pose?: MushafPose;
   dragging?: boolean;
   pan?: MushafPan;
+  /** Scale that fits the whole book in the close-up stage. Zoom multiplies it. */
+  fit?: number;
   spotlight?: number | null;
   tipId: string;
   menuId: string;
@@ -37,6 +39,7 @@ export function MushafBook({
   pose,
   dragging = false,
   pan,
+  fit = 1,
   spotlight = null,
   tipId,
   menuId,
@@ -53,6 +56,7 @@ export function MushafBook({
         "--mushaf-shadow": tableShadowSpan(pose.yaw).toFixed(4),
         "--mushaf-pan-x": explore && pan ? `${pan.x}px` : "0px",
         "--mushaf-pan-y": explore && pan ? `${pan.y}px` : "0px",
+        "--mushaf-fit": explore ? fit : 1,
       } as CSSProperties)
     : undefined;
   const bookStyle: CSSProperties | undefined = pose
@@ -73,6 +77,7 @@ export function MushafBook({
       data-yaw={pose ? String(Math.round(pose.yaw)) : undefined}
       data-pitch={pose ? String(Math.round(pose.pitch)) : undefined}
       data-zoom={pose ? pose.zoom.toFixed(2) : undefined}
+      data-fit={explore ? fit.toFixed(3) : undefined}
       data-pan-x={explore && pan ? String(Math.round(pan.x)) : undefined}
       data-pan-y={explore && pan ? String(Math.round(pan.y)) : undefined}
       data-angle={pose ? angleOf(pose) : undefined}

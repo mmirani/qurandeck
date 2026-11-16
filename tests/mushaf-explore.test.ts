@@ -17,8 +17,18 @@ import {
   panBoundsFromRects,
   panBy,
   shouldResetPan,
+  YAW_GIVE,
   YAW_MAX,
   YAW_MIN,
+  PITCH_GIVE,
+  PITCH_MAX,
+  PITCH_MIN,
+  FIT_MAX,
+  FIT_SHARE,
+  dragTurn,
+  fitScale,
+  heldPose,
+  softLimit,
   angleOf,
   clampPose,
   colourShown,
@@ -112,10 +122,47 @@ describe("mushaf pose", () => {
     assert.ok(left.yaw >= YAW_MIN);
     const shoved = dragPose(defaultPose(), 10_000, 10_000);
     assert.equal(shoved.yaw, YAW_MAX);
-    assert.equal(shoved.pitch, 2);
+    assert.equal(shoved.pitch, PITCH_MAX);
     const dropped = dragPose(defaultPose(), 0, -10_000);
-    assert.equal(dropped.pitch, -12);
+    assert.equal(dropped.pitch, PITCH_MIN);
     assert.equal(dragPose(defaultPose(), Number.NaN, Number.NaN).yaw, THREE_QUARTER.yaw);
+  });
+
+  it("keeps the turn to a believable range: never the back board or the underside", () => {
+    assert.ok(YAW_MIN >= FORE_EDGE.yaw, "no further than the fore-edge seen square on");
+    assert.ok(YAW_MAX <= 10, "only a touch toward the spine");
+    assert.ok(PITCH_MAX <= 0, "never tilted up to show the underside");
+    assert.ok(PITCH_MIN >= -10);
+    for (const preset of [THREE_QUARTER, FORE_EDGE]) {
+      assert.ok(preset.yaw >= YAW_MIN && preset.yaw <= YAW_MAX);
+      assert.ok(preset.pitch >= PITCH_MIN && preset.pitch <= PITCH_MAX);
+    }
+  });
+
+  it("gives a little past a limit while held, then settles back", () => {
+    assert.equal(softLimit(-40, YAW_MIN, YAW_MAX, YAW_GIVE), -40);
+    const pushed = softLimit(YAW_MIN - 5, YAW_MIN, YAW_MAX, YAW_GIVE);
+    const shoved = softLimit(YAW_MIN - 500, YAW_MIN, YAW_MAX, YAW_GIVE);
+    assert.ok(pushed < YAW_MIN && pushed > YAW_MIN - YAW_GIVE);
+    assert.ok(shoved < pushed && shoved >= YAW_MIN - YAW_GIVE);
+    let turn: { yaw: number; pitch: number } = { yaw: THREE_QUARTER.yaw, pitch: THREE_QUARTER.pitch };
+    for (let i = 0; i < 50; i += 1) turn = dragTurn(turn, 200, 40);
+    const held = heldPose(turn, 1);
+    assert.ok(held.yaw > YAW_MAX && held.yaw <= YAW_MAX + YAW_GIVE);
+    assert.ok(held.pitch > PITCH_MAX && held.pitch <= PITCH_MAX + PITCH_GIVE);
+    const settled = clampPose(held);
+    assert.equal(settled.yaw, YAW_MAX);
+    assert.equal(settled.pitch, PITCH_MAX);
+  });
+
+  it("fits the whole book into the stage along its tighter side", () => {
+    const natural = { width: 300, height: 380 };
+    const wide = fitScale({ width: 1440, height: 600 }, natural);
+    assert.ok(Math.abs(wide - (600 * FIT_SHARE) / 380) < 0.002);
+    const tall = fitScale({ width: 400, height: 1200 }, natural);
+    assert.ok(Math.abs(tall - (400 * FIT_SHARE) / 300) < 0.002);
+    assert.equal(fitScale({ width: 0, height: 0 }, natural), 1);
+    assert.equal(fitScale({ width: 100_000, height: 100_000 }, natural), FIT_MAX);
   });
 
   it("steps yaw from the arrow keys and stops at the fore-edge side", () => {
@@ -144,7 +191,7 @@ describe("mushaf pose", () => {
   it("repairs a pose that would float or flip", () => {
     const fixed = clampPose({ yaw: -400, pitch: 80, zoom: 9 });
     assert.equal(fixed.yaw, YAW_MIN);
-    assert.equal(fixed.pitch, 2);
+    assert.equal(fixed.pitch, PITCH_MAX);
     assert.equal(fixed.zoom, ZOOM_MAX);
     assert.equal(clampPose({ yaw: 0, pitch: -8, zoom: Number.NaN }).zoom, ZOOM_MIN);
   });
