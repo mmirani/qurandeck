@@ -219,10 +219,17 @@ type MushafContextValue = {
   stillReadingAsk: boolean;
   /** A newer place saved on another device, while this tab still shows an older one. */
   elsewherePlace: string | null;
+  dismissElsewherePlace: () => void;
   goToElsewherePlace: () => void;
   confirmStillReading: () => void;
   declineStillReading: () => void;
 };
+
+/** Input after this long without any counts as coming back to the screen. */
+const RETURN_AFTER_MS = 30_000;
+/** How long a returning screen waits for other devices before saving its own place. */
+const RETURN_HOLD_MS = 2_500;
+const LOAD_HOLD_MS = 4_000;
 
 const MushafContext = createContext<MushafContextValue | null>(null);
 
@@ -310,6 +317,10 @@ export function MushafProvider({ children }: { children: ReactNode }) {
   /** What this tab was showing when the newer place arrived. */
   const placeAtSyncRef = useRef<string | null>(null);
   const [elsewherePlace, setElsewherePlace] = useState<string | null>(null);
+  /** Last keyboard, mouse or touch input anywhere on the site. */
+  const lastInputRef = useRef(0);
+  /** After a load or a pause, hold place saves briefly so another device's newer place can arrive first. */
+  const holdPlaceUntilRef = useRef(0);
 
   useEffect(() => {
     versesRef.current = verses;
@@ -391,6 +402,27 @@ export function MushafProvider({ children }: { children: ReactNode }) {
     saveProgress(progress);
   }, [hydrated, progress]);
 
+  useEffect(() => {
+    lastInputRef.current = Date.now();
+    // A fresh load (or refresh) of a reader page shows the old ayah from the URL.
+    // Wait for the synced place before treating that ayah as where they are reading.
+    holdPlaceUntilRef.current = Date.now() + LOAD_HOLD_MS;
+    const onInput = () => {
+      const now = Date.now();
+      const away = now - lastInputRef.current >= RETURN_AFTER_MS;
+      lastInputRef.current = now;
+      if (!away) return;
+      // Back after a pause (maybe from a phone): fetch the newest place before this screen saves its own.
+      holdPlaceUntilRef.current = now + RETURN_HOLD_MS;
+      window.dispatchEvent(new Event(LIBRARY_PULL_EVENT));
+    };
+    const events = ["pointermove", "pointerdown", "keydown", "wheel", "touchstart"] as const;
+    for (const name of events) window.addEventListener(name, onInput, { passive: true, capture: true });
+    return () => {
+      for (const name of events) window.removeEventListener(name, onInput, { capture: true });
+    };
+  }, []);
+
   const markReadingActivity = useCallback(() => {
     if (stillReadingAskRef.current) return;
     lastActivityRef.current = Date.now();
@@ -404,6 +436,8 @@ export function MushafProvider({ children }: { children: ReactNode }) {
     // A page change is a fresh start; the synced place is already saved.
     remotePlaceRef.current = null;
     queueMicrotask(() => setElsewherePlace(null));
+    // Every page change checks whether another device read further.
+    window.dispatchEvent(new Event(LIBRARY_PULL_EVENT));
     if (isMushafPath(pathname)) {
       lastActivityRef.current = Date.now();
       return;
@@ -550,8 +584,14 @@ export function MushafProvider({ children }: { children: ReactNode }) {
       scrolled: scrolledPlace,
     });
     const wait = isPlaying || engagedVerseKey ? 400 : 900;
-    const timer = window.setTimeout(() => {
+    let timer = 0;
+    const save = () => {
       if (document.visibilityState !== "visible") return;
+      const held = holdPlaceUntilRef.current - Date.now();
+      if (held > 0) {
+        timer = window.setTimeout(save, held);
+        return;
+      }
       const remote = remotePlaceRef.current;
       if (remote) {
         // Sync just moved the place here from another device. Only a real move
@@ -565,7 +605,8 @@ export function MushafProvider({ children }: { children: ReactNode }) {
         if (!target) return current;
         return saveReadingPlace(current, target);
       });
-    }, wait);
+    };
+    timer = window.setTimeout(save, wait);
     return () => window.clearTimeout(timer);
   }, [engagedVerseKey, hydrated, isPlaying, loading, pathname, playingVerseKey, scrolledPlace, visibleVerseKeys]);
 
@@ -771,6 +812,11 @@ export function MushafProvider({ children }: { children: ReactNode }) {
     const place = parseVerseKey(key);
     if (place) openSurah(place.chapterId, place.verseNumber);
   }, [openSurah]);
+
+  const dismissElsewherePlace = useCallback(() => {
+    // Keep the synced place until they actually read on this screen.
+    setElsewherePlace(null);
+  }, []);
 
   const clearPendingScrollVerse = useCallback(() => {
     setPendingScrollVerseKey(null);
@@ -1351,6 +1397,7 @@ export function MushafProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const applyLibrary = useCallback((library: LibrarySnapshot) => {
+    holdPlaceUntilRef.current = 0;
     const local = progressRef.current;
     const incomingKey = library.progress.lastVerseKey;
     const movedElsewhere =
@@ -1531,6 +1578,7 @@ export function MushafProvider({ children }: { children: ReactNode }) {
       clearResume: () => setResumeCue(false),
       stillReadingAsk,
       elsewherePlace,
+      dismissElsewherePlace,
       goToElsewherePlace,
       confirmStillReading,
       declineStillReading,
@@ -1611,6 +1659,7 @@ export function MushafProvider({ children }: { children: ReactNode }) {
       signOut,
       stillReadingAsk,
       elsewherePlace,
+      dismissElsewherePlace,
       goToElsewherePlace,
       stopAudio,
       swatches,

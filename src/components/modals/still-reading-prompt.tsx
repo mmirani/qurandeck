@@ -5,13 +5,22 @@ import { Modal } from "@/components/ui/modal";
 import { versePlaceLabel } from "@/lib/reading";
 
 export function StillReadingPrompt() {
-  const { stillReadingAsk, confirmStillReading, declineStillReading, elsewherePlace, goToElsewherePlace, chapters } =
-    useMushaf();
-  if (!stillReadingAsk) return null;
+  const {
+    stillReadingAsk,
+    confirmStillReading,
+    declineStillReading,
+    elsewherePlace,
+    goToElsewherePlace,
+    dismissElsewherePlace,
+    chapters,
+  } = useMushaf();
   const elsewhere = elsewherePlace ? versePlaceLabel(chapters, elsewherePlace) : null;
+  if (!stillReadingAsk && !elsewhere) return null;
+  // Without the idle check, this is only the "you read further elsewhere" offer.
+  const stay = stillReadingAsk ? confirmStillReading : dismissElsewherePlace;
 
   return (
-    <Modal title={elsewhere ? "Pick up where you left off?" : "Are you still reading?"} onClose={declineStillReading}>
+    <Modal title={elsewhere ? "Pick up where you left off?" : "Are you still reading?"} onClose={stillReadingAsk ? declineStillReading : dismissElsewherePlace}>
       {elsewhere ? (
         <p className="text-sm leading-6 text-ink-soft">
           You read up to {elsewhere.title} {elsewhere.ayah} on another device. Continue there, or stay on this page.
@@ -34,7 +43,7 @@ export function StillReadingPrompt() {
         ) : null}
         <button
           type="button"
-          onClick={confirmStillReading}
+          onClick={stay}
           className={
             elsewhere
               ? "inline-flex h-11 cursor-pointer items-center justify-center rounded-full border border-line px-5 text-sm font-medium text-ink-soft"
@@ -43,13 +52,15 @@ export function StillReadingPrompt() {
         >
           {elsewhere ? "Stay here" : "Still reading"}
         </button>
-        <button
-          type="button"
-          onClick={declineStillReading}
-          className="inline-flex h-11 cursor-pointer items-center justify-center rounded-full border border-line px-5 text-sm font-medium text-ink-soft"
-        >
-          Stop for now
-        </button>
+        {stillReadingAsk ? (
+          <button
+            type="button"
+            onClick={declineStillReading}
+            className="inline-flex h-11 cursor-pointer items-center justify-center rounded-full border border-line px-5 text-sm font-medium text-ink-soft"
+          >
+            Stop for now
+          </button>
+        ) : null}
       </div>
     </Modal>
   );
