@@ -696,3 +696,10 @@ export function verseShareText(verse: Pick<Verse, "verseKey" | "textUthmani" | "
   const body = extra.length ? extra.join("\n") : verse.translation;
   return `${verse.verseKey}\n${verse.textUthmani}\n${body}`;
 }
+
+/** One page of a ranked list. The page is clamped so a shrinking list never shows an empty page. */
+export function rankPage<T>(items: T[], page: number, size = 5) {
+  const pages = Math.max(1, Math.ceil(items.length / size));
+  const current = Math.min(Math.max(0, Math.floor(page) || 0), pages - 1);
+  return { items: items.slice(current * size, current * size + size), page: current, pages, offset: current * size };
+}

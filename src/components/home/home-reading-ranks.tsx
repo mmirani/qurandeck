@@ -1,20 +1,37 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useMushaf } from "@/components/providers/mushaf-provider";
-import { readerHref, topAyahsByVisits, topCompletedSurahs } from "@/lib/reading";
+import { rankPage, readerHref, topAyahsByVisits, topCompletedSurahs } from "@/lib/reading";
+
+/** Rows per page; the card stays the same size as before. */
+const PAGE_SIZE = 5;
+/** Ayah visits can run into thousands; the list keeps the 50 most returned to. */
+const AYAH_LIMIT = 50;
 
 export function HomeReadingRanks() {
   const { progress, chapters, openSurah } = useMushaf();
-  const surahs = topCompletedSurahs(progress, 5);
-  const ayahs = topAyahsByVisits(progress, 5);
-  if (surahs.length === 0 && ayahs.length === 0) return null;
+  const [surahPageIndex, setSurahPage] = useState(0);
+  const [ayahPageIndex, setAyahPage] = useState(0);
+  const allSurahs = topCompletedSurahs(progress, Number.POSITIVE_INFINITY);
+  const allAyahs = topAyahsByVisits(progress, AYAH_LIMIT);
+  if (allSurahs.length === 0 && allAyahs.length === 0) return null;
+  const surahPage = rankPage(allSurahs, surahPageIndex, PAGE_SIZE);
+  const ayahPage = rankPage(allAyahs, ayahPageIndex, PAGE_SIZE);
+  const surahs = surahPage.items;
+  const ayahs = ayahPage.items;
 
   const surahName = (id: number) => chapters.find((item) => item.id === id)?.nameSimple ?? `Surah ${id}`;
 
   return (
     <>
-      <RankCard title="Surahs you finished" detail="Your own full readings. Not a score.">
+      <RankCard
+        title="Surahs you finished"
+        detail="Your own full readings. Not a score."
+        pager={<Pager label="Surahs you finished" page={surahPage.page} pages={surahPage.pages} onPage={setSurahPage} />}
+      >
         {surahs.length === 0 ? (
           <p className="text-sm leading-6 text-ink-soft">Finish a surah and it will show here.</p>
         ) : (
@@ -36,7 +53,11 @@ export function HomeReadingRanks() {
         )}
       </RankCard>
 
-      <RankCard title="Ayahs you return to" detail="Places you have spent time. Not a spiritual rank.">
+      <RankCard
+        title="Ayahs you return to"
+        detail="Places you have spent time. Not a spiritual rank."
+        pager={<Pager label="Ayahs you return to" page={ayahPage.page} pages={ayahPage.pages} onPage={setAyahPage} />}
+      >
         {ayahs.length === 0 ? (
           <p className="text-sm leading-6 text-ink-soft">Stay with an ayah and it will start to rise here.</p>
         ) : (
@@ -68,18 +89,67 @@ export function HomeReadingRanks() {
 function RankCard({
   title,
   detail,
+  pager,
   children,
 }: {
   title: string;
   detail: string;
+  pager?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
     <section className="qd-card h-full min-h-0 rounded-3xl border border-line bg-surface">
-      <h3 className="text-sm font-semibold leading-5 text-ink">{title}</h3>
-      <p className="text-xs leading-5 text-ink-soft">{detail}</p>
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h3 className="text-sm font-semibold leading-5 text-ink">{title}</h3>
+          <p className="text-xs leading-5 text-ink-soft">{detail}</p>
+        </div>
+        {pager}
+      </div>
       {children}
     </section>
+  );
+}
+
+/** Small previous/next control in the card header; hidden when everything fits on one page. */
+function Pager({
+  label,
+  page,
+  pages,
+  onPage,
+}: {
+  label: string;
+  page: number;
+  pages: number;
+  onPage: (page: number) => void;
+}) {
+  if (pages <= 1) return null;
+  const button =
+    "inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-full text-ink-soft hover:bg-gold/10 hover:text-gold-deep focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold disabled:cursor-default disabled:opacity-35 disabled:hover:bg-transparent disabled:hover:text-ink-soft";
+  return (
+    <nav aria-label={`${label} pages`} className="-mr-1.5 -mt-1 flex shrink-0 items-center gap-0.5">
+      <button
+        type="button"
+        className={button}
+        onClick={() => onPage(page - 1)}
+        disabled={page === 0}
+        aria-label="Previous page"
+      >
+        <ChevronLeft className="h-4 w-4" aria-hidden />
+      </button>
+      <span className="min-w-9 text-center text-xs tabular-nums text-ink-soft" aria-live="polite">
+        {page + 1} / {pages}
+      </span>
+      <button
+        type="button"
+        className={button}
+        onClick={() => onPage(page + 1)}
+        disabled={page >= pages - 1}
+        aria-label="Next page"
+      >
+        <ChevronRight className="h-4 w-4" aria-hidden />
+      </button>
+    </nav>
   );
 }
 
