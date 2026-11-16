@@ -2,6 +2,7 @@
 
 import { type CSSProperties, type FocusEvent, type MouseEvent, type PointerEvent as ReactPointerEvent, type Ref } from "react";
 import { useMushafOwnerTitle } from "@/components/home/use-mushaf-owner-title";
+import { mushafCoverOwner } from "@/lib/mushaf-title";
 import type { EdgeChoice, MushafEdge, SurahBand, TooltipCopy } from "@/lib/mushaf-edge";
 import { angleOf, tableShadowSpan, type MushafPose } from "@/lib/mushaf-explore";
 
@@ -91,7 +92,10 @@ export function MushafBook({
               <span className="mushaf-corner" data-corner="bl" />
               <span className="mushaf-corner" data-corner="br" />
               <span className="mushaf-cover-mark" />
-              <p className="mushaf-cover-title" title={title}>{title}</p>
+              <p className="mushaf-cover-title" title={title}>
+                <span className="mushaf-cover-owner">{mushafCoverOwner(title)}</span>
+                <span className="mushaf-cover-book">Mushaf</span>
+              </p>
             </div>
           </div>
           <div className="mushaf-board-top mushaf-board-top-front" aria-hidden="true" />

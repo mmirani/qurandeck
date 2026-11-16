@@ -60,7 +60,7 @@ export function HomeMushafEdge() {
       className="qd-card scroll-mt-24 rounded-3xl border border-line bg-surface pb-10"
     >
       <p className="kufic-label text-gold-deep">Marked pages</p>
-      <h2 id={headingId} className="min-w-0 truncate font-display text-3xl font-semibold tracking-tight text-ink" title={title}>
+      <h2 id={headingId} className="font-display text-3xl font-semibold tracking-tight text-ink">
         {title}
       </h2>
       <p className="max-w-2xl text-sm leading-6 text-ink-soft lg:hidden" data-testid="mushaf-edge-hint">

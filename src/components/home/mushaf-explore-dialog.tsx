@@ -218,7 +218,7 @@ export function MushafExploreDialog({ input, jumpToHit, onClose, returnFocus }: 
         <div className="flex shrink-0 items-start justify-between gap-4 border-b border-line/50 px-5 py-4">
           <div className="min-w-0">
             <p className="kufic-label text-gold-deep">Close-up</p>
-            <h2 id={titleId} className="min-w-0 truncate font-display text-3xl leading-tight font-semibold text-ink" title={title}>
+            <h2 id={titleId} className="font-display text-3xl leading-tight font-semibold text-ink">
               {title}
             </h2>
             <p className="mt-1 text-sm leading-6 text-ink-soft">

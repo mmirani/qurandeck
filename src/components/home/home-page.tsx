@@ -210,7 +210,7 @@ function HomeMushafEdgeFallback() {
   return (
     <section aria-hidden="true" className="qd-card scroll-mt-24 rounded-3xl border border-line bg-surface">
       <p className="kufic-label text-gold-deep">Marked pages</p>
-      <h2 className="min-w-0 truncate font-display text-3xl font-semibold tracking-tight text-ink" title={title}>
+      <h2 className="font-display text-3xl font-semibold tracking-tight text-ink">
         {title}
       </h2>
       <p className="max-w-2xl text-sm leading-6 text-ink-soft lg:hidden">See your marked-up Mushaf on desktop.</p>

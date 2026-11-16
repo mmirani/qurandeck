@@ -2504,10 +2504,12 @@ html[data-focus="on"] .sana-dock {
 .mushaf-cover-title {
   position: relative;
   box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   max-width: 100%;
   margin: 0;
   padding-inline: 0.65rem;
-  overflow: hidden;
   color: var(--on-gold);
   font-family: var(--font-display), system-ui, sans-serif;
   font-size: clamp(1.15rem, 1.7vw, 1.5rem);
@@ -2515,8 +2517,12 @@ html[data-focus="on"] .sana-dock {
   letter-spacing: -0.02em;
   line-height: 1.15;
   text-align: center;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+}
+
+.mushaf-cover-owner,
+.mushaf-cover-book {
+  display: block;
+  max-width: 100%;
 }
 
 .mushaf-fore {

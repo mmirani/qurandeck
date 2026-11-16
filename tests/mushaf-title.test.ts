@@ -1,6 +1,11 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { DEFAULT_MUSHAF_TITLE, mushafOwnerTitle } from "../src/lib/mushaf-title";
+import {
+  DEFAULT_MUSHAF_TITLE,
+  MUSHAF_COVER_OWNER_MAX,
+  mushafCoverOwner,
+  mushafOwnerTitle,
+} from "../src/lib/mushaf-title";
 
 describe("mushafOwnerTitle", () => {
   it("falls back to Your Mushaf when the name is missing", () => {
@@ -19,5 +24,20 @@ describe("mushafOwnerTitle", () => {
     assert.equal(mushafOwnerTitle("James"), "James's Mushaf");
     assert.equal(mushafOwnerTitle("James Kirk"), "James's Mushaf");
     assert.equal(mushafOwnerTitle("Chris"), "Chris's Mushaf");
+  });
+
+  it("falls back to Your Mushaf when the first cover line is too long", () => {
+    assert.equal("Muhammad's".length, MUSHAF_COVER_OWNER_MAX);
+    assert.equal(mushafOwnerTitle("Muhammad"), "Muhammad's Mushaf");
+    assert.equal(mushafOwnerTitle("Elizabeth"), "Your Mushaf");
+    assert.equal(mushafOwnerTitle("Christopher Wren"), "Your Mushaf");
+  });
+});
+
+describe("mushafCoverOwner", () => {
+  it("takes the first cover line from the one-line title", () => {
+    assert.equal(mushafCoverOwner("Mansur's Mushaf"), "Mansur's");
+    assert.equal(mushafCoverOwner("James's Mushaf"), "James's");
+    assert.equal(mushafCoverOwner("Your Mushaf"), "Your");
   });
 });

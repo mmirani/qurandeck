@@ -291,11 +291,16 @@ test("the book heading uses the signed-in first name", async ({ page }) => {
   await seed(page, "iris", denseLibrary());
   await openEdge(page, "Mansur's Mushaf");
 
-  await expect(page.locator(".mushaf-cover-title")).toHaveText("Mansur's Mushaf");
+  const cover = page.getByTestId("mushaf-edge-book").locator(".mushaf-cover-title");
+  await expect(cover.locator(".mushaf-cover-owner")).toHaveText("Mansur's");
+  await expect(cover.locator(".mushaf-cover-book")).toHaveText("Mushaf");
   await page.getByTestId("mushaf-edge-explore").click();
   const dialog = page.getByTestId("mushaf-explore-dialog");
   await expect(dialog.getByRole("heading", { name: "Mansur's Mushaf" })).toBeVisible();
   await expect(dialog.getByLabel("Mansur's Mushaf on the desk")).toBeVisible();
+  const exploreCover = dialog.locator(".mushaf-cover-title");
+  await expect(exploreCover.locator(".mushaf-cover-owner")).toHaveText("Mansur's");
+  await expect(exploreCover.locator(".mushaf-cover-book")).toHaveText("Mushaf");
 });
 
 test("the book heading falls back to Your Mushaf when the session has no name", async ({ page }) => {
@@ -304,7 +309,25 @@ test("the book heading falls back to Your Mushaf when the session has no name", 
   await seed(page, "iris", denseLibrary());
   await openEdge(page, "Your Mushaf");
 
-  await expect(page.locator(".mushaf-cover-title")).toHaveText("Your Mushaf");
+  const cover = page.getByTestId("mushaf-edge-book").locator(".mushaf-cover-title");
+  await expect(cover.locator(".mushaf-cover-owner")).toHaveText("Your");
+  await expect(cover.locator(".mushaf-cover-book")).toHaveText("Mushaf");
+  await page.getByTestId("mushaf-edge-explore").click();
+  const dialog = page.getByTestId("mushaf-explore-dialog");
+  await expect(dialog.getByRole("heading", { name: "Your Mushaf" })).toBeVisible();
+  await expect(dialog.getByLabel("Your Mushaf on the desk")).toBeVisible();
+});
+
+test("a long first name falls back to Your Mushaf everywhere", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await stubSessionName(page, "Christopher Wren");
+  await seed(page, "iris", denseLibrary());
+  await openEdge(page, "Your Mushaf");
+
+  const cover = page.getByTestId("mushaf-edge-book").locator(".mushaf-cover-title");
+  await expect(cover.locator(".mushaf-cover-owner")).toHaveText("Your");
+  await expect(cover.locator(".mushaf-cover-book")).toHaveText("Mushaf");
+  await expect(page.getByRole("heading", { name: "Christopher's Mushaf" })).toHaveCount(0);
   await page.getByTestId("mushaf-edge-explore").click();
   const dialog = page.getByTestId("mushaf-explore-dialog");
   await expect(dialog.getByRole("heading", { name: "Your Mushaf" })).toBeVisible();
