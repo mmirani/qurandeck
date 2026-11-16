@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode, type RefObject } from "react";
 import { createPortal } from "react-dom";
 import { dialogFocusables, initialDialogIndex, trapTabIndex } from "@/lib/dialog-focus";
 import { EDGE_HOVER_DELAY_MS, EDGE_HOVER_GRACE_MS, placeFloating, type EdgeChoice, type FloatingBox, type TooltipCopy } from "@/lib/mushaf-edge";
@@ -20,7 +20,7 @@ type MenuState = {
   element: HTMLElement;
 };
 
-export function useMushafEdgeInteraction(jumpToHit: (hit: SearchHit) => void, layoutKey = "") {
+export function useMushafEdgeInteraction(jumpToHit: (hit: SearchHit) => void, layoutKey = "", portalRoot?: RefObject<HTMLElement | null>) {
   const tipId = useId();
   const menuId = useId();
   const menuRef = useRef<HTMLDivElement>(null);
@@ -238,7 +238,7 @@ export function useMushafEdgeInteraction(jumpToHit: (hit: SearchHit) => void, la
               ))}
               {tip.copy.preview ? <p className="mt-1 text-ink">{tip.copy.preview}</p> : null}
             </div>,
-            document.body,
+            portalRoot?.current ?? document.body,
           )
         : null}
       {menu
@@ -289,7 +289,7 @@ export function useMushafEdgeInteraction(jumpToHit: (hit: SearchHit) => void, la
                 ))}
               </ul>
             </div>,
-            document.body,
+            portalRoot?.current ?? document.body,
           )
         : null}
     </>

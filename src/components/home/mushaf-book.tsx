@@ -4,7 +4,7 @@ import { type CSSProperties, type FocusEvent, type MouseEvent, type PointerEvent
 import { useMushafOwnerTitle } from "@/components/home/use-mushaf-owner-title";
 import { mushafCoverOwner } from "@/lib/mushaf-title";
 import type { EdgeChoice, MushafEdge, SurahBand, TooltipCopy } from "@/lib/mushaf-edge";
-import { angleOf, tableShadowSpan, type MushafPose } from "@/lib/mushaf-explore";
+import { angleOf, tableShadowSpan, type MushafPan, type MushafPose } from "@/lib/mushaf-explore";
 
 export type MarkHandlers = {
   onPointerEnter: (event: ReactPointerEvent<HTMLButtonElement>) => void;
@@ -20,6 +20,7 @@ type MushafBookProps = {
   variant: "card" | "explore";
   pose?: MushafPose;
   dragging?: boolean;
+  pan?: MushafPan;
   spotlight?: number | null;
   tipId: string;
   menuId: string;
@@ -35,6 +36,7 @@ export function MushafBook({
   variant,
   pose,
   dragging = false,
+  pan,
   spotlight = null,
   tipId,
   menuId,
@@ -49,6 +51,8 @@ export function MushafBook({
     ? ({
         "--mushaf-zoom": pose.zoom,
         "--mushaf-shadow": tableShadowSpan(pose.yaw).toFixed(4),
+        "--mushaf-pan-x": explore && pan ? `${pan.x}px` : "0px",
+        "--mushaf-pan-y": explore && pan ? `${pan.y}px` : "0px",
       } as CSSProperties)
     : undefined;
   const bookStyle: CSSProperties | undefined = pose
@@ -60,10 +64,17 @@ export function MushafBook({
 
   return (
     <div
+      className={`mushaf-zoom${explore ? " is-explore" : ""}${dragging ? " is-dragging" : ""}`}
+      style={zoomStyle}
+      data-testid={explore ? "mushaf-explore-zoom" : undefined}
+    >
+    <div
       data-testid={explore ? "mushaf-explore-book" : "mushaf-edge-book"}
       data-yaw={pose ? String(Math.round(pose.yaw)) : undefined}
       data-pitch={pose ? String(Math.round(pose.pitch)) : undefined}
       data-zoom={pose ? pose.zoom.toFixed(2) : undefined}
+      data-pan-x={explore && pan ? String(Math.round(pan.x)) : undefined}
+      data-pan-y={explore && pan ? String(Math.round(pan.y)) : undefined}
       data-angle={pose ? angleOf(pose) : undefined}
       className={`mushaf-scene${explore ? " is-explore" : ""}${dragging ? " is-dragging" : ""}`}
       onClick={
@@ -77,7 +88,7 @@ export function MushafBook({
           : undefined
       }
     >
-      <div className="mushaf-float" style={zoomStyle}>
+      <div className="mushaf-float">
         <div className="mushaf-ground" aria-hidden="true" />
         <div className={`mushaf-book${dragging ? " is-dragging" : ""}`} style={bookStyle}>
           <div className="mushaf-spine" aria-hidden="true">
@@ -153,14 +164,17 @@ export function MushafBook({
                 className="mushaf-tab-anchor absolute z-20"
                 style={{
                   left: `${20 + Math.min(1, Math.max(0, flag.position)) * 62}%`,
+                  zIndex: 20 + Math.round((1 - Math.min(1, Math.max(0, flag.position))) * 40),
                   transform: depthShift(flag.position, "translate(-50%, -74%)"),
                 }}
               >
+                <span aria-hidden="true" className="mushaf-tab-slot" />
                 <span className="mushaf-flag-rise block" style={{ animationDelay: `${Math.min(index, 12) * 40}ms` }}>
                   <button
                     type="button"
                     data-testid="mushaf-edge-flag"
                     className="mushaf-tab relative flex h-9 min-w-9 cursor-pointer items-end justify-center bg-transparent p-0"
+                    style={{ "--tab": ink.background, "--tab-ink": ink.color, "--tab-line": ink.border } as CSSProperties}
                     aria-label={controlName("Note", flag.tooltip.title, flag.tooltip.lines[0] ?? "", flag.label)}
                     aria-describedby={activeTipId === id ? tipId : undefined}
                     aria-expanded={flag.choices.length > 0 ? open : undefined}
@@ -168,16 +182,15 @@ export function MushafBook({
                     aria-controls={open ? menuId : undefined}
                     {...handlers(id, flag.tooltip, flag.direct, flag.choices)}
                   >
-                    <span
-                      className="mushaf-tab-face relative flex h-9 min-w-9 items-center justify-center whitespace-nowrap rounded-t-md rounded-b-sm px-1.5 text-xs font-semibold shadow-[var(--shadow)]"
-                      style={{ background: ink.background, color: ink.color, border: `1px solid ${ink.border}` }}
-                    >
-                      <span
-                        aria-hidden="true"
-                        className="pointer-events-none absolute top-0 right-0 h-2.5 w-2.5"
-                        style={{ background: ink.color, opacity: 0.28, clipPath: "polygon(100% 0, 0 0, 100% 100%)" }}
-                      />
-                      <span aria-hidden="true">{flag.label}</span>
+                    <span className="mushaf-tab-body">
+                      <span className="mushaf-tab-face relative flex h-9 min-w-9 items-start justify-center whitespace-nowrap px-1.5 pt-1.5 text-xs font-semibold">
+                        <span aria-hidden="true" className="mushaf-tab-fold" />
+                        <span aria-hidden="true">{flag.label}</span>
+                      </span>
+                      <span aria-hidden="true" className="mushaf-tab-back" />
+                      <span aria-hidden="true" className="mushaf-tab-side" data-side="start" />
+                      <span aria-hidden="true" className="mushaf-tab-side" data-side="end" />
+                      <span aria-hidden="true" className="mushaf-tab-top" />
                     </span>
                   </button>
                 </span>
@@ -193,6 +206,7 @@ export function MushafBook({
                 className="mushaf-ribbon-anchor absolute z-20"
                 style={{
                   left: `${18 + Math.min(1, Math.max(0, ribbon.position)) * 58}%`,
+                  zIndex: 20 + Math.round((1 - Math.min(1, Math.max(0, ribbon.position))) * 40),
                   transform: depthShift(ribbon.position, "translateX(-50%)"),
                 }}
               >
@@ -208,12 +222,15 @@ export function MushafBook({
                     aria-controls={open ? menuId : undefined}
                     {...handlers(id, ribbon.tooltip, ribbon.direct, ribbon.choices)}
                   >
-                    <span aria-hidden="true" className="mushaf-satin" />
-                    {ribbon.label ? (
-                      <span className="absolute top-1 left-1/2 -translate-x-1/2 rounded-full bg-[#fff8e7] px-1 text-[10px] font-semibold leading-4 text-[#1c140c] ring-1 ring-[#c4b48a]">
-                        {ribbon.label}
-                      </span>
-                    ) : null}
+                    <span aria-hidden="true" className="mushaf-ribbon-tuck" />
+                    <span className="mushaf-ribbon-cloth">
+                      <span aria-hidden="true" className="mushaf-satin" />
+                      {ribbon.label ? (
+                        <span className="absolute top-1.5 left-1/2 -translate-x-1/2 rounded-full bg-[#fff8e7] px-1 text-[10px] font-semibold leading-4 text-[#1c140c] ring-1 ring-[#c4b48a]">
+                          {ribbon.label}
+                        </span>
+                      ) : null}
+                    </span>
                   </button>
                 </span>
               </span>
@@ -221,6 +238,7 @@ export function MushafBook({
           })}
         </div>
       </div>
+    </div>
     </div>
   );
 }
@@ -245,7 +263,7 @@ export function MushafEdgeMagnifier({
         <span className="font-medium text-ink">Page edge, magnified</span>
         <span>An-Nas · Back cover</span>
       </div>
-      <div className="mushaf-magnifier relative h-16 overflow-hidden rounded-md">
+      <div className="mushaf-magnifier relative overflow-hidden rounded-md">
         <PageStripes bands={edge.bands} empty={edge.empty} along="fore" />
         <div className="mushaf-edge-lines pointer-events-none absolute inset-0" aria-hidden="true" />
         <div
@@ -289,10 +307,13 @@ function controlName(kind: string, title: string, range: string, extra: string) 
   return [kind, title, range, extra].filter(Boolean).join(", ");
 }
 
-/** Shift a mark through the page block: 0 is just behind the front cover. */
+/**
+ * Tuck a mark between the pages at its depth: 0 sits just behind the front cover, 1 just
+ * in front of the back board. The 0.94 keeps the tab's own thickness inside the boards.
+ */
 function depthShift(position: number, place: string) {
   const safe = Math.min(1, Math.max(0, position));
-  const towardFront = (0.5 - safe).toFixed(4);
+  const towardFront = ((0.5 - safe) * 0.94).toFixed(4);
   return `${place} translateZ(calc(var(--page-d) * ${towardFront}))`;
 }
 
