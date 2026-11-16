@@ -39,6 +39,9 @@ function localLibrary(email?: string): LibrarySnapshot {
 /** Ask other devices' saves on demand, e.g. when the idle prompt opens. */
 export const LIBRARY_PULL_EVENT = "qurandeck:library-pull";
 
+/** Page changes and coming back after a pause ask often; keep at most one check per 10s. */
+const FORCED_PULL_GAP_MS = 10_000;
+
 type Pulled = { library: LibrarySnapshot | null; updatedAt: string | null };
 
 async function pullLibrary(): Promise<Pulled | undefined> {
@@ -222,7 +225,7 @@ export function LibrarySync({
 
     const pull = (force: boolean) => {
       if (!hydrated || readyEmail.current !== normalized()) return;
-      if (!force && !shouldPullLibrary(Date.now(), lastPullAt.current)) return;
+      if (!shouldPullLibrary(Date.now(), lastPullAt.current, force ? FORCED_PULL_GAP_MS : undefined)) return;
       lastPullAt.current = Date.now();
       void (async () => {
         const pulled = await pullLibrary();
