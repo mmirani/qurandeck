@@ -233,3 +233,37 @@ test("spine and cover stay joined at 400% in three-quarter and fore-edge views",
     ).toBe(true);
   }
 });
+
+async function expectMarksTuckedIn(dialog: Locator, label: string) {
+  const book = dialog.getByTestId("mushaf-explore-book");
+  const faces = await Promise.all(
+    [".mushaf-front", ".mushaf-back", ".mushaf-fore"].map((selector) => book.locator(selector).boundingBox()),
+  );
+  if (faces.some((box) => !box)) throw new Error(`missing book faces (${label})`);
+  const left = Math.min(...faces.map((box) => box!.x));
+  const right = Math.max(...faces.map((box) => box!.x + box!.width));
+  const pieces = book.locator(".mushaf-tab-face, .mushaf-tab-back, .mushaf-tab-side, .mushaf-ribbon-tuck");
+  const count = await pieces.count();
+  expect(count, `tabs and ribbons should render (${label})`).toBeGreaterThan(0);
+  const slop = 1.5;
+  for (let i = 0; i < count; i += 1) {
+    const box = await pieces.nth(i).boundingBox();
+    if (!box) continue;
+    expect(
+      box.x >= left - slop && box.x + box.width <= right + slop,
+      `a tab or ribbon pokes out past the covers (${label}): piece=${JSON.stringify(box)} book=${left}..${right}`,
+    ).toBe(true);
+  }
+}
+
+test("tabs and ribbons stay tucked between the covers edge-on, at 100% and 400%", async ({ page }) => {
+  const dialog = await openExplore(page);
+  await dialog.getByRole("button", { name: "Fore-edge" }).click();
+  await expect(dialog.getByTestId("mushaf-explore-book")).toHaveAttribute("data-angle", "fore-edge");
+  await expectMarksTuckedIn(dialog, "fore-edge 100%");
+
+  await dialog.getByTestId("mushaf-explore-fullscreen").click();
+  await expect(dialog).toHaveAttribute("data-fullscreen", "true");
+  await zoomToMax(dialog);
+  await expectMarksTuckedIn(dialog, "fore-edge 400% full screen");
+});

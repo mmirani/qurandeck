@@ -2141,10 +2141,10 @@ html[data-focus="on"] .sana-dock {
 
 @keyframes mushaf-ribbon-drop {
   from {
-    transform: translateY(-12px);
+    transform: scaleY(0.35);
   }
   to {
-    transform: translateY(0);
+    transform: scaleY(1);
   }
 }
 
@@ -2221,27 +2221,6 @@ html[data-focus="on"] .sana-dock {
     color-mix(in srgb, var(--ink) 58%, transparent) 0%,
     transparent 72%
   );
-}
-
-/* Keep tabs and ribbons readable when the book turns. They stay on their page and face the desk. */
-.mushaf-scene.is-explore .mushaf-tab-anchor,
-.mushaf-scene.is-explore .mushaf-ribbon-anchor,
-.mushaf-scene.is-explore .mushaf-flag-rise,
-.mushaf-scene.is-explore .mushaf-ribbon-drop {
-  transform-style: preserve-3d;
-}
-
-.mushaf-scene.is-explore .mushaf-tab,
-.mushaf-scene.is-explore .mushaf-ribbon {
-  transform: rotateX(calc(var(--mushaf-pitch, -8deg) * -1)) rotateY(calc(var(--mushaf-yaw, -40deg) * -1));
-}
-
-.mushaf-scene.is-explore .mushaf-tab {
-  transform-origin: bottom center;
-}
-
-.mushaf-scene.is-explore .mushaf-ribbon {
-  transform-origin: top center;
 }
 
 .mushaf-explore-stage {
@@ -2561,7 +2540,13 @@ html[data-focus="on"] .sana-dock {
     inset -3px 0 4px rgba(28, 20, 12, 0.16);
 }
 
+/*
+ * Tabs and ribbons are real 3D pieces tucked between the pages at their ayah's depth.
+ * They stay in the page plane (no turning toward the camera), so from any angle the
+ * covers and the page block hide the part that sits inside the book.
+ */
 .mushaf-tab-anchor {
+  --tab-t: 1.5px;
   top: var(--inset);
   pointer-events: auto;
 }
@@ -2569,6 +2554,154 @@ html[data-focus="on"] .sana-dock {
 .mushaf-ribbon-anchor {
   top: calc(100% - var(--inset));
   pointer-events: auto;
+}
+
+.mushaf-tab-anchor,
+.mushaf-ribbon-anchor,
+.mushaf-flag-rise,
+.mushaf-ribbon-drop,
+.mushaf-tab,
+.mushaf-tab-body,
+.mushaf-ribbon {
+  transform-style: preserve-3d;
+}
+
+.mushaf-tab-body {
+  position: relative;
+  display: block;
+}
+
+.mushaf-tab-face,
+.mushaf-tab-back,
+.mushaf-tab-side,
+.mushaf-tab-top {
+  backface-visibility: hidden;
+}
+
+.mushaf-tab-face {
+  border-radius: 3px 3px 1px 1px;
+  color: var(--tab-ink);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, white 22%, transparent) 0%, transparent 34%),
+    linear-gradient(180deg, transparent 52%, rgba(28, 20, 12, 0.24) 74%, rgba(28, 20, 12, 0.32) 100%),
+    var(--tab);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--tab-line) 70%, transparent),
+    inset 0 1px 0 color-mix(in srgb, white 30%, transparent);
+  transform: translateZ(calc(var(--tab-t) / 2));
+}
+
+.mushaf-tab-fold {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 0.55rem;
+  height: 0.55rem;
+  pointer-events: none;
+  background: linear-gradient(225deg, transparent 50%, color-mix(in srgb, var(--tab-ink) 26%, var(--tab)) 50%);
+  border-top-right-radius: 3px;
+}
+
+.mushaf-tab-back {
+  position: absolute;
+  inset: 0;
+  border-radius: 3px 3px 1px 1px;
+  background:
+    linear-gradient(180deg, transparent 52%, rgba(28, 20, 12, 0.28) 74%, rgba(28, 20, 12, 0.36) 100%),
+    color-mix(in srgb, var(--tab) 88%, black);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--tab-line) 60%, transparent);
+  transform: rotateY(180deg) translateZ(calc(var(--tab-t) / 2));
+}
+
+.mushaf-tab-side,
+.mushaf-tab-top {
+  position: absolute;
+  background: color-mix(in srgb, var(--tab) 72%, black);
+}
+
+.mushaf-tab-side {
+  top: 2px;
+  bottom: 0;
+  width: var(--tab-t);
+}
+
+.mushaf-tab-side[data-side="start"] {
+  left: 0;
+  transform: translateX(-50%) rotateY(-90deg);
+}
+
+.mushaf-tab-side[data-side="end"] {
+  right: 0;
+  transform: translateX(50%) rotateY(90deg);
+}
+
+.mushaf-tab-top {
+  top: 0;
+  right: 2px;
+  left: 2px;
+  height: var(--tab-t);
+  background: color-mix(in srgb, var(--tab) 84%, white);
+  transform: translateY(-50%) rotateX(90deg);
+}
+
+/* Contact shadow on the page block where the tab slips between the pages. */
+.mushaf-tab-slot {
+  position: absolute;
+  top: 74%;
+  left: -3px;
+  right: -3px;
+  height: 5px;
+  pointer-events: none;
+  background: radial-gradient(ellipse at 50% 50%, rgba(28, 20, 12, 0.34) 0%, rgba(28, 20, 12, 0.12) 45%, transparent 72%);
+  transform: translateY(-50%) rotateX(90deg) translateZ(0.35px);
+}
+
+/*
+ * The satin leaves the pages flat between two leaves, then turns a fixed 40° as it hangs
+ * below the book. Every ribbon turns the same way so neighbours never cut through each
+ * other, and across the whole turn range (-98° to 12°) none goes fully edge-on.
+ */
+.mushaf-ribbon {
+  --twist: 40deg;
+  position: relative;
+  margin-top: var(--inset);
+  transform: rotateY(var(--twist));
+  transform-origin: 50% 0;
+}
+
+.mushaf-ribbon-tuck {
+  position: absolute;
+  top: calc(var(--inset) * -1);
+  left: 50%;
+  width: 0.9rem;
+  height: calc(var(--inset) + 1px);
+  margin-left: -0.45rem;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--gold-deep) 78%, black) 0%,
+    color-mix(in srgb, var(--gold) 55%, white) 42%,
+    var(--gold-deep) 58%,
+    color-mix(in srgb, var(--gold-deep) 70%, black) 100%
+  );
+  transform: rotateY(calc(var(--twist) * -1));
+}
+
+/*
+ * Satin and its count label are one flat piece of cloth. Keeping them in a single layer
+ * means the 3D sort can never slip the label behind the satin or open seams through it.
+ */
+.mushaf-ribbon-cloth {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  transform-style: flat;
+}
+
+.mushaf-ribbon-drop,
+.mushaf-satin {
+  transform-origin: 50% 0;
 }
 
 .mushaf-float,
@@ -2586,7 +2719,7 @@ html[data-focus="on"] .sana-dock {
 .mushaf-satin {
   display: block;
   width: 0.9rem;
-  height: 3.1rem;
+  height: calc(3.1rem - var(--inset));
   background: linear-gradient(
     90deg,
     color-mix(in srgb, var(--gold-deep) 78%, black) 0%,
@@ -2595,7 +2728,6 @@ html[data-focus="on"] .sana-dock {
     color-mix(in srgb, var(--gold-deep) 70%, black) 100%
   );
   clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 84%, 0 100%);
-  box-shadow: 0 6px 8px rgba(28, 20, 12, 0.18);
 }
 
 .mushaf-ground {
@@ -2646,19 +2778,19 @@ html[data-focus="on"] .sana-dock {
     animation: mushaf-ribbon-drop 640ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
   }
 
-  .mushaf-tab-face,
+  .mushaf-tab-body,
   .mushaf-satin {
     transition: transform 180ms ease;
   }
 
-  .mushaf-tab:hover .mushaf-tab-face,
-  .mushaf-tab:focus-visible .mushaf-tab-face {
+  .mushaf-tab:hover .mushaf-tab-body,
+  .mushaf-tab:focus-visible .mushaf-tab-body {
     transform: translateY(-6px);
   }
 
   .mushaf-ribbon:hover .mushaf-satin,
   .mushaf-ribbon:focus-visible .mushaf-satin {
-    transform: translateY(8px);
+    transform: scaleY(1.16);
   }
 }
 
