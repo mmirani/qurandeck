@@ -12,15 +12,18 @@ export function StillReadingPrompt() {
     elsewherePlace,
     goToElsewherePlace,
     dismissElsewherePlace,
+    closeElsewherePlace,
     chapters,
   } = useMushaf();
   const elsewhere = elsewherePlace ? versePlaceLabel(chapters, elsewherePlace) : null;
   if (!stillReadingAsk && !elsewhere) return null;
   // Without the idle check, this is only the "you read further elsewhere" offer.
   const stay = elsewhere ? dismissElsewherePlace : confirmStillReading;
+  // Closing without a choice never claims this page; only "Stay here" does.
+  const close = stillReadingAsk ? declineStillReading : closeElsewherePlace;
 
   return (
-    <Modal title={elsewhere ? "Pick up where you left off?" : "Are you still reading?"} onClose={stillReadingAsk ? declineStillReading : dismissElsewherePlace}>
+    <Modal title={elsewhere ? "Pick up where you left off?" : "Are you still reading?"} onClose={close}>
       {elsewhere ? (
         <p className="text-sm leading-6 text-ink-soft">
           You read up to {elsewhere.title} {elsewhere.ayah} on another device. Continue there, or stay on this page.
@@ -38,7 +41,7 @@ export function StillReadingPrompt() {
             onClick={goToElsewherePlace}
             className="inline-flex h-11 cursor-pointer items-center justify-center rounded-full bg-gold px-5 text-sm font-semibold text-on-gold"
           >
-            Continue at {elsewhere.ayah}
+            Continue at {elsewhere.title} {elsewhere.ayah}
           </button>
         ) : null}
         <button

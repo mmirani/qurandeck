@@ -120,6 +120,10 @@ export function LibrarySync({
   const lastPullAt = useRef(0);
   const emailRef = useRef(email);
   const serverAt = useRef<string | null>(null);
+  /** A check for other devices' saves is in flight; pushes wait for it so a stale place is never sent first. */
+  const pulling = useRef(false);
+  /** One save at a time, so each carries the row stamp the last one got back. */
+  const pushing = useRef(false);
 
   /** Records a successful push and adopts anything the server merged in. */
   const afterPush = useRef((sent: LibrarySnapshot, result: Pushed, normalized: string) => {
@@ -194,17 +198,33 @@ export function LibrarySync({
     if (timer.current && dueAt.current > 0 && dueAt.current <= nextDue) return;
     window.clearTimeout(timer.current);
     dueAt.current = nextDue;
-    timer.current = window.setTimeout(() => {
+    const run = () => {
       timer.current = 0;
       dueAt.current = 0;
-      const current = snapshotRef.current;
       if (readyEmail.current !== normalized) return;
       if (document.visibilityState === "hidden") return;
-      void pushLibrary(current, serverAt.current).then((result) => {
-        if (readyEmail.current !== normalized) return;
-        afterPush.current(current, result, normalized);
-      });
-    }, delay);
+      if (pulling.current || pushing.current) {
+        // Wait for a check of other devices (or the previous save) so this
+        // screen adopts the newer library before it sends its own.
+        timer.current = window.setTimeout(run, 300);
+        dueAt.current = Date.now() + 300;
+        return;
+      }
+      const current = snapshotRef.current;
+      if (libraryChangeKind(lastSent.current, current) === "none") {
+        pending.current = "none";
+        return;
+      }
+      pushing.current = true;
+      void pushLibrary(current, serverAt.current)
+        .catch((): Pushed => ({ ok: false, updatedAt: null, library: null }))
+        .then((result) => {
+          pushing.current = false;
+          if (readyEmail.current !== normalized) return;
+          afterPush.current(current, result, normalized);
+        });
+    };
+    timer.current = window.setTimeout(run, delay);
   }, [email, hydrated, snapshot]);
 
   useEffect(() => {
@@ -227,12 +247,17 @@ export function LibrarySync({
       if (!hydrated || readyEmail.current !== normalized()) return;
       if (!shouldPullLibrary(Date.now(), lastPullAt.current, force ? FORCED_PULL_GAP_MS : undefined)) return;
       lastPullAt.current = Date.now();
+      pulling.current = true;
       void (async () => {
-        const pulled = await pullLibrary();
-        if (!pulled?.library || readyEmail.current !== normalized()) return;
-        serverAt.current = pulled.updatedAt;
-        const merged = mergeLibraries(localLibrary(normalized()), pulled.library);
-        onApplyRef.current(merged);
+        try {
+          const pulled = await pullLibrary().catch(() => undefined);
+          if (!pulled?.library || readyEmail.current !== normalized()) return;
+          serverAt.current = pulled.updatedAt;
+          const merged = mergeLibraries(localLibrary(normalized()), pulled.library);
+          onApplyRef.current(merged);
+        } finally {
+          pulling.current = false;
+        }
       })();
     };
 
@@ -241,7 +266,8 @@ export function LibrarySync({
         flush();
         return;
       }
-      pull(false);
+      // Back on this screen: always check other devices before anything is sent.
+      pull(true);
     };
     // A desktop tab can stay visible while the reader moves to a phone, so
     // window focus (clicking back into the browser) also checks for news.

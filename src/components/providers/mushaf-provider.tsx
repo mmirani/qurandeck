@@ -83,6 +83,7 @@ import {
   readingPlaceKey,
   RESUME_AFTER_MS,
   parseVerseKey,
+  quietReadingPlace,
   saveReadingPlace,
   subtractReadingSeconds,
   surahIdFromPath,
@@ -219,7 +220,10 @@ type MushafContextValue = {
   stillReadingAsk: boolean;
   /** A newer place saved on another device, while this tab still shows an older one. */
   elsewherePlace: string | null;
+  /** "Stay here": claim this page as the reading place. */
   dismissElsewherePlace: () => void;
+  /** Close the offer without choosing; the newer place stays saved. */
+  closeElsewherePlace: () => void;
   goToElsewherePlace: () => void;
   confirmStillReading: () => void;
   declineStillReading: () => void;
@@ -234,6 +238,10 @@ const LOAD_HOLD_MS = 4_000;
 const PLACE_INPUT_WINDOW_MS = 120_000;
 
 const MushafContext = createContext<MushafContextValue | null>(null);
+
+function samePreferences(a: Preferences, b: Preferences) {
+  return JSON.stringify(a) === JSON.stringify(b);
+}
 
 function verseIndex(verses: Verse[], key: string | null) {
   return verses.findIndex((verse) => verse.verseKey === key);
@@ -325,17 +333,37 @@ export function MushafProvider({ children }: { children: ReactNode }) {
   const touchedAtRef = useRef(0);
   /** After a load or a pause, hold place saves briefly so another device's newer place can arrive first. */
   const holdPlaceUntilRef = useRef(0);
+  /** When this screen's reading ayah last changed; quiet saves stamp this, never "now". */
+  const placeMovedAtRef = useRef(0);
+  const engagedKeyRef = useRef<string | null>(null);
+  const isPlayingRef = useRef(false);
 
   useEffect(() => {
     versesRef.current = verses;
     selectedRef.current = selectedVerseKey;
     progressRef.current = progress;
     visibleRef.current = visibleVerseKeys;
+    if (readingKey !== placeRef.current) placeMovedAtRef.current = readingKey ? Date.now() : 0;
     placeRef.current = readingKey;
+    isPlayingRef.current = isPlaying;
+    engagedKeyRef.current = engagedVerseKey;
     pathnameRef.current = pathname;
     stillReadingAskRef.current = stillReadingAsk;
     if (lastActivityRef.current === 0) lastActivityRef.current = Date.now();
-  }, [pathname, progress, readingKey, selectedVerseKey, stillReadingAsk, verses, visibleVerseKeys]);
+  }, [engagedVerseKey, isPlaying, pathname, progress, readingKey, selectedVerseKey, stillReadingAsk, verses, visibleVerseKeys]);
+
+  /**
+   * Tab hidden, page closed, or leaving the reader. Saves only a move made on
+   * this screen that is newer than the saved place, so a stale tab (or a
+   * dismissed prompt) never re-stamps its old ayah over another device's.
+   */
+  const quietSavePlace = useCallback(() => {
+    const key = placeRef.current;
+    if (!key || remotePlaceRef.current) return;
+    const active = isPlayingRef.current || Date.now() - touchedAtRef.current <= PLACE_INPUT_WINDOW_MS;
+    const movedAt = placeMovedAtRef.current;
+    setProgress((current) => quietReadingPlace(current, key, { movedAt, active }));
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -436,8 +464,7 @@ export function MushafProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    const key = placeRef.current;
-    if (key && !remotePlaceRef.current) setProgress((current) => saveReadingPlace(current, key, { touch: false }));
+    quietSavePlace();
     // A page change is a fresh start; the synced place is already saved.
     remotePlaceRef.current = null;
     queueMicrotask(() => setElsewherePlace(null));
@@ -455,7 +482,7 @@ export function MushafProvider({ children }: { children: ReactNode }) {
       setStillReadingAsk(false);
       if (claw > 0) setProgress((current) => subtractReadingSeconds(current, claw));
     });
-  }, [pathname]);
+  }, [pathname, quietSavePlace]);
 
   useEffect(() => {
     if (!isMushafPath(pathname)) return;
@@ -531,11 +558,17 @@ export function MushafProvider({ children }: { children: ReactNode }) {
     setStillReadingAsk(false);
   }, []);
 
+  /**
+   * "Stop for now". The reader is done here, so the offer to jump to another
+   * device's place closes too, but that newer place stays the saved one: this
+   * choice never stamps this page's ayah.
+   */
   const declineStillReading = useCallback(() => {
     const claw = accruedSinceActivityRef.current;
     accruedSinceActivityRef.current = 0;
     pausedForIdleRef.current = true;
     setStillReadingAsk(false);
+    setElsewherePlace(null);
     if (claw > 0) setProgress((current) => subtractReadingSeconds(current, claw));
   }, []);
 
@@ -626,10 +659,7 @@ export function MushafProvider({ children }: { children: ReactNode }) {
   }, [hydrated]);
 
   useEffect(() => {
-    const flush = () => {
-      const key = placeRef.current;
-      if (key && !remotePlaceRef.current) setProgress((current) => saveReadingPlace(current, key, { touch: false }));
-    };
+    const flush = quietSavePlace;
     const onVis = () => {
       if (document.visibilityState === "hidden") {
         hiddenAtRef.current = Date.now();
@@ -646,7 +676,7 @@ export function MushafProvider({ children }: { children: ReactNode }) {
       window.removeEventListener("pagehide", flush);
       document.removeEventListener("visibilitychange", onVis);
     };
-  }, []);
+  }, [quietSavePlace]);
 
   useEffect(() => {
     Promise.all([getChapters(), getJuzs(), getTranslations(), getRecitations()])
@@ -695,7 +725,8 @@ export function MushafProvider({ children }: { children: ReactNode }) {
     const key = explicit ? `${id}:${verseNumber}` : fallbackKey;
     setSelectedVerseKey(key);
     setPendingScrollVerseKey(explicit ? `${id}:${verseNumber}` : null);
-    if (explicit && key) engageVerse(key);
+    // The URL's ayah, re-read for a reload of the same page, is not new reading.
+    if (explicit && key && key !== engagedKeyRef.current) engageVerse(key);
   }, [engageVerse]);
 
   const loadSurah = useCallback(
@@ -821,6 +852,14 @@ export function MushafProvider({ children }: { children: ReactNode }) {
     const place = parseVerseKey(key);
     if (place) openSurah(place.chapterId, place.verseNumber);
   }, [openSurah]);
+
+  /**
+   * Closing the offer (X, Escape, or a click outside) is not a choice. The
+   * other device's newer place stays saved; only "Stay here" claims this page.
+   */
+  const closeElsewherePlace = useCallback(() => {
+    setElsewherePlace(null);
+  }, []);
 
   /** "Stay here": this page becomes the reading place, newer than the other device's. */
   const dismissElsewherePlace = useCallback(() => {
@@ -1429,7 +1468,10 @@ export function MushafProvider({ children }: { children: ReactNode }) {
       // Offer the jump only while this tab is in the reader showing another ayah.
       setElsewherePlace(isMushafPath(pathnameRef.current) && placeRef.current !== incomingKey ? incomingKey : null);
     }
-    setPreferences(library.preferences);
+    // Keep the same object when nothing changed. A new translation list would
+    // reload the open surah, and reloading re-claims the ayah in the URL as new
+    // reading, which made a stale tab overwrite another device's newer place.
+    setPreferences((current) => samePreferences(current, library.preferences) ? current : library.preferences);
     setBookmarks(library.bookmarks);
     setNotes(library.notes);
     setHighlights(library.highlights);
@@ -1598,6 +1640,7 @@ export function MushafProvider({ children }: { children: ReactNode }) {
       stillReadingAsk,
       elsewherePlace,
       dismissElsewherePlace,
+      closeElsewherePlace,
       goToElsewherePlace,
       confirmStillReading,
       declineStillReading,
@@ -1679,6 +1722,7 @@ export function MushafProvider({ children }: { children: ReactNode }) {
       stillReadingAsk,
       elsewherePlace,
       dismissElsewherePlace,
+      closeElsewherePlace,
       goToElsewherePlace,
       stopAudio,
       swatches,

@@ -297,6 +297,25 @@ export function saveReadingPlace(
   return { ...progress, lastVerseKey: verseKey, lastActiveAt: now };
 }
 
+/**
+ * The place to keep when a screen saves quietly (tab hidden, page closed, or
+ * leaving the reader). It only records a move made on this screen after the
+ * saved place was set, and keeps the time that move happened rather than now.
+ * A tab left open while the reader moved on elsewhere therefore never pushes
+ * its old ayah over the newer one.
+ */
+export function quietReadingPlace(
+  progress: ReadingProgress,
+  verseKey: string | null | undefined,
+  options: { movedAt: number; active: boolean },
+): ReadingProgress {
+  if (!verseKey || !parseVerseKey(verseKey)) return progress;
+  if (progress.lastVerseKey === verseKey) return progress;
+  if (!options.active || !options.movedAt) return progress;
+  if (options.movedAt <= (progress.lastActiveAt ?? 0)) return progress;
+  return { ...progress, lastVerseKey: verseKey, lastActiveAt: options.movedAt };
+}
+
 export type ReadingPlaceInput = {
   isPlaying: boolean;
   playingVerseKey?: string | null;
