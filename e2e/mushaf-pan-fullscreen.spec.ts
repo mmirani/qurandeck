@@ -267,3 +267,116 @@ test("tabs and ribbons stay tucked between the covers edge-on, at 100% and 400%"
   await zoomToMax(dialog);
   await expectMarksTuckedIn(dialog, "fore-edge 400% full screen");
 });
+
+async function bookFit(dialog: Locator) {
+  const stage = await dialog.getByTestId("mushaf-explore-stage").boundingBox();
+  // The float is the book's whole box: cover, tabs above and ribbons below.
+  const book = await dialog.locator(".mushaf-float").boundingBox();
+  if (!stage || !book) throw new Error("missing stage or book");
+  return {
+    dx: Math.abs(book.x + book.width / 2 - (stage.x + stage.width / 2)) / stage.width,
+    dy: Math.abs(book.y + book.height / 2 - (stage.y + stage.height / 2)) / stage.height,
+    fill: Math.max(book.width / stage.width, book.height / stage.height),
+    inside:
+      book.x >= stage.x - 1 &&
+      book.y >= stage.y - 1 &&
+      book.x + book.width <= stage.x + stage.width + 1 &&
+      book.y + book.height <= stage.y + stage.height + 1,
+  };
+}
+
+async function expectFitted(dialog: Locator, label: string) {
+  await expect
+    .poll(async () => {
+      const fit = await bookFit(dialog);
+      return fit.dx < 0.03 && fit.dy < 0.03 && fit.fill >= 0.75 && fit.inside;
+    }, { message: `book should be centred and fill the stage (${label})`, timeout: 5_000 })
+    .toBe(true);
+}
+
+for (const size of [
+  { width: 1440, height: 900 },
+  { width: 1920, height: 1080 },
+]) {
+  test(`full screen fits and centres the whole book at ${size.width}x${size.height}`, async ({ page }) => {
+    await page.setViewportSize(size);
+    await seed(page, "iris", denseLibrary());
+    await openEdge(page);
+    await page.getByTestId("mushaf-edge-explore").click();
+    const dialog = page.getByTestId("mushaf-explore-dialog");
+    const book = dialog.getByTestId("mushaf-explore-book");
+    await expectFitted(dialog, "windowed");
+    const windowedFit = Number(await book.getAttribute("data-fit"));
+
+    await dialog.getByRole("button", { name: "Zoom in" }).click();
+    await dialog.getByTestId("mushaf-explore-fullscreen").click();
+    await expect(dialog).toHaveAttribute("data-fullscreen", "true");
+    await expect(book).toHaveAttribute("data-zoom", "1.00");
+    await expect(dialog.getByText("100%")).toBeVisible();
+    await expectFitted(dialog, "full screen");
+    const fullFit = Number(await book.getAttribute("data-fit"));
+    expect(fullFit, "full screen should make the book bigger").toBeGreaterThan(windowedFit);
+
+    // Zoom and pan away, then Reset zoom comes back to the fitted, centred book.
+    await dialog.getByRole("button", { name: "Zoom in" }).click();
+    await dialog.getByRole("button", { name: "Zoom in" }).click();
+    const stage = dialog.getByTestId("mushaf-explore-stage");
+    await stage.focus();
+    await page.keyboard.press("ArrowRight");
+    await page.keyboard.press("ArrowDown");
+    await dialog.getByRole("button", { name: "Reset zoom" }).click();
+    await expect(book).toHaveAttribute("data-zoom", "1.00");
+    await expectFitted(dialog, "after reset");
+
+    // Fullscreen still reaches well past the old 400% of the windowed book.
+    const zoomIn = dialog.getByRole("button", { name: "Zoom in" });
+    for (let i = 0; i < 16 && (await zoomIn.isEnabled()); i += 1) await zoomIn.click();
+    expect(Number(await book.getAttribute("data-zoom")) * fullFit).toBeGreaterThanOrEqual(4);
+
+    await page.keyboard.press("Escape");
+    await expect(dialog).toHaveAttribute("data-fullscreen", "false");
+    await expect(book).toHaveAttribute("data-zoom", "1.00");
+    await expectFitted(dialog, "back to windowed");
+    await expect.poll(async () => Number(await book.getAttribute("data-fit"))).toBeCloseTo(windowedFit, 2);
+  });
+}
+
+test("a drag can turn the book only within a believable range", async ({ page }) => {
+  const dialog = await openExplore(page);
+  const book = dialog.getByTestId("mushaf-explore-book");
+  const stage = await dialog.getByTestId("mushaf-explore-stage").boundingBox();
+  if (!stage) throw new Error("missing stage");
+  const midY = stage.y + stage.height / 2;
+
+  // Far toward the fore-edge and down: it gives a touch while held, then settles.
+  await page.mouse.move(stage.x + stage.width - 20, midY);
+  await page.mouse.down();
+  await page.mouse.move(stage.x + 20, stage.y + stage.height - 10, { steps: 24 });
+  await page.mouse.move(stage.x + 10, stage.y + stage.height - 5, { steps: 4 });
+  const heldYaw = Number(await book.getAttribute("data-yaw"));
+  expect(heldYaw).toBeGreaterThanOrEqual(-92);
+  await page.mouse.up();
+  await expect(book).toHaveAttribute("data-yaw", "-90");
+  const settledPitch = Number(await book.getAttribute("data-pitch"));
+  expect(settledPitch).toBeGreaterThanOrEqual(-10);
+  expect(settledPitch).toBeLessThanOrEqual(0);
+  await expect(dialog.getByRole("button", { name: "Turn left" })).toBeDisabled();
+
+  // Twice across the other way and up: stops a touch past front-on, never tilted up.
+  for (let pass = 0; pass < 2; pass += 1) {
+    await page.mouse.move(stage.x + 20, midY);
+    await page.mouse.down();
+    await page.mouse.move(stage.x + stage.width - 20, stage.y + 10, { steps: 24 });
+    await page.mouse.up();
+  }
+  await expect(book).toHaveAttribute("data-yaw", "8");
+  expect(Number(await book.getAttribute("data-pitch"))).toBeGreaterThanOrEqual(-10);
+  expect(Number(await book.getAttribute("data-pitch"))).toBeLessThanOrEqual(0);
+  await expect(dialog.getByRole("button", { name: "Turn right" })).toBeDisabled();
+
+  // Presets still work inside the range.
+  await dialog.getByRole("button", { name: "Fore-edge" }).click();
+  await expect(book).toHaveAttribute("data-yaw", "-90");
+  await dialog.getByRole("button", { name: "Three-quarter" }).click();
+  await expect(book).toHaveAttribute("data-yaw", "-40");
+});
