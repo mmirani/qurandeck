@@ -6,6 +6,7 @@ import { ZoomIn } from "lucide-react";
 import { MushafBook } from "@/components/home/mushaf-book";
 import { useMushafEdgeInteraction } from "@/components/home/mushaf-edge-interaction";
 import { MushafExploreDialog } from "@/components/home/mushaf-explore-dialog";
+import { useMushafOwnerTitle } from "@/components/home/use-mushaf-owner-title";
 import { useMushaf } from "@/components/providers/mushaf-provider";
 import { buildMushafEdge, minShareForWidth, type MushafEdgeInput } from "@/lib/mushaf-edge";
 
@@ -32,6 +33,7 @@ function desktopOnServer() {
  */
 export function HomeMushafEdge() {
   const headingId = useId();
+  const title = useMushafOwnerTitle();
   const rootRef = useRef<HTMLElement>(null);
   const desktop = useSyncExternalStore(subscribeDesktop, desktopNow, desktopOnServer);
   const [near, setNear] = useState(false);
@@ -59,7 +61,7 @@ export function HomeMushafEdge() {
     >
       <p className="kufic-label text-gold-deep">Marked pages</p>
       <h2 id={headingId} className="font-display text-3xl font-semibold tracking-tight text-ink">
-        Your Mushaf
+        {title}
       </h2>
       <p className="max-w-2xl text-sm leading-6 text-ink-soft lg:hidden" data-testid="mushaf-edge-hint">
         See your marked-up Mushaf on desktop.

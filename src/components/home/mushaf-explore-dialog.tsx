@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { ChevronLeft, ChevronRight, Maximize, Minimize, Minus, Plus, X } from "lucide-react";
 import { useMushafEdgeInteraction } from "@/components/home/mushaf-edge-interaction";
 import { MushafBook, MushafEdgeMagnifier } from "@/components/home/mushaf-book";
+import { useMushafOwnerTitle } from "@/components/home/use-mushaf-owner-title";
 import { dialogFocusables, initialDialogIndex, trapTabIndex } from "@/lib/dialog-focus";
 import { buildMushafEdge, minShareForWidth, type MushafEdgeInput } from "@/lib/mushaf-edge";
 import {
@@ -89,6 +90,7 @@ function exitNodeFullscreen(): Promise<void> {
 
 export function MushafExploreDialog({ input, jumpToHit, onClose, returnFocus }: MushafExploreDialogProps) {
   const titleId = useId();
+  const title = useMushafOwnerTitle();
   const dialogRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const pagesRef = useRef<HTMLDivElement>(null);
@@ -428,7 +430,7 @@ export function MushafExploreDialog({ input, jumpToHit, onClose, returnFocus }: 
           <div className="min-w-0">
             <p className="kufic-label text-gold-deep">Close-up</p>
             <h2 id={titleId} className="font-display text-3xl leading-tight font-semibold text-ink">
-              Your Mushaf
+              {title}
             </h2>
             <p className="mt-1 text-sm leading-6 text-ink-soft">
               Drag to turn. When zoomed, drag, scroll, or the arrow keys move the view. Double-click to reset. + and − zoom.
@@ -503,7 +505,7 @@ export function MushafExploreDialog({ input, jumpToHit, onClose, returnFocus }: 
           ref={stageRef}
           tabIndex={0}
           data-testid="mushaf-explore-stage"
-          aria-label="Closed mushaf on the desk. When zoomed, drag, scroll, or use arrow keys to move the view."
+          aria-label={`${title} on the desk. When zoomed, drag, scroll, or use arrow keys to move the view.`}
           className={`mushaf-explore-stage${angle === "fore-edge" ? " has-magnifier" : ""}${dragging ? " is-dragging" : ""}`}
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
