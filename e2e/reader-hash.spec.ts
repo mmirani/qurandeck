@@ -1,5 +1,9 @@
 import { expect, test, type Page } from "@playwright/test";
 
+// The dev server rate-limits /api per client address. Each spec file gets its own
+// so one file's requests never throttle another's (live traffic is unaffected).
+test.use({ extraHTTPHeaders: { "x-forwarded-for": "e2e-reader-hash" } });
+
 async function shellMetrics(page: Page) {
   return page.evaluate(() => {
     const shell = document.getElementById("main-content");

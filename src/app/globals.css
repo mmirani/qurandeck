@@ -2176,11 +2176,123 @@ html[data-focus="on"] .sana-dock {
   align-items: center;
   width: 100%;
   padding: 0.75rem 3.5rem 0 0.25rem;
+  cursor: pointer;
+}
+
+.mushaf-scene.is-explore {
+  justify-content: flex-end;
+  width: min(100%, 46rem);
+  height: 100%;
+  padding: 0.5rem 1.5rem 0.25rem;
+  cursor: grab;
+}
+
+.mushaf-scene.is-explore.is-dragging {
+  cursor: grabbing;
+}
+
+.mushaf-scene.is-explore .mushaf-ground {
+  width: calc(var(--mushaf-shadow, 0.92) * 100%);
+  height: 1.15rem;
+  transform: translate(-50%, 30%);
+  background: radial-gradient(
+    ellipse at 50% 0%,
+    color-mix(in srgb, var(--ink) 58%, transparent) 0%,
+    transparent 72%
+  );
+}
+
+/* Keep tabs and ribbons readable when the book turns. They stay on their page and face the desk. */
+.mushaf-scene.is-explore .mushaf-tab-anchor,
+.mushaf-scene.is-explore .mushaf-ribbon-anchor,
+.mushaf-scene.is-explore .mushaf-flag-rise,
+.mushaf-scene.is-explore .mushaf-ribbon-drop {
+  transform-style: preserve-3d;
+}
+
+.mushaf-scene.is-explore .mushaf-tab,
+.mushaf-scene.is-explore .mushaf-ribbon {
+  transform: rotateX(calc(var(--mushaf-pitch, -8deg) * -1)) rotateY(calc(var(--mushaf-yaw, -40deg) * -1));
+}
+
+.mushaf-scene.is-explore .mushaf-tab {
+  transform-origin: bottom center;
+}
+
+.mushaf-scene.is-explore .mushaf-ribbon {
+  transform-origin: top center;
+}
+
+.mushaf-explore-stage {
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  align-items: flex-end;
+  justify-content: center;
+  min-height: 16rem;
+  overflow: hidden;
+  touch-action: none;
+  background:
+    radial-gradient(90% 55% at 50% 100%, color-mix(in srgb, var(--ink) 12%, transparent), transparent 62%),
+    color-mix(in srgb, var(--canvas) 78%, var(--surface));
+}
+
+.mushaf-spot {
+  position: absolute;
+  z-index: 3;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  margin-left: -1px;
+  pointer-events: none;
+  background: var(--gold-deep);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--surface) 75%, transparent);
+}
+
+.mushaf-scrubber {
+  width: 100%;
+  height: 2rem;
+  margin: 0;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+  accent-color: var(--gold-deep);
+}
+
+.mushaf-scrubber::-webkit-slider-runnable-track {
+  height: 0.4rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ink) 28%, var(--surface));
+}
+
+.mushaf-scrubber::-webkit-slider-thumb {
+  appearance: none;
+  width: 1.5rem;
+  height: 1.5rem;
+  margin-top: -0.55rem;
+  border: 2px solid var(--surface);
+  border-radius: 999px;
+  background: var(--gold);
+}
+
+.mushaf-scrubber::-moz-range-track {
+  height: 0.4rem;
+  border: 0;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ink) 28%, var(--surface));
+}
+
+.mushaf-scrubber::-moz-range-thumb {
+  width: 1.5rem;
+  height: 1.5rem;
+  border: 2px solid var(--surface);
+  border-radius: 999px;
+  background: var(--gold);
 }
 
 .mushaf-float {
-  --w: 14.5rem;
-  --h: 17.25rem;
+  --w: calc(14.5rem * var(--mushaf-zoom, 1));
+  --h: calc(17.25rem * var(--mushaf-zoom, 1));
   --d: calc(var(--w) * 0.24);
   --board: 4px;
   --inset: 4px;
@@ -2197,7 +2309,7 @@ html[data-focus="on"] .sana-dock {
   z-index: 1;
   width: var(--w);
   height: var(--h);
-  transform: rotateY(-40deg) rotateX(-8deg);
+  transform: rotateY(var(--mushaf-yaw, -40deg)) rotateX(var(--mushaf-pitch, -8deg));
   transform-origin: center center;
   transform-style: preserve-3d;
 }
@@ -2478,6 +2590,19 @@ html[data-focus="on"] .sana-dock {
 }
 
 @media (prefers-reduced-motion: no-preference) {
+  .mushaf-book {
+    transition: transform 180ms ease;
+  }
+
+  .mushaf-scene.is-explore .mushaf-ground {
+    transition: width 180ms ease;
+  }
+
+  .mushaf-book.is-dragging,
+  .mushaf-scene.is-dragging .mushaf-ground {
+    transition: none;
+  }
+
   .mushaf-flag-rise {
     animation: mushaf-flag-rise 560ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
   }
@@ -2517,4 +2642,21 @@ html[data-focus="on"] .sana-dock {
   .nur .nur-floor {
     animation: none;
   }
+}
+
+/* Fore-edge laid flat at reading size inside the explore view. Same paper as the book. */
+.mushaf-magnifier {
+  background-color: #f4efe4;
+  border: 1px solid color-mix(in srgb, var(--ink) 18%, transparent);
+  box-shadow:
+    inset 0 3px 6px rgba(28, 20, 12, 0.18),
+    inset 0 -3px 6px rgba(28, 20, 12, 0.14);
+}
+.mushaf-magnifier .mushaf-spot {
+  z-index: 3;
+}
+/* Leave room for the magnified strip: the edge-on book only needs to show where you are. */
+.mushaf-explore-stage.has-magnifier .mushaf-float {
+  transform: scale(0.8);
+  transform-origin: 50% 100%;
 }
