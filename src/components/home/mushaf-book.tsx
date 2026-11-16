@@ -219,6 +219,66 @@ export function MushafBook({
   );
 }
 
+/**
+ * The fore-edge seen straight on is only as wide as the book is thick. This lays the
+ * same edge out at reading size, front cover on the left and back cover on the right.
+ */
+export function MushafEdgeMagnifier({
+  edge,
+  spotlight = null,
+  tipId,
+  menuId,
+  activeTipId,
+  activeMenuId,
+  handlers,
+}: Pick<MushafBookProps, "edge" | "spotlight" | "tipId" | "menuId" | "activeTipId" | "activeMenuId" | "handlers">) {
+  return (
+    <div data-testid="mushaf-edge-magnifier" className="flex shrink-0 flex-col gap-1.5 px-5 pt-3">
+      <div className="flex items-baseline justify-between text-xs text-ink-soft">
+        <span>Front cover · Al-Fatihah</span>
+        <span className="font-medium text-ink">Page edge, magnified</span>
+        <span>An-Nas · Back cover</span>
+      </div>
+      <div className="mushaf-magnifier relative h-24 overflow-hidden rounded-md">
+        <PageStripes bands={edge.bands} empty={edge.empty} along="fore" />
+        <div className="mushaf-edge-lines pointer-events-none absolute inset-0" aria-hidden="true" />
+        <div
+          className="absolute inset-0 flex flex-row"
+          role="group"
+          aria-label="Magnified page edge, Al-Fatihah on the left to An-Nas on the right"
+        >
+          {edge.buckets.map((bucket) => {
+            const id = `zoom-pages-${bucket.id}`;
+            const open = activeMenuId === id;
+            return (
+              <button
+                key={bucket.id}
+                type="button"
+                data-testid="mushaf-magnifier-slice"
+                className="h-full min-w-0 cursor-pointer hover:bg-[color-mix(in_srgb,white_22%,transparent)] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-gold"
+                style={{ flex: `${bucket.ayahCount} 1 0%` }}
+                aria-label={`Pages, ${bucket.name}`}
+                aria-describedby={activeTipId === id ? tipId : undefined}
+                aria-expanded={bucket.choices.length > 0 ? open : undefined}
+                aria-haspopup={bucket.choices.length > 0 ? "dialog" : undefined}
+                aria-controls={open ? menuId : undefined}
+                {...handlers(id, bucket.tooltip, bucket.direct, bucket.choices)}
+              />
+            );
+          })}
+        </div>
+        {spotlight != null ? (
+          <span
+            aria-hidden="true"
+            className="mushaf-spot"
+            style={{ left: `${Math.min(100, Math.max(0, spotlight * 100))}%` }}
+          />
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
 function controlName(kind: string, title: string, range: string, extra: string) {
   return [kind, title, range, extra].filter(Boolean).join(", ");
 }

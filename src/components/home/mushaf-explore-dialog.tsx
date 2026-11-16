@@ -4,7 +4,7 @@ import { useEffect, useId, useMemo, useRef, useState, type PointerEvent as React
 import { createPortal } from "react-dom";
 import { ChevronLeft, ChevronRight, Minus, Plus, X } from "lucide-react";
 import { useMushafEdgeInteraction } from "@/components/home/mushaf-edge-interaction";
-import { MushafBook } from "@/components/home/mushaf-book";
+import { MushafBook, MushafEdgeMagnifier } from "@/components/home/mushaf-book";
 import { dialogFocusables, initialDialogIndex, trapTabIndex } from "@/lib/dialog-focus";
 import { buildMushafEdge, minShareForWidth, type MushafEdgeInput } from "@/lib/mushaf-edge";
 import {
@@ -300,6 +300,18 @@ export function MushafExploreDialog({ input, jumpToHit, onClose, returnFocus }: 
             handlers={interaction.handlers}
           />
         </div>
+
+        {angle === "fore-edge" ? (
+          <MushafEdgeMagnifier
+            edge={edge}
+            spotlight={share}
+            tipId={interaction.tipId}
+            menuId={interaction.menuId}
+            activeTipId={interaction.activeTipId}
+            activeMenuId={interaction.activeMenuId}
+            handlers={interaction.handlers}
+          />
+        ) : null}
 
         <div className="flex shrink-0 flex-col gap-3 border-t border-line/50 px-5 py-3">
           <div className="flex flex-wrap items-center justify-center gap-2">
