@@ -13,7 +13,10 @@ export const FORE_EDGE = { yaw: -90, pitch: 0 } as const;
 
 export const DEFAULT_ZOOM = 1;
 export const ZOOM_MIN = 1;
-export const ZOOM_MAX = 2.5;
+/** Highest zoom in the windowed close-up, including 260%. */
+export const ZOOM_MAX = 2.6;
+/** Highest zoom when the close-up is full screen. */
+export const ZOOM_FULLSCREEN_MAX = 4;
 export const ZOOM_STEP = 0.25;
 
 export const YAW_MIN = -98;
@@ -27,11 +30,34 @@ export const DRAG_YAW_PER_PX = 0.4;
 /** Degrees of lean per pixel of a vertical drag. Kept small so the book stays seated. */
 export const DRAG_PITCH_PER_PX = 0.08;
 
+/** Ignore jitter smaller than this before a pointer move becomes a pan or a turn. */
+export const PAN_DRAG_THRESHOLD_PX = 8;
+/** Arrow-key pan distance, in pixels. */
+export const PAN_KEYBOARD_STEP = 48;
+/** Keep at least this many pixels of the book in the stage. */
+export const PAN_MIN_VISIBLE_PX = 96;
+
 export type MushafPose = {
   yaw: number;
   pitch: number;
   zoom: number;
 };
+
+export type MushafPan = {
+  x: number;
+  y: number;
+};
+
+export type PanBounds = {
+  minX: number;
+  maxX: number;
+  minY: number;
+  maxY: number;
+};
+
+export const PAN_ORIGIN: MushafPan = { x: 0, y: 0 };
+
+export const PAN_BOUNDS_NONE: PanBounds = { minX: 0, maxX: 0, minY: 0, maxY: 0 };
 
 export type MushafAngle = "three-quarter" | "fore-edge";
 
@@ -61,50 +87,127 @@ function roundZoom(zoom: number) {
   return Math.round(zoom * 100) / 100;
 }
 
-export function clampPose(pose: MushafPose): MushafPose {
+export function maxZoomForView(fullscreen: boolean): number {
+  return fullscreen ? ZOOM_FULLSCREEN_MAX : ZOOM_MAX;
+}
+
+export function clampPose(pose: MushafPose, maxZoom = ZOOM_MAX): MushafPose {
   return {
     yaw: clamp(pose.yaw, YAW_MIN, YAW_MAX),
     pitch: clamp(pose.pitch, PITCH_MIN, PITCH_MAX),
-    zoom: roundZoom(clamp(pose.zoom, ZOOM_MIN, ZOOM_MAX)),
+    zoom: roundZoom(clamp(pose.zoom, ZOOM_MIN, maxZoom)),
   };
 }
 
-export function zoomBySteps(pose: MushafPose, steps: number): MushafPose {
-  if (!Number.isFinite(steps) || steps === 0) return clampPose(pose);
-  return clampPose({ ...pose, zoom: pose.zoom + steps * ZOOM_STEP });
+export function zoomBySteps(pose: MushafPose, steps: number, maxZoom = ZOOM_MAX): MushafPose {
+  if (!Number.isFinite(steps) || steps === 0) return clampPose(pose, maxZoom);
+  return clampPose({ ...pose, zoom: pose.zoom + steps * ZOOM_STEP }, maxZoom);
 }
 
 /** Scroll down and pinch-out zoom out. Scroll up and pinch-in zoom in. */
-export function zoomFromWheel(pose: MushafPose, deltaY: number): MushafPose {
-  if (!Number.isFinite(deltaY) || deltaY === 0) return clampPose(pose);
-  return clampPose({ ...pose, zoom: pose.zoom * Math.exp(-deltaY / 280) });
+export function zoomFromWheel(pose: MushafPose, deltaY: number, maxZoom = ZOOM_MAX): MushafPose {
+  if (!Number.isFinite(deltaY) || deltaY === 0) return clampPose(pose, maxZoom);
+  return clampPose({ ...pose, zoom: pose.zoom * Math.exp(-deltaY / 280) }, maxZoom);
 }
 
-export function resetZoom(pose: MushafPose): MushafPose {
-  return clampPose({ ...pose, zoom: DEFAULT_ZOOM });
+export function resetZoom(pose: MushafPose, maxZoom = ZOOM_MAX): MushafPose {
+  return clampPose({ ...pose, zoom: DEFAULT_ZOOM }, maxZoom);
 }
 
-export function withAngle(pose: MushafPose, angle: MushafAngle): MushafPose {
+export function withAngle(pose: MushafPose, angle: MushafAngle, maxZoom = ZOOM_MAX): MushafPose {
   const next = angle === "fore-edge" ? FORE_EDGE : THREE_QUARTER;
-  return clampPose({ ...pose, yaw: next.yaw, pitch: next.pitch });
+  return clampPose({ ...pose, yaw: next.yaw, pitch: next.pitch }, maxZoom);
 }
 
-export function turnBy(pose: MushafPose, direction: -1 | 1): MushafPose {
-  return clampPose({ ...pose, yaw: pose.yaw + direction * YAW_STEP });
+export function turnBy(pose: MushafPose, direction: -1 | 1, maxZoom = ZOOM_MAX): MushafPose {
+  return clampPose({ ...pose, yaw: pose.yaw + direction * YAW_STEP }, maxZoom);
 }
 
 /**
  * Drag right turns the cover with the hand (yaw increases, toward a front-on view).
  * Drag down eases the lean back toward upright.
  */
-export function dragPose(pose: MushafPose, dx: number, dy: number): MushafPose {
+export function dragPose(pose: MushafPose, dx: number, dy: number, maxZoom = ZOOM_MAX): MushafPose {
   const safeX = Number.isFinite(dx) ? dx : 0;
   const safeY = Number.isFinite(dy) ? dy : 0;
-  return clampPose({
-    ...pose,
-    yaw: pose.yaw + safeX * DRAG_YAW_PER_PX,
-    pitch: pose.pitch + safeY * DRAG_PITCH_PER_PX,
-  });
+  return clampPose(
+    {
+      ...pose,
+      yaw: pose.yaw + safeX * DRAG_YAW_PER_PX,
+      pitch: pose.pitch + safeY * DRAG_PITCH_PER_PX,
+    },
+    maxZoom,
+  );
+}
+
+export function canPan(zoom: number): boolean {
+  return Number.isFinite(zoom) && zoom > ZOOM_MIN;
+}
+
+export function clampPan(pan: MushafPan, bounds: PanBounds): MushafPan {
+  let minX = bounds.minX;
+  let maxX = bounds.maxX;
+  let minY = bounds.minY;
+  let maxY = bounds.maxY;
+  if (minX > maxX) {
+    const mid = (minX + maxX) / 2;
+    minX = mid;
+    maxX = mid;
+  }
+  if (minY > maxY) {
+    const mid = (minY + maxY) / 2;
+    minY = mid;
+    maxY = mid;
+  }
+  return {
+    x: clamp(Number.isFinite(pan.x) ? pan.x : 0, minX, maxX),
+    y: clamp(Number.isFinite(pan.y) ? pan.y : 0, minY, maxY),
+  };
+}
+
+export function panBy(pan: MushafPan, dx: number, dy: number, bounds: PanBounds): MushafPan {
+  const safeX = Number.isFinite(dx) ? dx : 0;
+  const safeY = Number.isFinite(dy) ? dy : 0;
+  return clampPan({ x: pan.x + safeX, y: pan.y + safeY }, bounds);
+}
+
+/**
+ * Pan limits from the stage and book boxes, with the current pan already applied
+ * to the book box. The book stays at least PAN_MIN_VISIBLE_PX on screen.
+ * At rest zoom there is no pan.
+ */
+export function panBoundsFromRects(
+  stage: { left: number; right: number; top: number; bottom: number },
+  book: { left: number; right: number; top: number; bottom: number },
+  pan: MushafPan,
+  zoom: number,
+  minVisible = PAN_MIN_VISIBLE_PX,
+): PanBounds {
+  if (!canPan(zoom)) return PAN_BOUNDS_NONE;
+  const left = book.left - pan.x;
+  const right = book.right - pan.x;
+  const top = book.top - pan.y;
+  const bottom = book.bottom - pan.y;
+  return {
+    minX: stage.left + minVisible - right,
+    maxX: stage.right - minVisible - left,
+    minY: stage.top + minVisible - bottom,
+    maxY: stage.bottom - minVisible - top,
+  };
+}
+
+export function keyboardPanDelta(key: string, step = PAN_KEYBOARD_STEP): MushafPan | null {
+  if (key === "ArrowLeft") return { x: -step, y: 0 };
+  if (key === "ArrowRight") return { x: step, y: 0 };
+  if (key === "ArrowUp") return { x: 0, y: -step };
+  if (key === "ArrowDown") return { x: 0, y: step };
+  return null;
+}
+
+export function shouldResetPan(previousZoom: number, nextZoom: number, angleChanged: boolean): boolean {
+  if (angleChanged) return true;
+  if (canPan(previousZoom) && !canPan(nextZoom)) return true;
+  return false;
 }
 
 export function angleOf(pose: MushafPose): MushafAngle | "custom" {
@@ -117,8 +220,8 @@ function near(value: number, target: number) {
   return Math.abs(value - target) < 0.05;
 }
 
-export function zoomLabel(zoom: number): string {
-  return `${Math.round(clamp(zoom, ZOOM_MIN, ZOOM_MAX) * 100)}%`;
+export function zoomLabel(zoom: number, maxZoom = ZOOM_MAX): string {
+  return `${Math.round(clamp(zoom, ZOOM_MIN, maxZoom) * 100)}%`;
 }
 
 export function keyboardZoomSteps(key: string): number | null {

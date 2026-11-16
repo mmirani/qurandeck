@@ -1,28 +1,37 @@
 "use client";
 
-import { useEffect, useId, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent, type RefObject } from "react";
+import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent, type RefObject } from "react";
 import { createPortal } from "react-dom";
-import { ChevronLeft, ChevronRight, Minus, Plus, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Maximize, Minimize, Minus, Plus, X } from "lucide-react";
 import { useMushafEdgeInteraction } from "@/components/home/mushaf-edge-interaction";
 import { MushafBook, MushafEdgeMagnifier } from "@/components/home/mushaf-book";
 import { dialogFocusables, initialDialogIndex, trapTabIndex } from "@/lib/dialog-focus";
 import { buildMushafEdge, minShareForWidth, type MushafEdgeInput } from "@/lib/mushaf-edge";
 import {
   EXPLORE_FILTER_ALL,
+  PAN_DRAG_THRESHOLD_PX,
+  PAN_ORIGIN,
   YAW_MAX,
   YAW_MIN,
-  ZOOM_MAX,
   ZOOM_MIN,
   angleOf,
+  canPan,
+  clampPan,
+  clampPose,
   colourShown,
   defaultPose,
   dragPose,
   filterMushafInput,
   ignoresMushafKeys,
+  keyboardPanDelta,
   keyboardTurnDirection,
   keyboardZoomSteps,
+  maxZoomForView,
+  panBoundsFromRects,
+  panBy,
   resetZoom,
   scrubberLabel,
+  shouldResetPan,
   surahAtShare,
   toggleBookmarks,
   toggleColour,
@@ -33,7 +42,9 @@ import {
   zoomFromWheel,
   zoomLabel,
   type ExploreFilter,
+  type MushafPan,
   type MushafPose,
+  type PanBounds,
 } from "@/lib/mushaf-explore";
 import type { SearchHit } from "@/lib/quran/types";
 
@@ -44,19 +55,66 @@ type MushafExploreDialogProps = {
   returnFocus: RefObject<HTMLElement | null>;
 };
 
+type DragState = {
+  x: number;
+  y: number;
+  originX: number;
+  originY: number;
+  pointer: number;
+  mode: "pending" | "pan" | "turn";
+};
+
+function fullscreenElement(): Element | null {
+  const doc = document as Document & { webkitFullscreenElement?: Element | null };
+  return document.fullscreenElement ?? doc.webkitFullscreenElement ?? null;
+}
+
+function requestNodeFullscreen(node: HTMLElement): Promise<void> {
+  const anyNode = node as HTMLElement & { webkitRequestFullscreen?: () => Promise<void> | void };
+  if (typeof node.requestFullscreen === "function") return node.requestFullscreen();
+  if (typeof anyNode.webkitRequestFullscreen === "function") {
+    return Promise.resolve(anyNode.webkitRequestFullscreen());
+  }
+  return Promise.reject(new Error("unsupported"));
+}
+
+function exitNodeFullscreen(): Promise<void> {
+  const doc = document as Document & { webkitExitFullscreen?: () => Promise<void> | void };
+  if (fullscreenElement()) {
+    if (typeof document.exitFullscreen === "function") return document.exitFullscreen();
+    if (typeof doc.webkitExitFullscreen === "function") return Promise.resolve(doc.webkitExitFullscreen());
+  }
+  return Promise.resolve();
+}
+
 export function MushafExploreDialog({ input, jumpToHit, onClose, returnFocus }: MushafExploreDialogProps) {
   const titleId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const pagesRef = useRef<HTMLDivElement>(null);
+  const fullscreenButtonRef = useRef<HTMLButtonElement>(null);
   const onCloseRef = useRef(onClose);
-  const drag = useRef<{ x: number; y: number; pointer: number } | null>(null);
+  const drag = useRef<DragState | null>(null);
   const [pose, setPose] = useState<MushafPose>(defaultPose);
+  const [pan, setPan] = useState<MushafPan>(PAN_ORIGIN);
   const [filter, setFilter] = useState<ExploreFilter>(EXPLORE_FILTER_ALL);
   const [share, setShare] = useState(0);
   const [width, setWidth] = useState(0);
   const [dragging, setDragging] = useState(false);
-  const interaction = useMushafEdgeInteraction(jumpToHit, `${pose.yaw.toFixed(1)}:${pose.pitch.toFixed(1)}:${pose.zoom}`);
+  const [fullscreen, setFullscreen] = useState(false);
+  const [cssFallback, setCssFallback] = useState(false);
+  const poseRef = useRef(pose);
+  const panRef = useRef(pan);
+  const boundsRef = useRef<PanBounds>({ minX: 0, maxX: 0, minY: 0, maxY: 0 });
+  const fullscreenRef = useRef(false);
+  const cssFallbackRef = useRef(false);
+  const maxZoom = maxZoomForView(fullscreen);
+  const maxZoomRef = useRef(maxZoom);
+  const interaction = useMushafEdgeInteraction(
+    jumpToHit,
+    `${pose.yaw.toFixed(1)}:${pose.pitch.toFixed(1)}:${pose.zoom}:${pan.x.toFixed(0)}:${pan.y.toFixed(0)}:${fullscreen}`,
+    dialogRef,
+  );
   const { dismiss, menuOpen } = interaction;
   const menuOpenRef = useRef(false);
 
@@ -73,6 +131,31 @@ export function MushafExploreDialog({ input, jumpToHit, onClose, returnFocus }: 
   const spot = surahAtShare(full.bands, share);
   const angle = angleOf(pose);
 
+  const applyPan = (next: MushafPan) => {
+    const clamped = clampPan(next, boundsRef.current);
+    panRef.current = clamped;
+    setPan(clamped);
+  };
+
+  const applyPose = (next: MushafPose, resetPan = false) => {
+    const previous = poseRef.current;
+    const finalPose = clampPose(next, maxZoomRef.current);
+    poseRef.current = finalPose;
+    setPose(finalPose);
+    if (resetPan || shouldResetPan(previous.zoom, finalPose.zoom, false)) {
+      panRef.current = PAN_ORIGIN;
+      setPan(PAN_ORIGIN);
+    }
+  };
+
+  useEffect(() => {
+    poseRef.current = pose;
+    panRef.current = pan;
+    fullscreenRef.current = fullscreen;
+    maxZoomRef.current = maxZoom;
+    cssFallbackRef.current = cssFallback;
+  }, [cssFallback, fullscreen, maxZoom, pan, pose]);
+
   useEffect(() => {
     const node = pagesRef.current;
     if (!node) return;
@@ -84,7 +167,32 @@ export function MushafExploreDialog({ input, jumpToHit, onClose, returnFocus }: 
     const observer = new ResizeObserver(measure);
     observer.observe(node);
     return () => observer.disconnect();
-  }, [pose.zoom]);
+  }, [pose.zoom, fullscreen]);
+
+  useLayoutEffect(() => {
+    const stage = stageRef.current;
+    const book = stage?.querySelector(".mushaf-float");
+    if (!stage || !(book instanceof HTMLElement)) return;
+    const measure = () => {
+      const bounds = panBoundsFromRects(
+        stage.getBoundingClientRect(),
+        book.getBoundingClientRect(),
+        panRef.current,
+        poseRef.current.zoom,
+      );
+      boundsRef.current = bounds;
+      const next = clampPan(panRef.current, bounds);
+      if (next.x !== panRef.current.x || next.y !== panRef.current.y) {
+        panRef.current = next;
+        setPan(next);
+      }
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(stage);
+    observer.observe(book);
+    return () => observer.disconnect();
+  }, [angle, fullscreen, pan.x, pan.y, pose.pitch, pose.yaw, pose.zoom]);
 
   useEffect(() => {
     onCloseRef.current = onClose;
@@ -101,20 +209,82 @@ export function MushafExploreDialog({ input, jumpToHit, onClose, returnFocus }: 
     const node = returnFocus.current;
     return () => {
       document.body.style.overflow = previousOverflow;
+      if (fullscreenElement()) void exitNodeFullscreen();
       node?.focus();
     };
   }, [returnFocus]);
+
+  useEffect(() => {
+    const onChange = () => {
+      const active = fullscreenElement() === dialogRef.current;
+      if (active) {
+        cssFallbackRef.current = false;
+        setCssFallback(false);
+        setFullscreen(true);
+        return;
+      }
+      if (cssFallbackRef.current) return;
+      setFullscreen(false);
+    };
+    document.addEventListener("fullscreenchange", onChange);
+    document.addEventListener("webkitfullscreenchange", onChange);
+    return () => {
+      document.removeEventListener("fullscreenchange", onChange);
+      document.removeEventListener("webkitfullscreenchange", onChange);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!fullscreen) {
+      setPose((current) => {
+        const next = clampPose(current, maxZoomForView(false));
+        poseRef.current = next;
+        return next;
+      });
+    }
+  }, [fullscreen]);
 
   useEffect(() => {
     const stage = stageRef.current;
     if (!stage) return;
     const onWheel = (event: WheelEvent) => {
       event.preventDefault();
-      setPose((current) => zoomFromWheel(current, event.deltaY));
+      const zoomed = canPan(poseRef.current.zoom);
+      if ((event.ctrlKey || event.metaKey) || !zoomed) {
+        applyPose(zoomFromWheel(poseRef.current, event.deltaY, maxZoomRef.current));
+        return;
+      }
+      applyPan(panBy(panRef.current, -event.deltaX, -event.deltaY, boundsRef.current));
     };
     stage.addEventListener("wheel", onWheel, { passive: false });
     return () => stage.removeEventListener("wheel", onWheel);
   }, []);
+
+  const enterFullscreen = async () => {
+    const node = dialogRef.current;
+    if (!node) return;
+    try {
+      await requestNodeFullscreen(node);
+      fullscreenButtonRef.current?.focus();
+    } catch {
+      cssFallbackRef.current = true;
+      setCssFallback(true);
+      setFullscreen(true);
+      fullscreenButtonRef.current?.focus();
+    }
+  };
+
+  const leaveFullscreen = async () => {
+    cssFallbackRef.current = false;
+    setCssFallback(false);
+    try {
+      await exitNodeFullscreen();
+    } catch {
+      /* the CSS fallback still clears below */
+    }
+    setFullscreen(false);
+    fullscreenButtonRef.current?.focus();
+  };
 
   useEffect(() => {
     const root = dialogRef.current;
@@ -123,6 +293,10 @@ export function MushafExploreDialog({ input, jumpToHit, onClose, returnFocus }: 
         if (menuOpenRef.current) return;
         event.preventDefault();
         event.stopPropagation();
+        if (fullscreenRef.current) {
+          void leaveFullscreen();
+          return;
+        }
         onCloseRef.current();
         return;
       }
@@ -150,13 +324,22 @@ export function MushafExploreDialog({ input, jumpToHit, onClose, returnFocus }: 
       const zoom = keyboardZoomSteps(event.key);
       if (zoom) {
         event.preventDefault();
-        setPose((current) => zoomBySteps(current, zoom));
+        applyPose(zoomBySteps(poseRef.current, zoom, maxZoomRef.current));
         return;
+      }
+      const stageFocused = document.activeElement === stageRef.current;
+      if (stageFocused && canPan(poseRef.current.zoom)) {
+        const delta = keyboardPanDelta(event.key);
+        if (delta) {
+          event.preventDefault();
+          applyPan(panBy(panRef.current, delta.x, delta.y, boundsRef.current));
+          return;
+        }
       }
       const turn = keyboardTurnDirection(event.key);
       if (turn) {
         event.preventDefault();
-        setPose((current) => turnBy(current, turn));
+        applyPose(turnBy(poseRef.current, turn, maxZoomRef.current));
       }
     };
     document.addEventListener("keydown", onKey, true);
@@ -174,8 +357,14 @@ export function MushafExploreDialog({ input, jumpToHit, onClose, returnFocus }: 
     if (target instanceof Element && target.closest("button, a, input, label")) return;
     event.preventDefault();
     event.currentTarget.setPointerCapture(event.pointerId);
-    drag.current = { x: event.clientX, y: event.clientY, pointer: event.pointerId };
-    setDragging(true);
+    drag.current = {
+      x: event.clientX,
+      y: event.clientY,
+      originX: event.clientX,
+      originY: event.clientY,
+      pointer: event.pointerId,
+      mode: "pending",
+    };
     stageRef.current?.focus();
   };
 
@@ -184,10 +373,22 @@ export function MushafExploreDialog({ input, jumpToHit, onClose, returnFocus }: 
     if (!start || start.pointer !== event.pointerId) return;
     const dx = event.clientX - start.x;
     const dy = event.clientY - start.y;
+    if (start.mode === "pending") {
+      const travelled = Math.hypot(event.clientX - start.originX, event.clientY - start.originY);
+      if (travelled < PAN_DRAG_THRESHOLD_PX) return;
+      start.mode = canPan(poseRef.current.zoom) ? "pan" : "turn";
+      setDragging(true);
+    }
     start.x = event.clientX;
     start.y = event.clientY;
     if (dx === 0 && dy === 0) return;
-    setPose((current) => dragPose(current, dx, dy));
+    if (start.mode === "pan") {
+      applyPan(panBy(panRef.current, dx, dy, boundsRef.current));
+      return;
+    }
+    if (start.mode === "turn") {
+      applyPose(dragPose(poseRef.current, dx, dy, maxZoomRef.current));
+    }
   };
 
   const endDrag = (event: ReactPointerEvent<HTMLDivElement>) => {
@@ -196,13 +397,20 @@ export function MushafExploreDialog({ input, jumpToHit, onClose, returnFocus }: 
     setDragging(false);
   };
 
+  const onDoubleClick = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const target = event.target;
+    if (target instanceof Element && target.closest("button, a, input, label")) return;
+    event.preventDefault();
+    applyPose(resetZoom(poseRef.current, maxZoomRef.current), true);
+  };
+
   const chipClass = (pressed: boolean) =>
     `inline-flex h-11 min-h-11 cursor-pointer items-center gap-2 rounded-full border px-3 text-sm font-semibold ${
       pressed ? "border-gold bg-gold text-on-gold" : "border-line bg-surface text-ink"
     }`;
 
   return createPortal(
-    <div className="fixed inset-0 z-[70] flex items-center justify-center p-3 sm:p-4">,
+    <div className={`fixed inset-0 z-[70] flex items-center justify-center ${fullscreen && cssFallback ? "p-0" : "p-3 sm:p-4"}`}>
       <button type="button" aria-label="Close dialog" className="absolute inset-0 cursor-pointer bg-black/45" onClick={onClose} />
       <div
         ref={dialogRef}
@@ -211,7 +419,10 @@ export function MushafExploreDialog({ input, jumpToHit, onClose, returnFocus }: 
         aria-labelledby={titleId}
         tabIndex={-1}
         data-testid="mushaf-explore-dialog"
-        className="ornament-border paper-panel relative z-10 flex h-[min(100dvh-1.5rem,52rem)] w-full max-w-6xl flex-col overflow-hidden rounded-3xl outline-none"
+        data-fullscreen={fullscreen ? "true" : "false"}
+        className={`ornament-border paper-panel mushaf-explore-dialog relative z-10 flex h-[min(100dvh-1.5rem,52rem)] w-full max-w-6xl flex-col overflow-hidden rounded-3xl outline-none${
+          fullscreen ? " is-fullscreen" : ""
+        }`}
       >
         <div className="flex shrink-0 items-start justify-between gap-4 border-b border-line/50 px-5 py-4">
           <div className="min-w-0">
@@ -220,18 +431,31 @@ export function MushafExploreDialog({ input, jumpToHit, onClose, returnFocus }: 
               Your Mushaf
             </h2>
             <p className="mt-1 text-sm leading-6 text-ink-soft">
-              Drag to turn. Scroll or + and − to zoom. Arrow keys turn the book.
+              Drag to turn. When zoomed, drag, scroll, or the arrow keys move the view. Double-click to reset. + and − zoom.
             </p>
           </div>
-          <button
-            type="button"
-            data-dialog-close
-            aria-label="Close"
-            onClick={onClose}
-            className="inline-flex h-11 min-h-11 w-11 min-w-11 shrink-0 cursor-pointer items-center justify-center rounded-full border border-line text-ink hover:bg-highlight"
-          >
-            <X className="h-4 w-4" aria-hidden="true" />
-          </button>
+          <div className="flex shrink-0 items-center gap-2">
+            <button
+              ref={fullscreenButtonRef}
+              type="button"
+              aria-label={fullscreen ? "Exit full screen" : "Full screen"}
+              aria-pressed={fullscreen}
+              data-testid="mushaf-explore-fullscreen"
+              onClick={() => (fullscreen ? void leaveFullscreen() : void enterFullscreen())}
+              className="inline-flex h-11 min-h-11 w-11 min-w-11 cursor-pointer items-center justify-center rounded-full border border-line text-ink hover:bg-highlight"
+            >
+              {fullscreen ? <Minimize className="h-4 w-4" aria-hidden="true" /> : <Maximize className="h-4 w-4" aria-hidden="true" />}
+            </button>
+            <button
+              type="button"
+              data-dialog-close
+              aria-label="Close"
+              onClick={onClose}
+              className="inline-flex h-11 min-h-11 w-11 min-w-11 shrink-0 cursor-pointer items-center justify-center rounded-full border border-line text-ink hover:bg-highlight"
+            >
+              <X className="h-4 w-4" aria-hidden="true" />
+            </button>
+          </div>
         </div>
 
         {full.legend.length > 0 || full.totals.notes > 0 || full.totals.bookmarks > 0 ? (
@@ -279,18 +503,20 @@ export function MushafExploreDialog({ input, jumpToHit, onClose, returnFocus }: 
           ref={stageRef}
           tabIndex={0}
           data-testid="mushaf-explore-stage"
-          aria-label="Closed mushaf on the desk"
-          className={`mushaf-explore-stage${angle === "fore-edge" ? " has-magnifier" : ""}`}
+          aria-label="Closed mushaf on the desk. When zoomed, drag, scroll, or use arrow keys to move the view."
+          className={`mushaf-explore-stage${angle === "fore-edge" ? " has-magnifier" : ""}${dragging ? " is-dragging" : ""}`}
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
           onPointerUp={endDrag}
           onPointerCancel={endDrag}
+          onDoubleClick={onDoubleClick}
         >
           <MushafBook
             edge={edge}
             pagesRef={pagesRef}
             variant="explore"
             pose={pose}
+            pan={pan}
             dragging={dragging}
             spotlight={share}
             tipId={interaction.tipId}
@@ -320,19 +546,19 @@ export function MushafExploreDialog({ input, jumpToHit, onClose, returnFocus }: 
                 type="button"
                 aria-label="Zoom out"
                 disabled={pose.zoom <= ZOOM_MIN}
-                onClick={() => setPose((current) => zoomBySteps(current, -1))}
+                onClick={() => applyPose(zoomBySteps(pose, -1, maxZoom))}
                 className="inline-flex h-11 w-11 cursor-pointer items-center justify-center rounded-full border border-line text-ink hover:bg-highlight disabled:cursor-not-allowed"
               >
                 <Minus className="h-4 w-4" aria-hidden="true" />
               </button>
               <span className="inline-flex h-11 min-w-16 items-center justify-center text-sm font-semibold text-ink tabular-nums" aria-hidden="true">
-                {zoomLabel(pose.zoom)}
+                {zoomLabel(pose.zoom, maxZoom)}
               </span>
               <button
                 type="button"
                 aria-label="Zoom in"
-                disabled={pose.zoom >= ZOOM_MAX}
-                onClick={() => setPose((current) => zoomBySteps(current, 1))}
+                disabled={pose.zoom >= maxZoom}
+                onClick={() => applyPose(zoomBySteps(pose, 1, maxZoom))}
                 className="inline-flex h-11 w-11 cursor-pointer items-center justify-center rounded-full border border-line text-ink hover:bg-highlight disabled:cursor-not-allowed"
               >
                 <Plus className="h-4 w-4" aria-hidden="true" />
@@ -340,7 +566,7 @@ export function MushafExploreDialog({ input, jumpToHit, onClose, returnFocus }: 
               <button
                 type="button"
                 disabled={pose.zoom === ZOOM_MIN}
-                onClick={() => setPose((current) => resetZoom(current))}
+                onClick={() => applyPose(resetZoom(pose, maxZoom), true)}
                 className="inline-flex h-11 cursor-pointer items-center justify-center rounded-full border border-line px-4 text-sm font-semibold text-ink hover:bg-highlight disabled:cursor-not-allowed"
               >
                 Reset zoom
@@ -351,7 +577,7 @@ export function MushafExploreDialog({ input, jumpToHit, onClose, returnFocus }: 
                 type="button"
                 aria-label="Turn left"
                 disabled={pose.yaw <= YAW_MIN}
-                onClick={() => setPose((current) => turnBy(current, -1))}
+                onClick={() => applyPose(turnBy(pose, -1, maxZoom))}
                 className="inline-flex h-11 w-11 cursor-pointer items-center justify-center rounded-full border border-line text-ink hover:bg-highlight disabled:cursor-not-allowed"
               >
                 <ChevronLeft className="h-4 w-4" aria-hidden="true" />
@@ -359,7 +585,7 @@ export function MushafExploreDialog({ input, jumpToHit, onClose, returnFocus }: 
               <button
                 type="button"
                 aria-pressed={angle === "three-quarter"}
-                onClick={() => setPose((current) => withAngle(current, "three-quarter"))}
+                onClick={() => applyPose(withAngle(pose, "three-quarter", maxZoom), true)}
                 className={`inline-flex h-11 cursor-pointer items-center justify-center rounded-full border px-4 text-sm font-semibold ${
                   angle === "three-quarter" ? "border-gold bg-gold text-on-gold" : "border-line text-ink hover:bg-highlight"
                 }`}
@@ -369,7 +595,7 @@ export function MushafExploreDialog({ input, jumpToHit, onClose, returnFocus }: 
               <button
                 type="button"
                 aria-pressed={angle === "fore-edge"}
-                onClick={() => setPose((current) => withAngle(current, "fore-edge"))}
+                onClick={() => applyPose(withAngle(pose, "fore-edge", maxZoom), true)}
                 className={`inline-flex h-11 cursor-pointer items-center justify-center rounded-full border px-4 text-sm font-semibold ${
                   angle === "fore-edge" ? "border-gold bg-gold text-on-gold" : "border-line text-ink hover:bg-highlight"
                 }`}
@@ -380,7 +606,7 @@ export function MushafExploreDialog({ input, jumpToHit, onClose, returnFocus }: 
                 type="button"
                 aria-label="Turn right"
                 disabled={pose.yaw >= YAW_MAX}
-                onClick={() => setPose((current) => turnBy(current, 1))}
+                onClick={() => applyPose(turnBy(pose, 1, maxZoom))}
                 className="inline-flex h-11 w-11 cursor-pointer items-center justify-center rounded-full border border-line text-ink hover:bg-highlight disabled:cursor-not-allowed"
               >
                 <ChevronRight className="h-4 w-4" aria-hidden="true" />

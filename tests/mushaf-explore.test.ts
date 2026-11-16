@@ -4,8 +4,19 @@ import { buildMushafEdge } from "../src/lib/mushaf-edge";
 import {
   FORE_EDGE,
   THREE_QUARTER,
+  ZOOM_FULLSCREEN_MAX,
   ZOOM_MAX,
   ZOOM_MIN,
+  PAN_BOUNDS_NONE,
+  PAN_MIN_VISIBLE_PX,
+  PAN_ORIGIN,
+  canPan,
+  clampPan,
+  keyboardPanDelta,
+  maxZoomForView,
+  panBoundsFromRects,
+  panBy,
+  shouldResetPan,
   YAW_MAX,
   YAW_MIN,
   angleOf,
@@ -136,6 +147,64 @@ describe("mushaf pose", () => {
     assert.equal(fixed.pitch, 2);
     assert.equal(fixed.zoom, ZOOM_MAX);
     assert.equal(clampPose({ yaw: 0, pitch: -8, zoom: Number.NaN }).zoom, ZOOM_MIN);
+  });
+
+  it("lets the close-up go to 260% and full screen go further", () => {
+    assert.equal(ZOOM_MAX, 2.6);
+    assert.equal(zoomLabel(2.6), "260%");
+    assert.equal(maxZoomForView(false), ZOOM_MAX);
+    assert.equal(maxZoomForView(true), ZOOM_FULLSCREEN_MAX);
+    assert.equal(zoomBySteps({ ...defaultPose(), zoom: 2.5 }, 1).zoom, ZOOM_MAX);
+    assert.equal(zoomBySteps({ ...defaultPose(), zoom: 2.5 }, 4, ZOOM_FULLSCREEN_MAX).zoom, 3.5);
+    assert.equal(clampPose({ ...defaultPose(), zoom: 4 }, ZOOM_FULLSCREEN_MAX).zoom, 4);
+    assert.equal(clampPose({ ...defaultPose(), zoom: 4 }).zoom, ZOOM_MAX);
+  });
+});
+
+describe("mushaf pan", () => {
+  const stage = { left: 0, right: 800, top: 0, bottom: 500 };
+  const zoomedBook = { left: -100, right: 900, top: -80, bottom: 620 };
+
+  it("only pans once the book is zoomed in", () => {
+    assert.equal(canPan(1), false);
+    assert.equal(canPan(2.6), true);
+  });
+
+  it("clamps so the book cannot leave the stage", () => {
+    const bounds = panBoundsFromRects(stage, zoomedBook, PAN_ORIGIN, 2.6);
+    assert.ok(bounds.minX < 0);
+    assert.ok(bounds.maxX > 0);
+    const corner = clampPan({ x: -10_000, y: -10_000 }, bounds);
+    const restBook = {
+      left: zoomedBook.left + corner.x,
+      right: zoomedBook.right + corner.x,
+      top: zoomedBook.top + corner.y,
+      bottom: zoomedBook.bottom + corner.y,
+    };
+    assert.ok(restBook.right >= stage.left + PAN_MIN_VISIBLE_PX - 0.5);
+    assert.ok(restBook.bottom >= stage.top + PAN_MIN_VISIBLE_PX - 0.5);
+    const other = clampPan({ x: 10_000, y: 10_000 }, bounds);
+    assert.equal(other.x, bounds.maxX);
+    assert.equal(other.y, bounds.maxY);
+    assert.deepEqual(panBy(PAN_ORIGIN, 40, -20, { minX: -50, maxX: 50, minY: -50, maxY: 50 }), { x: 40, y: -20 });
+    assert.deepEqual(panBy(PAN_ORIGIN, 80, 0, { minX: -10, maxX: 10, minY: 0, maxY: 0 }), { x: 10, y: 0 });
+  });
+
+  it("gives no room to pan at rest zoom", () => {
+    assert.deepEqual(panBoundsFromRects(stage, zoomedBook, PAN_ORIGIN, 1), PAN_BOUNDS_NONE);
+    assert.deepEqual(clampPan({ x: 20, y: -15 }, PAN_BOUNDS_NONE), PAN_ORIGIN);
+  });
+
+  it("moves with the arrow keys and resets when the angle changes or zoom returns to rest", () => {
+    assert.deepEqual(keyboardPanDelta("ArrowLeft"), { x: -48, y: 0 });
+    assert.deepEqual(keyboardPanDelta("ArrowRight"), { x: 48, y: 0 });
+    assert.deepEqual(keyboardPanDelta("ArrowUp"), { x: 0, y: -48 });
+    assert.deepEqual(keyboardPanDelta("ArrowDown"), { x: 0, y: 48 });
+    assert.equal(keyboardPanDelta("+"), null);
+    assert.equal(shouldResetPan(2.6, 2.7, false), false);
+    assert.equal(shouldResetPan(2.6, 1, false), true);
+    assert.equal(shouldResetPan(2.6, 2.6, true), true);
+    assert.equal(shouldResetPan(1, 1, false), false);
   });
 });
 

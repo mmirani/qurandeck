@@ -2,7 +2,7 @@
 
 import { type CSSProperties, type FocusEvent, type MouseEvent, type PointerEvent as ReactPointerEvent, type Ref } from "react";
 import type { EdgeChoice, MushafEdge, SurahBand, TooltipCopy } from "@/lib/mushaf-edge";
-import { angleOf, tableShadowSpan, type MushafPose } from "@/lib/mushaf-explore";
+import { angleOf, tableShadowSpan, type MushafPan, type MushafPose } from "@/lib/mushaf-explore";
 
 export type MarkHandlers = {
   onPointerEnter: (event: ReactPointerEvent<HTMLButtonElement>) => void;
@@ -18,6 +18,7 @@ type MushafBookProps = {
   variant: "card" | "explore";
   pose?: MushafPose;
   dragging?: boolean;
+  pan?: MushafPan;
   spotlight?: number | null;
   tipId: string;
   menuId: string;
@@ -33,6 +34,7 @@ export function MushafBook({
   variant,
   pose,
   dragging = false,
+  pan,
   spotlight = null,
   tipId,
   menuId,
@@ -54,6 +56,13 @@ export function MushafBook({
         "--mushaf-pitch": `${pose.pitch}deg`,
       } as CSSProperties)
     : undefined;
+  const panStyle: CSSProperties | undefined =
+    explore && pan
+      ? ({
+          "--mushaf-pan-x": `${pan.x}px`,
+          "--mushaf-pan-y": `${pan.y}px`,
+        } as CSSProperties)
+      : undefined;
 
   return (
     <div
@@ -61,8 +70,11 @@ export function MushafBook({
       data-yaw={pose ? String(Math.round(pose.yaw)) : undefined}
       data-pitch={pose ? String(Math.round(pose.pitch)) : undefined}
       data-zoom={pose ? pose.zoom.toFixed(2) : undefined}
+      data-pan-x={explore && pan ? String(Math.round(pan.x)) : undefined}
+      data-pan-y={explore && pan ? String(Math.round(pan.y)) : undefined}
       data-angle={pose ? angleOf(pose) : undefined}
       className={`mushaf-scene${explore ? " is-explore" : ""}${dragging ? " is-dragging" : ""}`}
+      style={panStyle}
       onClick={
         onExplore
           ? (event) => {
@@ -239,7 +251,7 @@ export function MushafEdgeMagnifier({
         <span className="font-medium text-ink">Page edge, magnified</span>
         <span>An-Nas · Back cover</span>
       </div>
-      <div className="mushaf-magnifier relative h-16 overflow-hidden rounded-md">
+      <div className="mushaf-magnifier relative overflow-hidden rounded-md">
         <PageStripes bands={edge.bands} empty={edge.empty} along="fore" />
         <div className="mushaf-edge-lines pointer-events-none absolute inset-0" aria-hidden="true" />
         <div
