@@ -233,13 +233,13 @@ export function MushafEdgeMagnifier({
   handlers,
 }: Pick<MushafBookProps, "edge" | "spotlight" | "tipId" | "menuId" | "activeTipId" | "activeMenuId" | "handlers">) {
   return (
-    <div data-testid="mushaf-edge-magnifier" className="flex shrink-0 flex-col gap-1.5 px-5 pt-3">
+    <div data-testid="mushaf-edge-magnifier" className="flex shrink-0 flex-col gap-1 px-5 pt-2">
       <div className="flex items-baseline justify-between text-xs text-ink-soft">
         <span>Front cover · Al-Fatihah</span>
         <span className="font-medium text-ink">Page edge, magnified</span>
         <span>An-Nas · Back cover</span>
       </div>
-      <div className="mushaf-magnifier relative h-24 overflow-hidden rounded-md">
+      <div className="mushaf-magnifier relative h-16 overflow-hidden rounded-md">
         <PageStripes bands={edge.bands} empty={edge.empty} along="fore" />
         <div className="mushaf-edge-lines pointer-events-none absolute inset-0" aria-hidden="true" />
         <div

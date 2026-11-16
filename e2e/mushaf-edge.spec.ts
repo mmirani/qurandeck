@@ -1,5 +1,9 @@
 import { expect, test, type Page } from "@playwright/test";
 
+// The dev server rate-limits /api per client address. Each spec file gets its own
+// so one file's requests never throttle another's (live traffic is unaffected).
+test.use({ extraHTTPHeaders: { "x-forwarded-for": "e2e-mushaf-edge" } });
+
 const swatches = [
   { id: "honey", name: "Honey", color: "#F5D76E" },
   { id: "garden", name: "Garden", color: "#86EFAC" },
@@ -201,6 +205,11 @@ test("explore opens a close-up, zooms, turns, and returns focus", async ({ page 
 
   await dialog.getByRole("button", { name: "Fore-edge" }).click();
   await expect(book).toHaveAttribute("data-angle", "fore-edge");
+  // Edge-on, the page block is only as wide as the book is thick, so a magnified strip appears.
+  const magnifier = dialog.getByTestId("mushaf-edge-magnifier");
+  await expect(magnifier).toBeVisible();
+  expect((await magnifier.boundingBox())?.width ?? 0).toBeGreaterThan(600);
+  await expect(dialog.getByTestId("mushaf-magnifier-slice").first()).toBeVisible();
   await expect(book).toHaveAttribute("data-yaw", "-90");
   await expect(book).toHaveAttribute("data-pitch", "0");
   await expect(book).toHaveAttribute("data-zoom", "1.25");

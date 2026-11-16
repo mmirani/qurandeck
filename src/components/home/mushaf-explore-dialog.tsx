@@ -280,7 +280,7 @@ export function MushafExploreDialog({ input, jumpToHit, onClose, returnFocus }: 
           tabIndex={0}
           data-testid="mushaf-explore-stage"
           aria-label="Closed mushaf on the desk"
-          className="mushaf-explore-stage"
+          className={`mushaf-explore-stage${angle === "fore-edge" ? " has-magnifier" : ""}`}
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
           onPointerUp={endDrag}

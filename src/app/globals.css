@@ -2655,3 +2655,8 @@ html[data-focus="on"] .sana-dock {
 .mushaf-magnifier .mushaf-spot {
   z-index: 3;
 }
+/* Leave room for the magnified strip: the edge-on book only needs to show where you are. */
+.mushaf-explore-stage.has-magnifier .mushaf-float {
+  transform: scale(0.8);
+  transform-origin: 50% 100%;
+}
