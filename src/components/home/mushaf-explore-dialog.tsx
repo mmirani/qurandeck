@@ -182,9 +182,9 @@ export function MushafExploreDialog({ input, jumpToHit, onClose, returnFocus }: 
       );
       boundsRef.current = bounds;
       const next = clampPan(panRef.current, bounds);
-      if (next.x !== panRef.current.x || next.y !== panRef.current.y) {
+      if (Math.abs(next.x - panRef.current.x) > 0.5 || Math.abs(next.y - panRef.current.y) > 0.5) {
         panRef.current = next;
-        setPan(next);
+        setPan({ x: Math.round(next.x), y: Math.round(next.y) });
       }
     };
     measure();
@@ -192,7 +192,7 @@ export function MushafExploreDialog({ input, jumpToHit, onClose, returnFocus }: 
     observer.observe(stage);
     observer.observe(book);
     return () => observer.disconnect();
-  }, [angle, fullscreen, pan.x, pan.y, pose.pitch, pose.yaw, pose.zoom]);
+  }, [angle, fullscreen, pose.pitch, pose.yaw, pose.zoom]);
 
   useEffect(() => {
     onCloseRef.current = onClose;

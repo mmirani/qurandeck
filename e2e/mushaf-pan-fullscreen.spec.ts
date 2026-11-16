@@ -118,7 +118,7 @@ async function openEdge(page: Page) {
 
 
 async function openExplore(page: Page) {
-  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.setViewportSize({ width: 1440, height: 900 });
   await seed(page, "iris", denseLibrary());
   await openEdge(page);
   await page.getByTestId("mushaf-edge-explore").click();
@@ -134,6 +134,29 @@ async function zoomTo260(dialog: Locator) {
     await zoomIn.click();
   }
   await expect(dialog.getByTestId("mushaf-explore-book")).toHaveAttribute("data-zoom", "2.60");
+}
+
+
+function boxesTouchOrOverlap(
+  a: { x: number; y: number; width: number; height: number },
+  b: { x: number; y: number; width: number; height: number },
+  slop = 1,
+) {
+  const apart =
+    a.x + a.width < b.x - slop ||
+    b.x + b.width < a.x - slop ||
+    a.y + a.height < b.y - slop ||
+    b.y + b.height < a.y - slop;
+  return !apart;
+}
+
+async function zoomToMax(dialog: Locator, expected = "4.00") {
+  const zoomIn = dialog.getByRole("button", { name: "Zoom in" });
+  for (let i = 0; i < 16; i += 1) {
+    if ((await zoomIn.getAttribute("disabled")) !== null) break;
+    await zoomIn.click();
+  }
+  await expect(dialog.getByTestId("mushaf-explore-book")).toHaveAttribute("data-zoom", expected);
 }
 
 test("at 260% zoom a drag pans the book", async ({ page }) => {
@@ -155,10 +178,7 @@ test("at 260% zoom a drag pans the book", async ({ page }) => {
   const panX = Number(await book.getAttribute("data-pan-x"));
   const panY = Number(await book.getAttribute("data-pan-y"));
   expect(Math.abs(panX) + Math.abs(panY)).toBeGreaterThan(20);
-  const transform = await book.evaluate((node) => {
-    const float = node.querySelector(".mushaf-float");
-    return float ? getComputedStyle(float).transform : "";
-  });
+  const transform = await dialog.getByTestId("mushaf-explore-zoom").evaluate((node) => getComputedStyle(node).transform);
   expect(transform).not.toBe("none");
   expect(transform).not.toBe("matrix(1, 0, 0, 1, 0, 0)");
 
@@ -192,4 +212,24 @@ test("full screen toggles and Escape exits it without closing the close-up", asy
   await expect(dialog).toBeVisible();
   await expect(dialog).toHaveAttribute("data-fullscreen", "false");
   await expect(toggle).toBeFocused();
+});
+
+test("spine and cover stay joined at 400% in three-quarter and fore-edge views", async ({ page }) => {
+  const dialog = await openExplore(page);
+  await dialog.getByTestId("mushaf-explore-fullscreen").click();
+  await expect(dialog).toHaveAttribute("data-fullscreen", "true");
+  await zoomToMax(dialog);
+
+  for (const name of ["Three-quarter", "Fore-edge"] as const) {
+    await dialog.getByRole("button", { name }).click();
+    const book = dialog.getByTestId("mushaf-explore-book");
+    await expect(book).toHaveAttribute("data-angle", name === "Fore-edge" ? "fore-edge" : "three-quarter");
+    const spine = await book.locator(".mushaf-spine").boundingBox();
+    const cover = await book.locator(".mushaf-front").boundingBox();
+    if (!spine || !cover) throw new Error(`missing book faces in ${name}`);
+    expect(
+      boxesTouchOrOverlap(spine, cover),
+      `spine and cover should meet in ${name} at 400% (spine=${JSON.stringify(spine)} cover=${JSON.stringify(cover)})`,
+    ).toBe(true);
+  }
 });

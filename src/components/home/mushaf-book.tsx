@@ -48,6 +48,8 @@ export function MushafBook({
     ? ({
         "--mushaf-zoom": pose.zoom,
         "--mushaf-shadow": tableShadowSpan(pose.yaw).toFixed(4),
+        "--mushaf-pan-x": explore && pan ? `${pan.x}px` : "0px",
+        "--mushaf-pan-y": explore && pan ? `${pan.y}px` : "0px",
       } as CSSProperties)
     : undefined;
   const bookStyle: CSSProperties | undefined = pose
@@ -56,15 +58,13 @@ export function MushafBook({
         "--mushaf-pitch": `${pose.pitch}deg`,
       } as CSSProperties)
     : undefined;
-  const panStyle: CSSProperties | undefined =
-    explore && pan
-      ? ({
-          "--mushaf-pan-x": `${pan.x}px`,
-          "--mushaf-pan-y": `${pan.y}px`,
-        } as CSSProperties)
-      : undefined;
 
   return (
+    <div
+      className={`mushaf-zoom${explore ? " is-explore" : ""}${dragging ? " is-dragging" : ""}`}
+      style={zoomStyle}
+      data-testid={explore ? "mushaf-explore-zoom" : undefined}
+    >
     <div
       data-testid={explore ? "mushaf-explore-book" : "mushaf-edge-book"}
       data-yaw={pose ? String(Math.round(pose.yaw)) : undefined}
@@ -74,7 +74,6 @@ export function MushafBook({
       data-pan-y={explore && pan ? String(Math.round(pan.y)) : undefined}
       data-angle={pose ? angleOf(pose) : undefined}
       className={`mushaf-scene${explore ? " is-explore" : ""}${dragging ? " is-dragging" : ""}`}
-      style={panStyle}
       onClick={
         onExplore
           ? (event) => {
@@ -86,7 +85,7 @@ export function MushafBook({
           : undefined
       }
     >
-      <div className="mushaf-float" style={zoomStyle}>
+      <div className="mushaf-float">
         <div className="mushaf-ground" aria-hidden="true" />
         <div className={`mushaf-book${dragging ? " is-dragging" : ""}`} style={bookStyle}>
           <div className="mushaf-spine" aria-hidden="true">
@@ -159,6 +158,7 @@ export function MushafBook({
                 className="mushaf-tab-anchor absolute z-20"
                 style={{
                   left: `${20 + Math.min(1, Math.max(0, flag.position)) * 62}%`,
+                  zIndex: 20 + Math.round((1 - Math.min(1, Math.max(0, flag.position))) * 40),
                   transform: depthShift(flag.position, "translate(-50%, -74%)"),
                 }}
               >
@@ -199,6 +199,7 @@ export function MushafBook({
                 className="mushaf-ribbon-anchor absolute z-20"
                 style={{
                   left: `${18 + Math.min(1, Math.max(0, ribbon.position)) * 58}%`,
+                  zIndex: 20 + Math.round((1 - Math.min(1, Math.max(0, ribbon.position))) * 40),
                   transform: depthShift(ribbon.position, "translateX(-50%)"),
                 }}
               >
@@ -227,6 +228,7 @@ export function MushafBook({
           })}
         </div>
       </div>
+    </div>
     </div>
   );
 }

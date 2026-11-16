@@ -257,10 +257,12 @@ test("a ribbon in the close-up names its place and opens that ayah", async ({ pa
   await dialog.getByRole("button", { name: "Fore-edge" }).click();
   await dialog.getByRole("button", { name: "Zoom in" }).click();
   const ribbon = dialog.getByRole("button", { name: /Bookmark,.*, 36:1/ });
-  await ribbon.hover();
+  // Fore-edge packs marks onto the thin page block, so AABB centers can overlap
+  // a neighbour. Aim at the left side of this ribbon, which stays unique.
+  await ribbon.hover({ position: { x: 4, y: 28 } });
   await expect(page.getByRole("tooltip")).toContainText("36:1");
   await expect(page.getByRole("tooltip")).toContainText("Ya-Sin");
-  await ribbon.click();
+  await ribbon.click({ position: { x: 4, y: 28 } });
   await expect(page).toHaveURL(/\/surah\/36#ayah-1/);
 });
 
