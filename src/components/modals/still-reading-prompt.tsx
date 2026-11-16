@@ -17,7 +17,7 @@ export function StillReadingPrompt() {
   const elsewhere = elsewherePlace ? versePlaceLabel(chapters, elsewherePlace) : null;
   if (!stillReadingAsk && !elsewhere) return null;
   // Without the idle check, this is only the "you read further elsewhere" offer.
-  const stay = stillReadingAsk ? confirmStillReading : dismissElsewherePlace;
+  const stay = elsewhere ? dismissElsewherePlace : confirmStillReading;
 
   return (
     <Modal title={elsewhere ? "Pick up where you left off?" : "Are you still reading?"} onClose={stillReadingAsk ? declineStillReading : dismissElsewherePlace}>
