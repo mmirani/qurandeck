@@ -230,6 +230,8 @@ const RETURN_AFTER_MS = 30_000;
 /** How long a returning screen waits for other devices before saving its own place. */
 const RETURN_HOLD_MS = 2_500;
 const LOAD_HOLD_MS = 4_000;
+/** A screen only claims the reading place if someone touched it this recently (or audio is playing). */
+const PLACE_INPUT_WINDOW_MS = 120_000;
 
 const MushafContext = createContext<MushafContextValue | null>(null);
 
@@ -319,6 +321,8 @@ export function MushafProvider({ children }: { children: ReactNode }) {
   const [elsewherePlace, setElsewherePlace] = useState<string | null>(null);
   /** Last keyboard, mouse or touch input anywhere on the site. */
   const lastInputRef = useRef(0);
+  /** Real input on this screen; 0 until the reader touches it, so a load or refresh never claims the place. */
+  const touchedAtRef = useRef(0);
   /** After a load or a pause, hold place saves briefly so another device's newer place can arrive first. */
   const holdPlaceUntilRef = useRef(0);
 
@@ -411,6 +415,7 @@ export function MushafProvider({ children }: { children: ReactNode }) {
       const now = Date.now();
       const away = now - lastInputRef.current >= RETURN_AFTER_MS;
       lastInputRef.current = now;
+      touchedAtRef.current = now;
       if (!away) return;
       // Back after a pause (maybe from a phone): fetch the newest place before this screen saves its own.
       holdPlaceUntilRef.current = now + RETURN_HOLD_MS;
@@ -592,6 +597,9 @@ export function MushafProvider({ children }: { children: ReactNode }) {
         timer = window.setTimeout(save, held);
         return;
       }
+      // An untouched screen (a desktop left open while reading on a phone) must
+      // never re-stamp its ayah, or its old place beats the newer one.
+      if (!isPlaying && Date.now() - touchedAtRef.current > PLACE_INPUT_WINDOW_MS) return;
       const remote = remotePlaceRef.current;
       if (remote) {
         // Sync just moved the place here from another device. Only a real move
@@ -603,7 +611,8 @@ export function MushafProvider({ children }: { children: ReactNode }) {
       setProgress((current) => {
         const target = followed ?? landingReadingPlace(current.lastVerseKey, visible);
         if (!target) return current;
-        return saveReadingPlace(current, target);
+        // Stamp only a new ayah; the same ayah still in view is not new reading.
+        return saveReadingPlace(current, target, { touch: false });
       });
     };
     timer = window.setTimeout(save, wait);
@@ -813,9 +822,19 @@ export function MushafProvider({ children }: { children: ReactNode }) {
     if (place) openSurah(place.chapterId, place.verseNumber);
   }, [openSurah]);
 
+  /** "Stay here": this page becomes the reading place, newer than the other device's. */
   const dismissElsewherePlace = useCallback(() => {
-    // Keep the synced place until they actually read on this screen.
+    const key = placeRef.current ?? visibleRef.current[0] ?? null;
+    remotePlaceRef.current = null;
     setElsewherePlace(null);
+    touchedAtRef.current = Date.now();
+    if (stillReadingAskRef.current) {
+      lastActivityRef.current = Date.now();
+      accruedSinceActivityRef.current = 0;
+      pausedForIdleRef.current = false;
+      setStillReadingAsk(false);
+    }
+    if (key) setProgress((current) => ({ ...current, lastVerseKey: key, lastActiveAt: Date.now() }));
   }, []);
 
   const clearPendingScrollVerse = useCallback(() => {
