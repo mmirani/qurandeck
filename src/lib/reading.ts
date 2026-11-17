@@ -294,7 +294,26 @@ export function saveReadingPlace(
   // clock when the ayah did not change, or "resume after a break" never fires.
   // A new ayah is real activity: always stamp it, or sync will keep an older place.
   if (same && !touch) return progress;
-  return { ...progress, lastVerseKey: verseKey, lastActiveAt: now };
+  // A move made here comes after the place this screen already holds, even if
+  // another device's clock ran ahead and stamped that place "later" than now.
+  return { ...progress, lastVerseKey: verseKey, lastActiveAt: Math.max(now, (progress.lastActiveAt ?? 0) + 1) };
+}
+
+/**
+ * "Stay here": the reader explicitly picks this page over another device's place.
+ * The stamp must beat that place even when the other device's clock is ahead of
+ * this one; a plain "now" from a slower clock would lose the merge, the old place
+ * would come back on the next sync, and the offer would pop up again.
+ */
+export function claimReadingPlace(
+  progress: ReadingProgress,
+  verseKey: string | null | undefined,
+  options: { now?: number; over?: number } = {},
+): ReadingProgress {
+  if (!verseKey || !parseVerseKey(verseKey)) return progress;
+  const now = options.now ?? Date.now();
+  const lastActiveAt = Math.max(now, (options.over ?? 0) + 1, (progress.lastActiveAt ?? 0) + 1);
+  return { ...progress, lastVerseKey: verseKey, lastActiveAt };
 }
 
 /**

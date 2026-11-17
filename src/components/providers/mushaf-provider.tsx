@@ -83,6 +83,7 @@ import {
   readingPlaceKey,
   RESUME_AFTER_MS,
   parseVerseKey,
+  claimReadingPlace,
   DECLINED_PLACE_STORAGE_KEY,
   parseDeclinedPlace,
   shouldOfferPlace,
@@ -871,6 +872,7 @@ export function MushafProvider({ children }: { children: ReactNode }) {
   /** "Stay here": this page becomes the reading place, newer than the other device's. */
   const dismissElsewherePlace = useCallback(() => {
     const key = placeRef.current ?? visibleRef.current[0] ?? null;
+    const over = remoteAtRef.current;
     declinePlace(remotePlaceRef.current, remoteAtRef.current);
     remotePlaceRef.current = null;
     setElsewherePlace(null);
@@ -881,7 +883,7 @@ export function MushafProvider({ children }: { children: ReactNode }) {
       pausedForIdleRef.current = false;
       setStillReadingAsk(false);
     }
-    if (key) setProgress((current) => ({ ...current, lastVerseKey: key, lastActiveAt: Date.now() }));
+    if (key) setProgress((current) => claimReadingPlace(current, key, { over }));
   }, []);
 
   const clearPendingScrollVerse = useCallback(() => {
