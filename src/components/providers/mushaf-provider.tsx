@@ -83,6 +83,10 @@ import {
   readingPlaceKey,
   RESUME_AFTER_MS,
   parseVerseKey,
+  DECLINED_PLACE_STORAGE_KEY,
+  parseDeclinedPlace,
+  shouldOfferPlace,
+  type DeclinedPlace,
   quietReadingPlace,
   saveReadingPlace,
   subtractReadingSeconds,
@@ -327,6 +331,8 @@ export function MushafProvider({ children }: { children: ReactNode }) {
   /** What this tab was showing when the newer place arrived. */
   const placeAtSyncRef = useRef<string | null>(null);
   const [elsewherePlace, setElsewherePlace] = useState<string | null>(null);
+  /** Stamp of the other device's place currently on offer. */
+  const remoteAtRef = useRef(0);
   /** Last keyboard, mouse or touch input anywhere on the site. */
   const lastInputRef = useRef(0);
   /** Real input on this screen; 0 until the reader touches it, so a load or refresh never claims the place. */
@@ -858,12 +864,14 @@ export function MushafProvider({ children }: { children: ReactNode }) {
    * other device's newer place stays saved; only "Stay here" claims this page.
    */
   const closeElsewherePlace = useCallback(() => {
+    declinePlace(remotePlaceRef.current, remoteAtRef.current);
     setElsewherePlace(null);
   }, []);
 
   /** "Stay here": this page becomes the reading place, newer than the other device's. */
   const dismissElsewherePlace = useCallback(() => {
     const key = placeRef.current ?? visibleRef.current[0] ?? null;
+    declinePlace(remotePlaceRef.current, remoteAtRef.current);
     remotePlaceRef.current = null;
     setElsewherePlace(null);
     touchedAtRef.current = Date.now();
@@ -1458,15 +1466,22 @@ export function MushafProvider({ children }: { children: ReactNode }) {
     holdPlaceUntilRef.current = 0;
     const local = progressRef.current;
     const incomingKey = library.progress.lastVerseKey;
+    const incomingAt = library.progress.lastActiveAt ?? 0;
     const movedElsewhere =
       Boolean(incomingKey) &&
       incomingKey !== local.lastVerseKey &&
-      (library.progress.lastActiveAt ?? 0) > (local.lastActiveAt ?? 0);
+      incomingAt > (local.lastActiveAt ?? 0);
     if (movedElsewhere) {
       remotePlaceRef.current = incomingKey;
+      remoteAtRef.current = incomingAt;
       placeAtSyncRef.current = placeRef.current;
-      // Offer the jump only while this tab is in the reader showing another ayah.
-      setElsewherePlace(isMushafPath(pathnameRef.current) && placeRef.current !== incomingKey ? incomingKey : null);
+      // Offer the jump only while this tab is in the reader showing another ayah,
+      // and never again for a place the reader already answered on this browser.
+      const offer =
+        isMushafPath(pathnameRef.current) &&
+        placeRef.current !== incomingKey &&
+        shouldOfferPlace(loadDeclinedPlace(), incomingKey, incomingAt);
+      setElsewherePlace(offer ? incomingKey : null);
     }
     // Keep the same object when nothing changed. A new translation list would
     // reload the open surah, and reloading re-claims the ayah in the URL as new
@@ -1756,4 +1771,23 @@ export function useMushaf() {
   const value = useContext(MushafContext);
   if (!value) throw new Error("useMushaf must be used within MushafProvider");
   return value;
+}
+
+function loadDeclinedPlace(): DeclinedPlace | null {
+  try {
+    return parseDeclinedPlace(window.localStorage.getItem(DECLINED_PLACE_STORAGE_KEY));
+  } catch {
+    return null;
+  }
+}
+
+/** Remember the other device's place the reader turned down, so it is not offered again. */
+function declinePlace(key: string | null, at: number) {
+  if (!key || !at) return;
+  try {
+    const value: DeclinedPlace = { key, at };
+    window.localStorage.setItem(DECLINED_PLACE_STORAGE_KEY, JSON.stringify(value));
+  } catch {
+    // Storage can be full or blocked; the offer may then return on a later sync.
+  }
 }
