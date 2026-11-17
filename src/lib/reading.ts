@@ -722,3 +722,34 @@ export function rankPage<T>(items: T[], page: number, size = 5) {
   const current = Math.min(Math.max(0, Math.floor(page) || 0), pages - 1);
   return { items: items.slice(current * size, current * size + size), page: current, pages, offset: current * size };
 }
+
+/** Another device's place the reader already answered ("Stay here" or close). */
+export type DeclinedPlace = { key: string; at: number };
+
+export const DECLINED_PLACE_STORAGE_KEY = "al-mushaf-declined-place";
+
+/**
+ * Offer another device's place only if it is not the one already turned down.
+ * A newer place (a later stamp) from that device is offered again.
+ */
+export function shouldOfferPlace(
+  declined: DeclinedPlace | null | undefined,
+  key: string | null | undefined,
+  at: number | null | undefined,
+): boolean {
+  if (!key) return false;
+  if (!declined) return true;
+  return (at ?? 0) > declined.at;
+}
+
+export function parseDeclinedPlace(raw: string | null | undefined): DeclinedPlace | null {
+  if (!raw) return null;
+  try {
+    const value = JSON.parse(raw) as Partial<DeclinedPlace>;
+    if (typeof value.key !== "string" || !parseVerseKey(value.key)) return null;
+    if (typeof value.at !== "number" || !Number.isFinite(value.at)) return null;
+    return { key: value.key, at: value.at };
+  } catch {
+    return null;
+  }
+}
