@@ -178,6 +178,18 @@ export function LibrarySync({
       if (cancelled) return;
       afterPush.current(sent, pushed, normalized);
       readyEmail.current = normalized;
+      // A choice made while the first sync was in flight (e.g. "Stay here" on the
+      // offer it raised) was not scheduled; send it now instead of waiting for
+      // the next unrelated change.
+      const latest = snapshotRef.current;
+      if (libraryChangeKind(lastSent.current, latest) === "none" || pushing.current) return;
+      pushing.current = true;
+      const followUp = await pushLibrary(latest, serverAt.current).catch(
+        (): Pushed => ({ ok: false, updatedAt: null, library: null }),
+      );
+      pushing.current = false;
+      if (cancelled) return;
+      afterPush.current(latest, followUp, normalized);
     })();
 
     return () => {

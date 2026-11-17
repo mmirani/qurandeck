@@ -5,6 +5,7 @@ import { resolveIncoming } from "../src/lib/library-resolve";
 // The dev server rate-limits /api per client address. Each spec file gets its own
 // so one file's requests never throttle another's (live traffic is unaffected).
 const CLIENT = { "x-forwarded-for": "e2e-stale-tab-place" };
+const STAY_CLIENT = { "x-forwarded-for": "e2e-stay-here" };
 
 /**
  * One account on two devices. The session and the library row are served from
@@ -129,5 +130,60 @@ test("closing the other-device offer is not 'Stay here'", async ({ browser }) =>
   await desk.evaluate(() => window.dispatchEvent(new Event("pagehide")));
   await desk.clock.runFor(5_000);
   expect(account.row.library?.progress.lastVerseKey).toBe("18:10");
+  await desktop.close();
+});
+
+test("'Stay here' on the phone sticks: no re-offer of the same place", async ({ browser }) => {
+  const account = fakeAccount();
+
+  // Desktop reads Al-Muzzammil 73:10.
+  const desktop = await browser.newContext({ ...devices["Desktop Chrome"], extraHTTPHeaders: STAY_CLIENT });
+  await account.attach(desktop);
+  const desk = await desktop.newPage();
+  await readAyah(desk, "/surah/73#ayah-10", 10);
+  await expect.poll(() => account.row.library?.progress.lastVerseKey, { timeout: 20_000 }).toBe("73:10");
+
+  // Phone opens Al-Hijr and is offered 73:10.
+  const phone = await browser.newContext({ ...devices["iPhone 14"], extraHTTPHeaders: STAY_CLIENT });
+  await account.attach(phone);
+  const mobile = await phone.newPage();
+  // The phone's clock runs five minutes behind the desktop's: "Stay here" must
+  // still win over the desktop's (later-stamped) place.
+  await mobile.clock.setSystemTime(Date.now() - 5 * 60_000);
+  await mobile.goto("/surah/15#ayah-1");
+  const offer = mobile.getByRole("dialog");
+  await expect(offer.getByRole("button", { name: /Continue at Al-Muzzammil 73:10/ })).toBeVisible({ timeout: 20_000 });
+  await offer.getByRole("button", { name: "Stay here" }).click();
+  await expect(mobile.getByRole("dialog")).toHaveCount(0);
+
+  // The server now holds this page as the place.
+  await expect.poll(() => account.row.library?.progress.lastVerseKey, { timeout: 20_000 }).toMatch(/^15:/);
+
+  // Focus, visibility, a page change and a reload never bring the same offer back.
+  for (let round = 0; round < 3; round += 1) {
+    await mobile.evaluate(() => {
+      window.dispatchEvent(new Event("focus"));
+      window.dispatchEvent(new Event("qurandeck:library-pull"));
+    });
+    await mobile.waitForTimeout(1_500);
+    await expect(mobile.getByRole("dialog")).toHaveCount(0);
+  }
+  await mobile.waitForTimeout(11_000);
+  await mobile.goto("/surah/15#ayah-3");
+  await mobile.waitForTimeout(4_000);
+  await expect(mobile.getByRole("dialog")).toHaveCount(0);
+  await mobile.reload();
+  await mobile.waitForTimeout(4_000);
+  await expect(mobile.getByRole("dialog")).toHaveCount(0);
+  expect(account.row.library?.progress.lastVerseKey).toMatch(/^15:/);
+
+  // The desktop, back after a while, is offered the phone's place.
+  await desk.waitForTimeout(11_000);
+  await desk.evaluate(() => {
+    window.dispatchEvent(new Event("focus"));
+    window.dispatchEvent(new Event("qurandeck:library-pull"));
+  });
+  await expect(desk.getByRole("dialog").getByRole("button", { name: /Continue at Al-Hijr 15:/ })).toBeVisible({ timeout: 20_000 });
+  await phone.close();
   await desktop.close();
 });
