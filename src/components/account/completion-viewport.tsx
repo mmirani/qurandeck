@@ -836,7 +836,7 @@ export function CompletionViewport({
             dragging ? "cursor-grabbing" : zoomed ? "cursor-grab" : ""
           } ${explorer ? "touch-none" : "touch-pan-y"}`}
           style={{
-            background: `linear-gradient(to bottom, color-mix(in srgb, var(--noor) ${backdrop.top}%, var(--map-base)), color-mix(in srgb, var(--noor) ${backdrop.bottom}%, var(--map-base)))`,
+            background: `linear-gradient(to bottom, color-mix(in srgb, var(--noor) ${backdrop.top}%, var(--map-base)), color-mix(in srgb, var(--noor) ${backdrop.bottom}%, var(--map-base)) 55%, color-mix(in srgb, var(--noor) ${backdrop.bottom}%, var(--map-base)))`,
             boxShadow: backdrop.halo > 0 ? `0 0 ${backdrop.haloBlur}px color-mix(in srgb, var(--noor) ${backdrop.halo}%, transparent)` : undefined,
           }}
           onPointerDown={onPointerDown}

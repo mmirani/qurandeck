@@ -149,7 +149,7 @@ function CoarsePreview({ read, onExplore }: { read: ReadIndex; onExplore: () => 
       aria-label={`Quran completion map, ${read.total} of ${TOTAL_AYAHS} ayahs read. Open the explorer to zoom in.`}
       className="relative flex h-16 w-full cursor-pointer items-stretch gap-px overflow-hidden rounded-2xl p-2.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)]"
       style={{
-        background: `linear-gradient(to bottom, color-mix(in srgb, var(--noor) ${backdrop.top}%, var(--map-base)), color-mix(in srgb, var(--noor) ${backdrop.bottom}%, var(--map-base)))`,
+        background: `linear-gradient(to bottom, color-mix(in srgb, var(--noor) ${backdrop.top}%, var(--map-base)), color-mix(in srgb, var(--noor) ${backdrop.bottom}%, var(--map-base)) 55%, color-mix(in srgb, var(--noor) ${backdrop.bottom}%, var(--map-base)))`,
         boxShadow: backdrop.halo > 0 ? `0 0 ${backdrop.haloBlur}px color-mix(in srgb, var(--noor) ${backdrop.halo}%, transparent)` : undefined,
       }}
     >
