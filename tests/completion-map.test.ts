@@ -12,6 +12,7 @@ import {
   litRuns,
   minPpa,
   noorGlow,
+  barGlow,
   panBy,
   readInSpan,
   revealSpan,
@@ -195,14 +196,23 @@ describe("completion map view math", () => {
     assert.ok(moved.start > 100 && 301 <= moved.start + width / 10);
   });
 
-  it("noor grows with fill and a finished surah shines more", () => {
+  it("noor grows with fill and a finished surah shines brightest", () => {
     assert.equal(noorGlow(0, false), null);
     const half = noorGlow(0.5, false)!;
     const full = noorGlow(1, false)!;
     const done = noorGlow(1, true)!;
-    assert.ok(full.blur > half.blur && full.alpha > half.alpha);
-    assert.ok(done.blur > full.blur && done.alpha > full.alpha);
-    assert.ok(done.alpha <= 90, "never fully opaque");
+    assert.ok(full.spread > half.spread && full.opacity > half.opacity);
+    assert.ok(done.spread > full.spread && done.opacity > full.opacity);
+    assert.ok(done.opacity <= 1);
+  });
+
+  it("the bar warms as the total rises", () => {
+    const none = barGlow(0);
+    const some = barGlow(0.25);
+    const all = barGlow(1);
+    assert.equal(none.halo, 0);
+    assert.ok(some.top > none.top && all.top > some.top && all.halo > some.halo);
+    assert.ok(all.top <= 50, "the backdrop stays calm, never solid gold");
   });
 });
 

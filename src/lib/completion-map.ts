@@ -320,15 +320,28 @@ export function barWarmth(read: ReadIndex) {
 }
 
 /**
- * Noor around a sliver: blur radius and opacity grow with fill; a finished surah shines a little more.
- * Kept small so a full bar reads as soft light, not neon.
+ * Noor bloom behind a sliver: how far the light reaches past its edges (px, before blur) and how
+ * bright it is. Grows with fill; a finished surah is brightest and reaches furthest.
+ * The bloom is painted once in a single blurred layer, never as a filter per cell.
  */
 export function noorGlow(fill: number, finished: boolean) {
   if (fill <= 0) return null;
   const value = Math.max(0, Math.min(1, fill));
-  const blur = Math.round((4 + value * 12 + (finished ? 4 : 0)) * 10) / 10;
-  const alpha = Math.round((30 + value * 40 + (finished ? 15 : 0)) * 10) / 10;
-  return { blur, alpha };
+  if (finished) return { spread: 12, opacity: 1 };
+  const spread = Math.round((3 + value * 7) * 10) / 10;
+  const opacity = Math.round((0.38 + value * 0.42) * 100) / 100;
+  return { spread, opacity };
+}
+
+/** Backdrop warmth as noor percentages for the bar: top, bottom, and the halo around it. */
+export function barGlow(warmth: number) {
+  const w = Math.max(0, Math.min(1, warmth));
+  return {
+    top: Math.round(8 + w * 42),
+    bottom: Math.round(3 + w * 22),
+    halo: Math.round(w * 55),
+    haloBlur: Math.round(10 + w * 26),
+  };
 }
 
 /**

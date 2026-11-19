@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import { Maximize2, X } from "lucide-react";
 import { useMushaf } from "@/components/providers/mushaf-provider";
 import { CompletionViewport } from "@/components/account/completion-viewport";
-import { buildReadIndex, type ReadIndex, type SurahName } from "@/lib/completion-map";
+import { barGlow, barWarmth, buildReadIndex, noorGlow, type ReadIndex, type SurahName } from "@/lib/completion-map";
 import { dialogFocusables, trapTabIndex } from "@/lib/dialog-focus";
 import { TOTAL_AYAHS, ayahIndex, finishedSurahIds, parseVerseKey, quranPieceMap, TOTAL_SURAHS } from "@/lib/reading";
 
@@ -140,7 +140,7 @@ function CoarsePreview({ read, onExplore }: { read: ReadIndex; onExplore: () => 
     }
     return out;
   }, [read]);
-  const warmth = Math.sqrt(read.total / TOTAL_AYAHS);
+  const backdrop = barGlow(barWarmth(read));
   return (
     <button
       type="button"
@@ -149,20 +149,32 @@ function CoarsePreview({ read, onExplore }: { read: ReadIndex; onExplore: () => 
       aria-label={`Quran completion map, ${read.total} of ${TOTAL_AYAHS} ayahs read. Open the explorer to zoom in.`}
       className="relative flex h-16 w-full cursor-pointer items-stretch gap-px overflow-hidden rounded-2xl p-2.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)]"
       style={{
-        background: `color-mix(in srgb, var(--noor) ${Math.round(4 + warmth * 16)}%, color-mix(in srgb, var(--line) 28%, var(--surface)))`,
+        background: `linear-gradient(to bottom, color-mix(in srgb, var(--noor) ${backdrop.top}%, var(--map-base)), color-mix(in srgb, var(--noor) ${backdrop.bottom}%, var(--map-base)))`,
+        boxShadow: backdrop.halo > 0 ? `0 0 ${backdrop.haloBlur}px color-mix(in srgb, var(--noor) ${backdrop.halo}%, transparent)` : undefined,
       }}
     >
+      <span aria-hidden="true" className="pointer-events-none absolute inset-2.5 flex gap-px blur-[6px]">
+        {map.map((fill, index) => {
+          const glow = noorGlow(fill, fill >= 1);
+          return (
+            <span
+              key={index}
+              className="min-w-0 flex-1 rounded-full"
+              style={{ background: glow ? "var(--noor)" : "transparent", opacity: glow?.opacity ?? 0, transform: glow ? `scale(${1 + glow.spread / 6}, 1.25)` : undefined }}
+            />
+          );
+        })}
+      </span>
       {map.map((fill, index) => (
         <span
           key={index}
           aria-hidden="true"
-          className="min-w-0 flex-1 rounded-[2px]"
+          className="relative min-w-0 flex-1 rounded-[2px]"
           style={{
             background:
               fill > 0
-                ? `color-mix(in srgb, var(--gold) ${Math.round(28 + fill * 72)}%, var(--canvas))`
+                ? `linear-gradient(to bottom, color-mix(in srgb, var(--noor) ${Math.round(20 + fill * 30)}%, transparent), transparent 60%), color-mix(in srgb, var(--gold) ${Math.round(28 + fill * 72)}%, var(--canvas))`
                 : "color-mix(in srgb, var(--line) 30%, var(--canvas))",
-            boxShadow: fill > 0 ? `0 0 ${Math.round(4 + fill * 12)}px color-mix(in srgb, var(--noor) ${Math.round(30 + fill * 40)}%, transparent)` : undefined,
           }}
         />
       ))}

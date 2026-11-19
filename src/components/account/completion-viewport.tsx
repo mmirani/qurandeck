@@ -20,6 +20,7 @@ import {
   SURAH_PRESET_PPA,
   ZOOM_STEP,
   ayahTickEvery,
+  barGlow,
   barWarmth,
   centreOn,
   clampView,
@@ -82,11 +83,23 @@ function sliverFill(level: CompletionLevel, chapterId: number, fill: number) {
   return `color-mix(in srgb, ${tone(chapterId)} ${strength}%, var(--canvas))`;
 }
 
-function sliverGlow(fill: number, finished: boolean) {
-  const glow = noorGlow(fill, finished);
-  if (!glow) return undefined;
-  const halo = `0 0 ${glow.blur}px color-mix(in srgb, var(--noor) ${glow.alpha}%, transparent)`;
-  return finished ? `${halo}, inset 0 2px 0 color-mix(in srgb, var(--noor) 70%, transparent)` : halo;
+/** Lit slivers look lit from within: a warm top light over the fill; finished ones lean towards noor. */
+function litPaint(paint: string, chapterId: number, fill: number, finished: boolean, level: CompletionLevel) {
+  if (fill <= 0) return paint;
+  if (finished) {
+    const glowFill = `color-mix(in srgb, ${tone(chapterId)} 58%, var(--noor))`;
+    return `linear-gradient(to bottom, color-mix(in srgb, #fff8e1 55%, transparent), transparent 55%), ${
+      level === "surah" ? `linear-gradient(${glowFill}, ${glowFill})` : glowFill
+    }`;
+  }
+  return `linear-gradient(to bottom, color-mix(in srgb, var(--noor) ${Math.round(20 + fill * 30)}%, transparent), transparent 60%), ${paint}`;
+}
+
+function litRing(fill: number, finished: boolean) {
+  if (fill <= 0) return undefined;
+  return finished
+    ? "inset 0 0 0 1px color-mix(in srgb, var(--noor) 85%, transparent), inset 0 1px 0 color-mix(in srgb, #fffbeb 80%, transparent)"
+    : "inset 0 1px 0 color-mix(in srgb, var(--noor) 45%, transparent)";
 }
 
 function prefersReducedMotion() {
@@ -123,7 +136,7 @@ const Sliver = memo(function Sliver({ level, index, left, width, fill, finished,
         left,
         width: Math.max(width, 0.5),
         background: paint,
-        boxShadow: sliverGlow(fill, finished),
+        boxShadow: litRing(fill, finished),
       }}
     />
   );
@@ -487,14 +500,35 @@ export function CompletionViewport({
         const chapterId = place?.chapterId ?? 1;
         const fill = unitFill(read, unit);
         const finished = unit.level !== "quran" ? surahFinished(read, chapterId) : fill >= 1;
-        const paint =
-          unit.level === "surah"
-            ? surahPaint(chapterId, litRuns(read, unit.start, unit.end), fill)
-            : sliverFill(unit.level, chapterId, fill);
-        return { unit, chapterId, fill, finished, paint, label: unitLabel(unit, read, name) };
+        const runs = unit.level === "surah" && fill > 0 && fill < 1 ? litRuns(read, unit.start, unit.end) : null;
+        const base = unit.level === "surah" ? surahPaint(chapterId, runs, fill) : sliverFill(unit.level, chapterId, fill);
+        const paint = litPaint(base, chapterId, fill, finished, unit.level);
+        return { unit, chapterId, fill, finished, paint, runs, label: unitLabel(unit, read, name) };
       }),
     [units, read, name],
   );
+
+  // Noor: one blurred layer of soft light behind the slivers. Each lit stretch adds a pill of
+  // light that reaches past its edges; the layer is blurred once, never per cell.
+  const blooms = useMemo(() => {
+    const out: { key: string; left: number; width: number; spread: number; opacity: number }[] = [];
+    if (!ready) return out;
+    for (const { unit, fill, finished, runs } of unitData) {
+      const glow = noorGlow(fill, finished);
+      if (!glow) continue;
+      const x = (unit.start - winFrom) * ppa;
+      const w = Math.max(1, (unit.end - unit.start) * ppa - gap);
+      if (runs && runs.length) {
+        runs.forEach(([a, b], i) => {
+          const runGlow = noorGlow(Math.min(1, 0.6 + fill), false)!;
+          out.push({ key: `${unit.index}-${i}`, left: x + a * w, width: Math.max(1, (b - a) * w), spread: runGlow.spread, opacity: runGlow.opacity });
+        });
+      } else {
+        out.push({ key: `${unit.index}`, left: x, width: w, spread: glow.spread, opacity: glow.opacity });
+      }
+    }
+    return out;
+  }, [unitData, ready, winFrom, ppa, gap]);
 
   // Move keyboard focus once the newly focused sliver is on the page.
   // A zoom that changes level swaps every sliver; if the focused one went with it, focus its successor.
@@ -710,6 +744,7 @@ export function CompletionViewport({
   };
 
   const warmth = barWarmth(read);
+  const backdrop = barGlow(warmth);
   const explorer = variant === "explorer";
   const barHeight = explorer ? "h-36 sm:h-40" : "h-16";
   const canZoomIn = view.ppa < MAX_PPA - 1e-6;
@@ -797,8 +832,8 @@ export function CompletionViewport({
             dragging ? "cursor-grabbing" : zoomed ? "cursor-grab" : ""
           } ${explorer ? "touch-none" : "touch-pan-y"}`}
           style={{
-            background: `color-mix(in srgb, var(--noor) ${Math.round(4 + warmth * 16)}%, color-mix(in srgb, var(--line) 28%, var(--surface)))`,
-            boxShadow: warmth > 0 ? `0 0 ${Math.round(6 + warmth * 18)}px color-mix(in srgb, var(--noor) ${Math.round(warmth * 30)}%, transparent)` : undefined,
+            background: `linear-gradient(to bottom, color-mix(in srgb, var(--noor) ${backdrop.top}%, var(--map-base)), color-mix(in srgb, var(--noor) ${backdrop.bottom}%, var(--map-base)))`,
+            boxShadow: backdrop.halo > 0 ? `0 0 ${backdrop.haloBlur}px color-mix(in srgb, var(--noor) ${backdrop.halo}%, transparent)` : undefined,
           }}
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
@@ -813,7 +848,7 @@ export function CompletionViewport({
             role="group"
             aria-label={`Quran completion map, ${LEVEL_NAMES[level].toLowerCase()} view. Arrow keys move, plus and minus zoom, Enter opens.`}
             aria-describedby={statusId}
-            className="absolute inset-x-0 top-2.5 bottom-7 will-change-transform"
+            className="absolute inset-x-0 top-4 bottom-8 will-change-transform"
             style={{ transform: `translate3d(${(winFrom - view.start) * ppa}px, 0, 0)` }}
             onKeyDown={onTrackKeyDown}
             onClick={onTrackClick}
@@ -825,6 +860,27 @@ export function CompletionViewport({
               if (event.relatedTarget || target.isConnected) trackHadFocus.current = false;
             }}
           >
+            <div
+              aria-hidden="true"
+              data-testid="completion-noor"
+              className="pointer-events-none absolute inset-0 will-change-transform"
+              style={{ filter: `blur(${explorer ? 9 : 7}px)` }}
+            >
+              {blooms.map((bloom) => (
+                <span
+                  key={bloom.key}
+                  className="absolute rounded-full"
+                  style={{
+                    left: bloom.left - bloom.spread,
+                    width: bloom.width + bloom.spread * 2,
+                    top: -bloom.spread,
+                    bottom: -bloom.spread * 0.6,
+                    opacity: bloom.opacity,
+                    background: "var(--noor)",
+                  }}
+                />
+              ))}
+            </div>
             {ready
               ? unitData.map(({ unit, chapterId, fill, finished, label, paint }) => (
                   <Sliver
