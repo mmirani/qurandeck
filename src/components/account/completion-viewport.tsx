@@ -679,18 +679,22 @@ export function CompletionViewport({
       return marks;
     }
     const every = ayahTickEvery(ppa);
+    let blockedUntil = -Infinity;
     for (const { unit } of unitData) {
       const place = ayahAtIndex(unit.start);
       if (!place) continue;
+      const left = (unit.start - winFrom) * ppa;
       if (place.verseNumber === 1) {
+        const room = SURAH_VERSE_COUNTS[place.chapterId - 1] * ppa - 14;
+        blockedUntil = left + Math.min(room, `${place.chapterId} ${name(place.chapterId)}`.length * 7 + 10);
         marks.push({
           key: `s${place.chapterId}`,
           left: (unit.start - winFrom) * ppa,
-          width: 160,
+          width: Math.max(16, Math.min(160, SURAH_VERSE_COUNTS[place.chapterId - 1] * ppa - 14)),
           text: `${place.chapterId} ${name(place.chapterId)}`,
           strong: true,
         });
-      } else if (place.verseNumber % every === 0 && ppa * every >= 22) {
+      } else if (place.verseNumber % every === 0 && ppa * every >= 22 && left > blockedUntil) {
         marks.push({
           key: `a${unit.start}`,
           left: (unit.start - winFrom) * ppa,
@@ -874,7 +878,7 @@ export function CompletionViewport({
                     left: bloom.left - bloom.spread,
                     width: bloom.width + bloom.spread * 2,
                     top: -bloom.spread,
-                    bottom: -bloom.spread * 0.6,
+                    bottom: -Math.min(3, bloom.spread * 0.25),
                     opacity: bloom.opacity,
                     background: "var(--noor)",
                   }}

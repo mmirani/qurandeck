@@ -2856,7 +2856,7 @@ html[data-focus="on"] .sana-dock {
 
 /* Noor: the soft light the completion map gives off as ayahs are read. */
 :root {
-  --noor: color-mix(in srgb, var(--gold) 28%, #f6b93b);
+  --noor: color-mix(in srgb, var(--gold) 8%, #ffd36a);
   --map-base: color-mix(in srgb, var(--line) 28%, var(--surface));
 }
 
@@ -2872,5 +2872,5 @@ html[data-focus="on"] .sana-dock {
 }
 
 [data-theme="contrast"] {
-  --noor: color-mix(in srgb, var(--gold) 45%, #f6b93b);
+  --noor: color-mix(in srgb, var(--gold) 15%, #f7c64f);
 }
