@@ -1,6 +1,7 @@
 import { PRODUCT_NAME } from "@/lib/brand";
 import { trackUsage } from "@/lib/usage-client";
 import {
+  finishedSurahIds,
   formatReadingMinutes,
   normalizeSurahCompletions,
   TOTAL_AYAHS,
@@ -61,10 +62,11 @@ export type LibraryExportDocument = {
 export function buildExportStats(input: LibraryExportInput): LibraryExportStats {
   const { progress, bookmarks, notes, highlights } = input;
   const completions = normalizeSurahCompletions(progress.surahCompletions, progress.surahsRead);
+  const finished = finishedSurahIds(progress);
   return {
     versesRead: progress.versesRead.length,
     versesTotal: TOTAL_AYAHS,
-    surahsFinished: progress.surahsRead.length,
+    surahsFinished: finished.length,
     surahsTotal: TOTAL_SURAHS,
     streakDays: progress.streak,
     lastReadDay: progress.lastReadDay,
@@ -73,9 +75,11 @@ export function buildExportStats(input: LibraryExportInput): LibraryExportStats 
     notes: notes.length,
     highlights: highlights.length,
     lastVerseKey: progress.lastVerseKey,
-    surahsFinishedIds: [...progress.surahsRead],
+    surahsFinishedIds: finished,
     surahCompletions: Object.fromEntries(
-      Object.entries(completions).map(([id, count]) => [String(id), count]),
+      Object.entries(completions)
+        .filter(([id]) => finished.includes(Number(id)))
+        .map(([id, count]) => [String(id), count]),
     ),
   };
 }

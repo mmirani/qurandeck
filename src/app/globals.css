@@ -2853,3 +2853,23 @@ html[data-focus="on"] .sana-dock {
 .mushaf-explore-dialog.is-fullscreen .mushaf-magnifier {
   height: 7rem;
 }
+
+/* Noor: the soft light the completion map gives off as ayahs are read. */
+:root {
+  --noor: color-mix(in srgb, var(--gold) 55%, #f2b640);
+}
+
+[data-theme="aurora"],
+[data-theme="obsidian"],
+[data-theme="midnight"],
+[data-theme="slate"],
+[data-theme="forest"],
+[data-theme="amethyst"],
+[data-theme="rose"],
+[data-theme="cyan"] {
+  --noor: color-mix(in srgb, var(--gold) 72%, #fff1c2);
+}
+
+[data-theme="contrast"] {
+  --noor: color-mix(in srgb, var(--gold) 70%, #ffd88a);
+}
