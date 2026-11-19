@@ -878,7 +878,7 @@ export function CompletionViewport({
                     left: bloom.left - bloom.spread,
                     width: bloom.width + bloom.spread * 2,
                     top: -bloom.spread,
-                    bottom: -Math.min(3, bloom.spread * 0.25),
+                    bottom: 0,
                     opacity: bloom.opacity,
                     background: "var(--noor)",
                   }}
@@ -906,7 +906,7 @@ export function CompletionViewport({
             <div aria-hidden="true" className="pointer-events-none absolute top-full left-0 h-6">
               {sticky ? (
                 <span
-                  className="absolute top-1 overflow-hidden text-xs leading-4 font-semibold whitespace-nowrap text-ellipsis text-ink"
+                  className="absolute top-2 overflow-hidden text-xs leading-4 font-semibold whitespace-nowrap text-ellipsis text-ink"
                   style={{ left: sticky.left, maxWidth: sticky.width }}
                 >
                   {sticky.text}
@@ -917,7 +917,7 @@ export function CompletionViewport({
                 .map((mark) => (
                 <span
                   key={mark.key}
-                  className={`absolute top-1 overflow-hidden text-xs leading-4 whitespace-nowrap text-ellipsis ${
+                  className={`absolute top-2 overflow-hidden text-xs leading-4 whitespace-nowrap text-ellipsis ${
                     mark.strong ? "font-semibold text-ink" : "text-ink-soft"
                   }`}
                   style={{ left: mark.left, maxWidth: mark.width }}
