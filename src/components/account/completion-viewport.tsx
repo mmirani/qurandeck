@@ -24,6 +24,7 @@ import {
   barWarmth,
   centreOn,
   clampView,
+  fitLabel,
   isZoomed,
   levelForPpa,
   litRuns,
@@ -32,7 +33,6 @@ import {
   noorGlow,
   overviewFill,
   panBy,
-  placePopover,
   revealSpan,
   sliverPaint,
   sliverRing,
@@ -49,7 +49,6 @@ import {
   wholeView,
   zoomAt,
   type CompletionLevel,
-  type PopoverPlacement,
   type CompletionView,
   type ReadIndex,
   type SurahName,
@@ -169,8 +168,6 @@ export function CompletionViewport({
   const viewportRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const popoverRef = useRef<HTMLDivElement>(null);
-  const anchorRef = useRef<HTMLDivElement>(null);
-  const [placement, setPlacement] = useState<PopoverPlacement | null>(null);
   const [width, setWidth] = useState(0);
   const [view, setViewState] = useState<CompletionView>({ start: 0, ppa: 0.1 });
   const viewRef = useRef(view);
@@ -637,58 +634,8 @@ export function CompletionViewport({
     if (revealed !== viewRef.current) animateTo(revealed);
   };
 
-  const screenX = (ayah: number) => (ayah - view.start) * ppa;
-  const popoverWidth = Math.min(300, Math.max(0, width - 8));
-  const popoverLeft = openUnit
-    ? Math.max(0, Math.min(width - popoverWidth, screenX((openUnit.start + openUnit.end) / 2) - popoverWidth / 2))
-    : 0;
-
-  // Open above the bar (a phone held sideways has no room below), flip below when
-  // above does not fit, and keep the whole popover on screen. Measured before paint.
-  const popoverOpen = Boolean(openUnit && details);
-  useLayoutEffect(() => {
-    if (!popoverOpen) return;
-    const place = () => {
-      const anchor = anchorRef.current;
-      const bar = viewportRef.current;
-      const pop = popoverRef.current;
-      if (!anchor || !bar || !pop) return;
-      const host = anchor.getBoundingClientRect();
-      const barBox = bar.getBoundingClientRect();
-      const vv = window.visualViewport;
-      const next = placePopover({
-        anchor: barBox,
-        size: { width: pop.offsetWidth, height: pop.scrollHeight + (pop.offsetHeight - pop.clientHeight) },
-        viewport: { width: vv?.width ?? window.innerWidth, height: vv?.height ?? window.innerHeight },
-        preferredLeft: host.left + popoverLeft,
-      });
-      const relative = { ...next, top: next.top - host.top, left: next.left - host.left };
-      setPlacement((prev) =>
-        prev &&
-        prev.side === relative.side &&
-        Math.abs(prev.top - relative.top) < 0.5 &&
-        Math.abs(prev.left - relative.left) < 0.5 &&
-        prev.maxHeight === relative.maxHeight
-          ? prev
-          : relative,
-      );
-    };
-    place();
-    // Turning the phone re-places it; scrolling the page carries it along with the bar.
-    window.addEventListener("resize", place);
-    window.visualViewport?.addEventListener("resize", place);
-    return () => {
-      window.removeEventListener("resize", place);
-      window.visualViewport?.removeEventListener("resize", place);
-    };
-  }, [popoverOpen, popoverLeft, popoverWidth, details]);
-
   const hoverUnit = hover != null && !dragging && !openUnit ? unitAt(level, hover) : null;
   const hoverLabel = hoverUnit ? unitLabel(hoverUnit, read, name) : "";
-  const tooltipWidth = 260;
-  const hoverLeft = hoverUnit
-    ? Math.max(0, Math.min(width - tooltipWidth, screenX((hoverUnit.start + hoverUnit.end) / 2) - tooltipWidth / 2))
-    : 0;
 
   /* ---------- ruler, overview, warmth ---------- */
 
@@ -746,6 +693,8 @@ export function CompletionViewport({
     const label = `${first.chapterId} ${name(first.chapterId)}`;
     return { left: edge, width: Math.min(room, 180), text: label };
   })();
+  // Never draw a cut-off label: shorten "3 Ali 'Imran" to "3" at the bar's right edge, or skip it.
+  const visibleRight = (view.start - winFrom) * ppa + width - 6;
   const stickyRight = sticky ? sticky.left + Math.min(sticky.width, sticky.text.length * 7.2 + 8) : -Infinity;
 
   const overview = useMemo(
@@ -775,7 +724,10 @@ export function CompletionViewport({
   const warmth = barWarmth(read);
   const backdrop = barGlow(warmth);
   const explorer = variant === "explorer";
-  const barHeight = explorer ? "h-36 sm:h-40" : "h-16";
+  // A phone held sideways is short: a lower bar keeps the details row and the whole bar on screen.
+  const barHeight = explorer
+    ? "h-36 [@media(min-width:640px)_and_(min-height:501px)]:h-40 [@media(max-height:500px)]:h-28"
+    : "h-16";
   const canZoomIn = view.ppa < MAX_PPA - 1e-6;
   const canZoomOut = zoomed;
 
@@ -852,7 +804,99 @@ export function CompletionViewport({
         />
       </div>
 
-      <div ref={anchorRef} className="relative">
+      {/* Details sit in their own reserved row just above the bar: nothing floats over the
+          header, the stats, the controls or the key, and the bar never shifts when one opens. */}
+      <div
+        data-testid="completion-details"
+        className="flex min-h-[7.25rem] flex-col justify-center rounded-2xl border border-line bg-surface px-3 py-2 sm:min-h-[3.875rem]"
+      >
+        {openUnit && details ? (
+          <div
+            ref={popoverRef}
+            role="dialog"
+            aria-modal="false"
+            aria-labelledby={popoverTitleId}
+            data-testid="completion-popover"
+            className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-2 gap-y-2 text-ink sm:grid-cols-[minmax(0,1fr)_auto_auto]"
+            onKeyDown={(event) => {
+              if (event.key === "Escape") {
+                event.preventDefault();
+                event.stopPropagation();
+                closePopover(true);
+              }
+            }}
+          >
+            <div className="col-start-1 row-start-1 min-w-0">
+              <p id={popoverTitleId} className="text-sm leading-5 font-semibold">
+                {details.title}
+              </p>
+              <p className="text-sm leading-5 text-ink-soft" data-testid="completion-popover-surah">
+                {details.surahLine}
+                {details.detail ? ` · ${details.detail}` : details.finished ? " · Finished" : ""}
+              </p>
+            </div>
+            <div className="col-span-2 row-start-2 flex items-center gap-2 sm:col-span-1 sm:col-start-2 sm:row-start-1">
+              <button
+                type="button"
+                aria-label={`Previous ${level === "quran" ? "slice" : level}`}
+                disabled={openUnit.index === 0}
+                onClick={() => stepPopover(-1)}
+                className="inline-flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full border border-line text-ink disabled:opacity-40"
+              >
+                <ChevronLeft aria-hidden="true" className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                data-primary
+                onClick={() => onOpen(details.target)}
+                className="inline-flex h-11 min-w-0 flex-1 cursor-pointer items-center justify-center rounded-full bg-gold px-4 text-sm font-semibold whitespace-nowrap text-on-gold sm:flex-none"
+              >
+                {details.action}
+              </button>
+              <button
+                type="button"
+                aria-label={`Next ${level === "quran" ? "slice" : level}`}
+                disabled={openUnit.index >= unitCount(level) - 1}
+                onClick={() => stepPopover(1)}
+                className="inline-flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full border border-line text-ink disabled:opacity-40"
+              >
+                <ChevronRight aria-hidden="true" className="h-4 w-4" />
+              </button>
+            </div>
+            <button
+              type="button"
+              aria-label="Close"
+              onClick={() => closePopover(true)}
+              className="col-start-2 row-start-1 inline-flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center justify-self-end rounded-full text-ink-soft hover:bg-highlight sm:col-start-3"
+            >
+              <X aria-hidden="true" className="h-4 w-4" />
+            </button>
+          </div>
+        ) : (
+          <div className="flex flex-wrap items-center justify-between gap-x-4 text-xs leading-5 text-ink-soft">
+            {hoverUnit ? (
+              <p data-testid="completion-tooltip" aria-hidden="true" className="font-medium text-ink">
+                {hoverLabel}
+              </p>
+            ) : (
+              <p data-testid="completion-status-line" aria-hidden="true" className="font-medium text-ink">
+                {LEVEL_NAMES[level]}
+                {rangeText ? ` · ${rangeText}` : ""}
+              </p>
+            )}
+            <p>{hint}</p>
+          </div>
+        )}
+        <p id={statusId} data-testid="completion-status" className="sr-only">
+          {LEVEL_NAMES[level]}
+          {rangeText ? ` · ${rangeText}` : ""}
+        </p>
+        <p aria-live="polite" className="sr-only">
+          {ready ? `${LEVEL_NAMES[level]} view` : ""}
+        </p>
+      </div>
+
+      <div className="relative">
         <div
           ref={viewportRef}
           data-testid="completion-viewport"
@@ -942,6 +986,8 @@ export function CompletionViewport({
               ) : null}
               {ruler
                 .filter((mark) => mark.left > stickyRight || mark.left + mark.width < (sticky?.left ?? 0))
+                .map((mark) => ({ ...mark, text: fitLabel(mark.text, Math.min(mark.width, visibleRight - mark.left)) }))
+                .filter((mark) => mark.text)
                 .map((mark) => (
                 <span
                   key={mark.key}
@@ -963,100 +1009,6 @@ export function CompletionViewport({
           ) : null}
         </div>
 
-        {hoverUnit ? (
-          <div
-            role="tooltip"
-            data-testid="completion-tooltip"
-            className="pointer-events-none absolute bottom-full z-20 mb-2 rounded-xl border border-line bg-surface px-3 py-2 text-xs leading-5 text-ink shadow-lg"
-            style={{ left: hoverLeft, width: tooltipWidth }}
-          >
-            {hoverLabel}
-          </div>
-        ) : null}
-
-        {openUnit && details ? (
-          <div
-            ref={popoverRef}
-            role="dialog"
-            aria-modal="false"
-            aria-labelledby={popoverTitleId}
-            data-testid="completion-popover"
-            data-side={placement?.side ?? "above"}
-            className={`absolute z-30 overflow-y-auto overscroll-contain rounded-2xl border border-line bg-surface p-3 text-ink shadow-xl ${placement ? "" : "bottom-full mb-2"}`}
-            style={
-              placement
-                ? { top: placement.top, left: placement.left, width: popoverWidth, maxHeight: placement.maxHeight }
-                : { left: popoverLeft, width: popoverWidth }
-            }
-            onKeyDown={(event) => {
-              if (event.key === "Escape") {
-                event.preventDefault();
-                event.stopPropagation();
-                closePopover(true);
-              }
-            }}
-          >
-            <div className="flex items-start justify-between gap-2">
-              <div className="min-w-0 pt-1">
-                <p id={popoverTitleId} className="text-sm font-semibold leading-5">
-                  {details.title}
-                </p>
-                <p className="mt-0.5 text-sm leading-5 text-ink-soft" data-testid="completion-popover-surah">
-                  {details.surahLine}
-                  {details.finished ? " · Finished" : ""}
-                </p>
-                {details.detail ? <p className="text-xs leading-5 text-ink-soft">{details.detail}</p> : null}
-              </div>
-              <button
-                type="button"
-                aria-label="Close"
-                onClick={() => closePopover(true)}
-                className="inline-flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full text-ink-soft hover:bg-highlight"
-              >
-                <X aria-hidden="true" className="h-4 w-4" />
-              </button>
-            </div>
-            <div className="mt-2 flex items-center gap-2">
-              <button
-                type="button"
-                aria-label={`Previous ${level === "quran" ? "slice" : level}`}
-                disabled={openUnit.index === 0}
-                onClick={() => stepPopover(-1)}
-                className="inline-flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full border border-line text-ink disabled:opacity-40"
-              >
-                <ChevronLeft aria-hidden="true" className="h-4 w-4" />
-              </button>
-              <button
-                type="button"
-                data-primary
-                onClick={() => onOpen(details.target)}
-                className="inline-flex h-11 min-w-0 flex-1 cursor-pointer items-center justify-center rounded-full bg-gold px-4 text-sm font-semibold text-on-gold"
-              >
-                {details.action}
-              </button>
-              <button
-                type="button"
-                aria-label={`Next ${level === "quran" ? "slice" : level}`}
-                disabled={openUnit.index >= unitCount(level) - 1}
-                onClick={() => stepPopover(1)}
-                className="inline-flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full border border-line text-ink disabled:opacity-40"
-              >
-                <ChevronRight aria-hidden="true" className="h-4 w-4" />
-              </button>
-            </div>
-          </div>
-        ) : null}
-      </div>
-
-      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-xs leading-5 text-ink-soft">
-        <p id={statusId} data-testid="completion-status">
-          {LEVEL_NAMES[level]}
-          {rangeText ? ` · ${rangeText}` : ""}
-        </p>
-        <p aria-live="polite" className="sr-only">
-          {ready ? `${LEVEL_NAMES[level]} view` : ""}
-        </p>
-        <p>{hint}</p>
       </div>
     </div>
   );

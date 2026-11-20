@@ -8,6 +8,7 @@ import {
   buildReadIndex,
   clampView,
   firstUnreadIn,
+  fitLabel,
   heatColor,
   levelForPpa,
   litRuns,
@@ -16,7 +17,6 @@ import {
   overviewFill,
   barGlow,
   panBy,
-  placePopover,
   readInSpan,
   revealSpan,
   sliverPaint,
@@ -332,41 +332,13 @@ describe("emerald heat map paint", () => {
 });
 
 
-describe("sliver popover placement", () => {
-  const size = { width: 300, height: 150 };
 
-  it("opens above the bar on a phone held sideways", () => {
-    const viewport = { width: 844, height: 390 };
-    const anchor = { top: 236, bottom: 380 };
-    const p = placePopover({ anchor, size, viewport, preferredLeft: 400 });
-    assert.equal(p.side, "above");
-    assert.equal(p.top, 236 - 8 - 150);
-    assert.ok(p.top >= 8 && p.top + size.height <= anchor.top, "fully on screen and clear of the bar");
-  });
-
-  it("opens above on a desktop screen too", () => {
-    const p = placePopover({ anchor: { top: 300, bottom: 460 }, size, viewport: { width: 1280, height: 900 }, preferredLeft: 500 });
-    assert.equal(p.side, "above");
-  });
-
-  it("flips below when there is no room above", () => {
-    const p = placePopover({ anchor: { top: 60, bottom: 124 }, size, viewport: { width: 390, height: 844 }, preferredLeft: 40 });
-    assert.equal(p.side, "below");
-    assert.equal(p.top, 124 + 8);
-  });
-
-  it("keeps the popover inside the screen horizontally", () => {
-    const viewport = { width: 390, height: 844 };
-    const anchor = { top: 400, bottom: 464 };
-    assert.equal(placePopover({ anchor, size, viewport, preferredLeft: -40 }).left, 8);
-    assert.equal(placePopover({ anchor, size, viewport, preferredLeft: 300 }).left, 390 - 8 - 300);
-  });
-
-  it("pins and caps the height when neither side fits", () => {
-    const viewport = { width: 844, height: 200 };
-    const p = placePopover({ anchor: { top: 90, bottom: 150 }, size: { width: 300, height: 260 }, viewport, preferredLeft: 10 });
-    assert.equal(p.side, "above");
-    assert.equal(p.maxHeight, 184);
-    assert.equal(p.top, 8);
+describe("ruler labels never show cut text", () => {
+  it("shows the full label when it fits, the number when only that fits, else nothing", () => {
+    assert.equal(fitLabel("3 Ali 'Imran", 200), "3 Ali 'Imran");
+    assert.equal(fitLabel("3 Ali 'Imran", 30), "3");
+    assert.equal(fitLabel("114 An-Nas", 12), "");
+    assert.equal(fitLabel("40", 30), "40");
+    assert.equal(fitLabel("40", -5), "");
   });
 });
