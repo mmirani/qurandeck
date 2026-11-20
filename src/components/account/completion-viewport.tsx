@@ -62,7 +62,7 @@ function CompletionKey() {
     <div
       data-testid="completion-key"
       aria-hidden="true"
-      className="order-last flex w-full flex-wrap items-center gap-x-1.5 gap-y-1 text-[11px] leading-4 font-medium text-ink-soft sm:order-none sm:w-auto sm:flex-1 sm:justify-center"
+      className="flex w-full flex-wrap items-center gap-x-1.5 gap-y-1 text-[11px] leading-4 font-medium text-ink-soft sm:w-auto sm:flex-1 sm:justify-center"
     >
       <span className="inline-flex items-center gap-1.5">
         <span className="inline-block size-2.5 rounded-[3px] bg-[var(--map-unread)] shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--ink)_22%,transparent),inset_0_0_0_1px_var(--map-edge)]" />
@@ -747,28 +747,30 @@ export function CompletionViewport({
   return (
     <div className="flex flex-col gap-3" data-testid={`completion-view-${variant}`}>
       <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
-        <div role="group" aria-label="Zoom level" className="inline-flex rounded-full border border-line bg-surface p-0.5">
-          {(Object.keys(LEVEL_NAMES) as CompletionLevel[]).map((id) => (
-            <button
-              key={id}
-              type="button"
-              aria-pressed={level === id}
-              onClick={() => goToLevel(id)}
-              className="h-11 min-w-11 cursor-pointer rounded-full px-3.5 text-sm font-medium text-ink-soft transition-colors aria-pressed:bg-gold aria-pressed:text-on-gold motion-reduce:transition-none sm:px-4"
-            >
-              {LEVEL_NAMES[id]}
+        <div className="flex w-full items-center justify-between gap-2 sm:contents">
+          <div role="group" aria-label="Zoom level" className="inline-flex rounded-full border border-line bg-surface p-0.5">
+            {(Object.keys(LEVEL_NAMES) as CompletionLevel[]).map((id) => (
+              <button
+                key={id}
+                type="button"
+                aria-pressed={level === id}
+                onClick={() => goToLevel(id)}
+                className="h-11 min-w-11 cursor-pointer rounded-full px-3 text-sm font-medium text-ink-soft transition-colors aria-pressed:bg-gold aria-pressed:text-on-gold motion-reduce:transition-none sm:px-4"
+              >
+                {LEVEL_NAMES[id]}
+              </button>
+            ))}
+          </div>
+          <div className="flex items-center gap-2 sm:order-3">
+            <button type="button" aria-label="Zoom out" className={controlButton} disabled={!canZoomOut} onClick={() => zoomBy(1 / ZOOM_STEP)}>
+              <Minus aria-hidden="true" className="h-4 w-4" />
             </button>
-          ))}
+            <button type="button" aria-label="Zoom in" className={controlButton} disabled={!canZoomIn} onClick={() => zoomBy(ZOOM_STEP)}>
+              <Plus aria-hidden="true" className="h-4 w-4" />
+            </button>
+          </div>
         </div>
         <CompletionKey />
-        <div className="flex items-center gap-2">
-          <button type="button" aria-label="Zoom out" className={controlButton} disabled={!canZoomOut} onClick={() => zoomBy(1 / ZOOM_STEP)}>
-            <Minus aria-hidden="true" className="h-4 w-4" />
-          </button>
-          <button type="button" aria-label="Zoom in" className={controlButton} disabled={!canZoomIn} onClick={() => zoomBy(ZOOM_STEP)}>
-            <Plus aria-hidden="true" className="h-4 w-4" />
-          </button>
-        </div>
       </div>
 
       <div

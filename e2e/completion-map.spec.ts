@@ -117,7 +117,11 @@ test("desktop: deep zoom shows each ayah, read ones lit", async ({ page }) => {
   // Zoom in to the limit with +.
   const zoomIn = page.getByRole("button", { name: "Zoom in" });
   for (let i = 0; i < 6 && (await zoomIn.isEnabled()); i += 1) {
-    await zoomIn.click();
+    try {
+      await zoomIn.click({ timeout: 2_000 });
+    } catch {
+      break;
+    }
     await page.waitForTimeout(260);
   }
   await expect(zoomIn).toBeDisabled();
@@ -292,9 +296,13 @@ async function cssColor(page: Page, token: string) {
 }
 
 function parseRgb(value: string) {
-  const match = /rgba?\((\d+)[,\s]+(\d+)[,\s]+(\d+)/.exec(value);
-  if (!match) throw new Error(`not a color: ${value}`);
-  return [Number(match[1]), Number(match[2]), Number(match[3])] as const;
+  const rgb = /rgba?\((\d+)[,\s]+(\d+)[,\s]+(\d+)/.exec(value);
+  if (rgb) return [Number(rgb[1]), Number(rgb[2]), Number(rgb[3])] as const;
+  const srgb = /color\(srgb\s+([0-9.]+)\s+([0-9.]+)\s+([0-9.]+)/.exec(value);
+  if (srgb) {
+    return [Math.round(Number(srgb[1]) * 255), Math.round(Number(srgb[2]) * 255), Math.round(Number(srgb[3]) * 255)] as const;
+  }
+  throw new Error(`not a color: ${value}`);
 }
 
 function contrastRatio(a: readonly [number, number, number], b: readonly [number, number, number]) {
