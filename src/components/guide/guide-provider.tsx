@@ -20,6 +20,7 @@ import { sanaCommandName } from "@/lib/usage-catalog";
 import { focusOpenNote } from "@/lib/note-composer";
 import { scrollVerseIntoPane } from "@/lib/reader-scroll";
 import { trackUsage } from "@/lib/usage-client";
+import { finishedSurahIds } from "@/lib/reading";
 
 type GuideKind = "welcome" | "lesson" | null;
 
@@ -172,7 +173,7 @@ export function GuideProvider({ children }: { children: ReactNode }) {
       translations,
       recitations,
       versesRead: readingProgress.versesRead.length,
-      surahsFinished: readingProgress.surahsRead.length,
+      surahsFinished: finishedSurahIds(readingProgress).length,
       streak: readingProgress.streak,
       openSurah,
       openJuz,

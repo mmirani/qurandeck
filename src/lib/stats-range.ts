@@ -2,6 +2,7 @@ import {
   formatReadingMinutes,
   asDayKey,
   isDayKey,
+  finishedSurahIds,
   isMonthKey,
   lastDayKeyOfMonth,
   parseDayKey,
@@ -227,7 +228,7 @@ export function computeRangeStats(
   const range = resolveStatsRange(input, now, input.locale);
   const progress = input.progress;
   const streak = progress.streak;
-  const surahsFinished = progress.surahsRead.length;
+  const surahsFinished = finishedSurahIds(progress).length;
   const lifetimeAyahs = progress.versesRead.length;
   const mushafPercent = Math.min(100, Math.round((lifetimeAyahs / TOTAL_AYAHS) * 1000) / 10);
   const notes = countActivityInRange(input.notes, range.start, range.end);

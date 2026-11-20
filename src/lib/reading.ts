@@ -510,9 +510,8 @@ export function markVerseRead(progress: ReadingProgress, verseKey: string, day =
   const place = parseVerseKey(verseKey);
   if (!place || result.surahsRead.includes(place.chapterId)) return result;
 
-  const ayahs = SURAH_VERSE_COUNTS[place.chapterId - 1];
-  // First finish: last ayah reached, or every ayah already marked.
-  if (place.verseNumber === ayahs || isSurahFullyRead(versesRead, place.chapterId)) {
+  // A surah is finished only when every one of its ayahs is lit — reaching the last ayah is not enough.
+  if (isNew && isSurahFullyRead(versesRead, place.chapterId)) {
     return recordSurahCompletion(result, place.chapterId);
   }
   return result;
@@ -559,13 +558,12 @@ export type RankedSurah = { chapterId: number; completions: number; ayahs: numbe
 export type RankedAyah = { verseKey: string; chapterId: number; verseNumber: number; visits: number };
 
 /**
- * Surahs from progress.surahsRead — same list as “Surahs finished”.
+ * Finished surahs (every ayah read) — same list as “Surahs finished”.
  * Completions come from surahCompletions (one per real finish), not ayah glance counts.
  */
 export function topCompletedSurahs(progress: ReadingProgress, limit = 5): RankedSurah[] {
   const completions = normalizeSurahCompletions(progress.surahCompletions, progress.surahsRead);
-  return progress.surahsRead
-    .filter((chapterId) => Number.isInteger(chapterId) && chapterId >= 1 && chapterId <= TOTAL_SURAHS)
+  return finishedSurahIds(progress)
     .map((chapterId) => ({
       chapterId,
       completions: completions[chapterId] ?? 1,
@@ -639,8 +637,39 @@ export function versePlaceLabel(
   };
 }
 
-export function ayahsReadInSurah(progress: ReadingProgress, chapterId: number) {
-  return progress.versesRead.filter((key) => Number(key.split(":")[0]) === chapterId).length;
+/** Distinct, valid ayahs read in one surah (duplicates and out-of-range keys never count). */
+export function ayahsReadInSurah(progress: Pick<ReadingProgress, "versesRead">, chapterId: number) {
+  if (!Number.isInteger(chapterId) || chapterId < 1 || chapterId > TOTAL_SURAHS) return 0;
+  const total = SURAH_VERSE_COUNTS[chapterId - 1];
+  const seen = new Set<number>();
+  for (const key of progress.versesRead) {
+    const place = parseVerseKey(key);
+    if (!place || place.chapterId !== chapterId || place.verseNumber > total) continue;
+    seen.add(place.verseNumber);
+  }
+  return seen.size;
+}
+
+/**
+ * Surahs that count as finished: every ayah is in versesRead. Older builds also recorded a
+ * surah when only its last ayah was reached; those stored ids stay in surahsRead for sync,
+ * but are not counted until the rest of the surah is read.
+ */
+export function finishedSurahIds(progress: Pick<ReadingProgress, "versesRead">): number[] {
+  const set = new Set(progress.versesRead);
+  const out: number[] = [];
+  for (let chapterId = 1; chapterId <= TOTAL_SURAHS; chapterId += 1) {
+    const ayahs = SURAH_VERSE_COUNTS[chapterId - 1];
+    let complete = true;
+    for (let verseNumber = 1; verseNumber <= ayahs; verseNumber += 1) {
+      if (!set.has(`${chapterId}:${verseNumber}`)) {
+        complete = false;
+        break;
+      }
+    }
+    if (complete) out.push(chapterId);
+  }
+  return out;
 }
 
 const SURAH_OFFSETS = SURAH_VERSE_COUNTS.reduce<number[]>((offsets, count) => {
