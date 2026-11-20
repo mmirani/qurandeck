@@ -333,7 +333,7 @@ export function noorGlow(fill: number, finished: boolean) {
   return { spread, opacity };
 }
 
-/** Backdrop warmth as noor percentages for the bar: top, bottom, and the halo around it. */
+/** Backdrop bloom percentages for the bar: top, bottom, and the halo around it. */
 export function barGlow(warmth: number) {
   const w = Math.max(0, Math.min(1, warmth));
   return {
@@ -363,4 +363,69 @@ export function litRuns(read: ReadIndex, start: number, end: number, limit = 48)
     }
   }
   return runs;
+}
+
+/** Quiet unread cell. Color means only how much is read, never which surah. */
+export const MAP_UNREAD = "var(--map-unread)";
+
+/**
+ * Emerald heat color for a 0–1 fill. The ramp is the same on every theme
+ * (tokens change only between Day/Paper, Night, and High Contrast).
+ * Unread and finished are not part of this ramp.
+ */
+export function heatColor(fill: number): string {
+  if (fill <= 0) return MAP_UNREAD;
+  const value = Math.max(0, Math.min(1, fill));
+  if (value < 0.5) {
+    return `color-mix(in srgb, var(--map-mid) ${Math.round((value / 0.5) * 100)}%, var(--map-low))`;
+  }
+  return `color-mix(in srgb, var(--map-high) ${Math.round(((value - 0.5) / 0.5) * 100)}%, var(--map-mid))`;
+}
+
+function litSheen(fill: number, finished: boolean): string {
+  if (finished) {
+    return `linear-gradient(to bottom, color-mix(in srgb, var(--map-sheen) 70%, transparent), transparent 55%)`;
+  }
+  return `linear-gradient(to bottom, color-mix(in srgb, var(--map-bloom) ${Math.round(18 + fill * 36)}%, transparent), transparent 60%)`;
+}
+
+/** CSS background for a slice, an ayah, or a fully filled surah. */
+export function sliverPaint(fill: number, finished: boolean): string {
+  if (fill <= 0) return MAP_UNREAD;
+  if (finished) return `${litSheen(1, true)}, var(--map-done)`;
+  return `${litSheen(fill, false)}, ${heatColor(fill)}`;
+}
+
+/**
+ * Surah sliver: paint the lit runs in place so the reader sees where in the
+ * surah they have read, not only how much.
+ */
+export function surahPaint(fill: number, runs: [number, number][] | null): string {
+  if (fill <= 0) return MAP_UNREAD;
+  if (!runs || fill >= 1) return sliverPaint(fill, fill >= 1);
+  const lit = heatColor(fill);
+  const stops: string[] = [];
+  for (const [from, to] of runs) {
+    const a = (from * 100).toFixed(2);
+    const b = (to * 100).toFixed(2);
+    stops.push(`${MAP_UNREAD} ${a}%`, `${lit} ${a}%`, `${lit} ${b}%`, `${MAP_UNREAD} ${b}%`);
+  }
+  return `${litSheen(fill, false)}, linear-gradient(to right, ${MAP_UNREAD} 0%, ${stops.join(", ")}, ${MAP_UNREAD} 100%)`;
+}
+
+/** Inset rim and sheen. High Contrast adds a crisp edge via --map-edge. */
+export function sliverRing(fill: number, finished: boolean): string {
+  const edge = "inset 0 0 0 1px var(--map-edge)";
+  if (fill <= 0) return edge;
+  const ring = finished
+    ? "inset 0 0 0 1px color-mix(in srgb, var(--map-sheen) 85%, transparent), inset 0 1px 0 var(--map-sheen)"
+    : "inset 0 1px 0 color-mix(in srgb, var(--map-bloom) 45%, transparent)";
+  return `${ring}, ${edge}`;
+}
+
+/** Solid fill for the zoomed overview hairline (no sheen). */
+export function overviewFill(fill: number): string {
+  if (fill <= 0) return MAP_UNREAD;
+  if (fill >= 1) return "var(--map-done)";
+  return heatColor(fill);
 }

@@ -249,4 +249,99 @@ test.describe("phone", () => {
     await dialog.getByRole("button", { name: "Close" }).first().tap();
     await expect(dialog).toHaveCount(0);
   });
+
+  test("the color key wraps under the zoom controls and touch targets stay 44 px", async ({ page }) => {
+    await seed(page, "aurora");
+    await openMap(page);
+    await expect(page.getByTestId("completion-preview")).toBeVisible();
+    await expect(page.getByTestId("completion-map").getByTestId("completion-key")).toHaveCount(0);
+    await page.getByTestId("completion-preview").tap();
+    const dialog = page.getByRole("dialog", { name: "Your map of the Quran" });
+    const key = dialog.getByTestId("completion-key");
+    await expect(key).toBeVisible();
+    await expect(key).toContainText("Not started");
+    await expect(key).toContainText("Finished");
+
+    const seg = dialog.getByRole("group", { name: "Zoom level" });
+    const zoomIn = dialog.getByRole("button", { name: "Zoom in" });
+    const zoomOut = dialog.getByRole("button", { name: "Zoom out" });
+    const keyBox = (await key.boundingBox())!;
+    const segBox = (await seg.boundingBox())!;
+    const zoomBox = (await zoomIn.boundingBox())!;
+    expect(keyBox.y).toBeGreaterThan(segBox.y + segBox.height - 8);
+    expect(Math.abs(zoomBox.y - segBox.y)).toBeLessThan(12);
+    for (const button of [zoomIn, zoomOut, ...await seg.getByRole("button").all()]) {
+      const box = (await button.boundingBox())!;
+      expect(box.height).toBeGreaterThanOrEqual(44);
+      expect(box.width).toBeGreaterThanOrEqual(44);
+    }
+  });
 });
+
+const CONTRAST_THEMES = ["iris", "emerald", "blush", "sepia", "aurora", "forest", "contrast"] as const;
+
+async function cssColor(page: Page, token: string) {
+  return page.evaluate((name) => {
+    const el = document.createElement("span");
+    el.style.color = `var(${name})`;
+    document.body.append(el);
+    const value = getComputedStyle(el).color;
+    el.remove();
+    return value;
+  }, token);
+}
+
+function parseRgb(value: string) {
+  const match = /rgba?\((\d+)[,\s]+(\d+)[,\s]+(\d+)/.exec(value);
+  if (!match) throw new Error(`not a color: ${value}`);
+  return [Number(match[1]), Number(match[2]), Number(match[3])] as const;
+}
+
+function contrastRatio(a: readonly [number, number, number], b: readonly [number, number, number]) {
+  const lum = (rgb: readonly [number, number, number]) => {
+    const to = (channel: number) => {
+      const c = channel / 255;
+      return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+    };
+    return 0.2126 * to(rgb[0]) + 0.7152 * to(rgb[1]) + 0.0722 * to(rgb[2]);
+  };
+  const l1 = lum(a);
+  const l2 = lum(b);
+  const hi = Math.max(l1, l2);
+  const lo = Math.min(l1, l2);
+  return (hi + 0.05) / (lo + 0.05);
+}
+
+test("desktop: the color key is visible and labels stay AA across themes", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await seed(page, "iris");
+  const map = await openMap(page);
+  const key = map.getByTestId("completion-key");
+  await expect(key).toBeVisible();
+  await expect(key).toContainText("Not started");
+  await expect(key).toContainText("In progress");
+  await expect(key).toContainText("Finished");
+
+  const failures: string[] = [];
+  for (const theme of CONTRAST_THEMES) {
+    await page.evaluate((next) => {
+      document.documentElement.dataset.theme = next;
+    }, theme);
+    const inkSoft = parseRgb(await cssColor(page, "--ink-soft"));
+    const ink = parseRgb(await cssColor(page, "--ink"));
+    const surface = parseRgb(await cssColor(page, "--surface"));
+    const base = parseRgb(await cssColor(page, "--map-base"));
+    const pairs: [string, typeof ink, typeof surface][] = [
+      ["ink-soft / surface", inkSoft, surface],
+      ["ink / surface", ink, surface],
+      ["ink-soft / map-base", inkSoft, base],
+      ["ink / map-base", ink, base],
+    ];
+    for (const [name, fg, bg] of pairs) {
+      const ratio = contrastRatio(fg, bg);
+      if (ratio < 4.5) failures.push(`${theme} ${name}: ${ratio.toFixed(2)}:1`);
+    }
+  }
+  expect(failures, failures.join("; ")).toEqual([]);
+});
+

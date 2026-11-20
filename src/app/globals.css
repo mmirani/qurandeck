@@ -2854,10 +2854,18 @@ html[data-focus="on"] .sana-dock {
   height: 7rem;
 }
 
-/* Noor: the soft light the completion map gives off as ayahs are read. */
+/* Completion map: one emerald heat scale. Color means only how much is read. */
 :root {
-  --noor: color-mix(in srgb, var(--gold) 8%, #ffd36a);
-  --map-base: color-mix(in srgb, var(--line) 28%, var(--surface));
+  --map-base: color-mix(in srgb, var(--surface) 72%, #e4e0ee);
+  --map-unread: color-mix(in srgb, var(--surface) 55%, #d4cfe0);
+  --map-low: #a7f3d0;
+  --map-mid: #34d399;
+  --map-high: #10b981;
+  --map-done: #059669;
+  --map-sheen: #a7f3d0;
+  --map-bloom: #6ee7b7;
+  --map-edge: transparent;
+  --noor: var(--map-bloom);
 }
 
 [data-theme="aurora"],
@@ -2868,9 +2876,27 @@ html[data-focus="on"] .sana-dock {
 [data-theme="amethyst"],
 [data-theme="rose"],
 [data-theme="cyan"] {
-  --noor: color-mix(in srgb, var(--gold) 50%, #ffe39a);
+  --map-base: color-mix(in srgb, var(--surface) 65%, #0b0914);
+  --map-unread: color-mix(in srgb, var(--surface) 40%, #1c1730);
+  --map-low: #166534;
+  --map-mid: #15803d;
+  --map-high: #10b981;
+  --map-done: #6ee7b7;
+  --map-sheen: #a7f3d0;
+  --map-bloom: #34d399;
+  --map-edge: transparent;
+  --noor: var(--map-bloom);
 }
 
 [data-theme="contrast"] {
-  --noor: color-mix(in srgb, var(--gold) 15%, #f7c64f);
+  --map-base: #ffffff;
+  --map-unread: #d0d0d0;
+  --map-low: #6ee7b7;
+  --map-mid: #10b981;
+  --map-high: #047857;
+  --map-done: #065f46;
+  --map-sheen: #ecfdf5;
+  --map-bloom: #10b981;
+  --map-edge: #000000;
+  --noor: var(--map-bloom);
 }
