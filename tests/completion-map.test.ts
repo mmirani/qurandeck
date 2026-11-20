@@ -8,14 +8,19 @@ import {
   buildReadIndex,
   clampView,
   firstUnreadIn,
+  heatColor,
   levelForPpa,
   litRuns,
   minPpa,
   noorGlow,
+  overviewFill,
   barGlow,
   panBy,
   readInSpan,
   revealSpan,
+  sliverPaint,
+  sliverRing,
+  surahPaint,
   unitAt,
   unitDetails,
   unitFill,
@@ -212,7 +217,7 @@ describe("completion map view math", () => {
     const all = barGlow(1);
     assert.equal(none.halo, 0);
     assert.ok(some.top > none.top && all.top > some.top && all.halo > some.halo);
-    assert.ok(all.top <= 50, "the backdrop stays calm, never solid gold");
+    assert.ok(all.top <= 50, "the backdrop stays calm, never a solid wash");
   });
 });
 
@@ -269,3 +274,59 @@ describe("surahs finished", () => {
     assert.equal(SURAH_VERSE_COUNTS[107], 3);
   });
 });
+
+describe("emerald heat map paint", () => {
+  it("uses one fill-based ramp and never cycles surah hues", () => {
+    const samples = [
+      heatColor(0),
+      heatColor(0.2),
+      heatColor(0.5),
+      heatColor(0.85),
+      sliverPaint(0, false),
+      sliverPaint(0.4, false),
+      sliverPaint(1, true),
+      surahPaint(0, null),
+      surahPaint(0.55, [[0, 0.3], [0.6, 0.8]]),
+      surahPaint(1, [[0, 1]]),
+      overviewFill(0),
+      overviewFill(0.4),
+      overviewFill(1),
+      sliverRing(0, false),
+      sliverRing(0.5, false),
+      sliverRing(1, true),
+    ];
+    for (const paint of samples) {
+      assert.doesNotMatch(paint, /--gold|--accent|--chip-alt|SURAH_TONES|chapter/i);
+    }
+    assert.equal(heatColor(0), "var(--map-unread)");
+    assert.equal(sliverPaint(0, false), "var(--map-unread)");
+    assert.equal(overviewFill(0), "var(--map-unread)");
+    assert.match(heatColor(0.2), /--map-low/);
+    assert.match(heatColor(0.5), /--map-mid/);
+    assert.match(heatColor(0.85), /--map-high/);
+    assert.match(sliverPaint(1, true), /--map-done/);
+    assert.match(sliverPaint(1, true), /--map-sheen/);
+    assert.match(overviewFill(1), /--map-done/);
+    // A fully read ayah in an unfinished surah is in-progress, not finished noor.
+    const readAyah = sliverPaint(1, false);
+    assert.match(readAyah, /--map-high|--map-mid/);
+    assert.doesNotMatch(readAyah, /--map-done/);
+  });
+
+  it("the same fill always paints the same color, regardless of surah", () => {
+    assert.equal(heatColor(0.33), heatColor(0.33));
+    assert.equal(sliverPaint(0.7, false), sliverPaint(0.7, false));
+    assert.equal(surahPaint(0.4, [[0, 0.2]]), surahPaint(0.4, [[0, 0.2]]));
+    assert.equal(overviewFill(0.9), heatColor(0.9));
+  });
+
+  it("partial surahs show lit runs on an unread ground", () => {
+    const paint = surahPaint(0.4, [[0, 0.2], [0.5, 0.7]]);
+    assert.match(paint, /to right/);
+    assert.match(paint, /--map-unread/);
+    assert.match(paint, /0\.00%/);
+    assert.match(paint, /20\.00%/);
+    assert.doesNotMatch(paint, /--gold|--accent|--chip-alt/);
+  });
+});
+

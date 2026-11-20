@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import { Maximize2, X } from "lucide-react";
 import { useMushaf } from "@/components/providers/mushaf-provider";
 import { CompletionViewport } from "@/components/account/completion-viewport";
-import { barGlow, barWarmth, buildReadIndex, noorGlow, type ReadIndex, type SurahName } from "@/lib/completion-map";
+import { barGlow, barWarmth, buildReadIndex, noorGlow, sliverPaint, type ReadIndex, type SurahName } from "@/lib/completion-map";
 import { dialogFocusables, trapTabIndex } from "@/lib/dialog-focus";
 import { TOTAL_AYAHS, ayahIndex, finishedSurahIds, parseVerseKey, quranPieceMap, TOTAL_SURAHS } from "@/lib/reading";
 
@@ -149,8 +149,8 @@ function CoarsePreview({ read, onExplore }: { read: ReadIndex; onExplore: () => 
       aria-label={`Quran completion map, ${read.total} of ${TOTAL_AYAHS} ayahs read. Open the explorer to zoom in.`}
       className="relative flex h-16 w-full cursor-pointer items-stretch gap-px overflow-hidden rounded-2xl p-2.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)]"
       style={{
-        background: `linear-gradient(to bottom, color-mix(in srgb, var(--noor) ${backdrop.top}%, var(--map-base)), color-mix(in srgb, var(--noor) ${backdrop.bottom}%, var(--map-base)) 55%, color-mix(in srgb, var(--noor) ${backdrop.bottom}%, var(--map-base)))`,
-        boxShadow: backdrop.halo > 0 ? `0 0 ${backdrop.haloBlur}px color-mix(in srgb, var(--noor) ${backdrop.halo}%, transparent)` : undefined,
+        background: `linear-gradient(to bottom, color-mix(in srgb, var(--map-bloom) ${backdrop.top}%, var(--map-base)), color-mix(in srgb, var(--map-bloom) ${backdrop.bottom}%, var(--map-base)) 55%, color-mix(in srgb, var(--map-bloom) ${backdrop.bottom}%, var(--map-base)))`,
+        boxShadow: backdrop.halo > 0 ? `0 0 ${backdrop.haloBlur}px color-mix(in srgb, var(--map-bloom) ${backdrop.halo}%, transparent)` : undefined,
       }}
     >
       <span aria-hidden="true" className="pointer-events-none absolute inset-2.5 flex gap-px blur-[6px]">
@@ -160,7 +160,7 @@ function CoarsePreview({ read, onExplore }: { read: ReadIndex; onExplore: () => 
             <span
               key={index}
               className="min-w-0 flex-1 rounded-full"
-              style={{ background: glow ? "var(--noor)" : "transparent", opacity: glow?.opacity ?? 0, transform: glow ? `scale(${1 + glow.spread / 6}, 1.25)` : undefined }}
+              style={{ background: glow ? "var(--map-bloom)" : "transparent", opacity: glow?.opacity ?? 0, transform: glow ? `scale(${1 + glow.spread / 6}, 1.25)` : undefined }}
             />
           );
         })}
@@ -171,10 +171,7 @@ function CoarsePreview({ read, onExplore }: { read: ReadIndex; onExplore: () => 
           aria-hidden="true"
           className="relative min-w-0 flex-1 rounded-[2px]"
           style={{
-            background:
-              fill > 0
-                ? `linear-gradient(to bottom, color-mix(in srgb, var(--noor) ${Math.round(20 + fill * 30)}%, transparent), transparent 60%), color-mix(in srgb, var(--gold) ${Math.round(28 + fill * 72)}%, var(--canvas))`
-                : "color-mix(in srgb, var(--line) 30%, var(--canvas))",
+            background: sliverPaint(fill, fill >= 1),
           }}
         />
       ))}

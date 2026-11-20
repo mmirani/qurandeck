@@ -30,9 +30,13 @@ import {
   MAX_PPA,
   minPpa,
   noorGlow,
+  overviewFill,
   panBy,
   revealSpan,
+  sliverPaint,
+  sliverRing,
   surahFinished,
+  surahPaint,
   unitAt,
   unitCount,
   unitDetails,
@@ -50,56 +54,32 @@ import {
 } from "@/lib/completion-map";
 import { COMPLETION_PIECES, SURAH_VERSE_COUNTS, TOTAL_AYAHS, ayahAtIndex, ayahsReadInSurah } from "@/lib/reading";
 
-/** Theme tokens that cycle by surah so neighbouring chapters can read apart. */
-const SURAH_TONES = ["var(--gold)", "var(--chip-alt)", "var(--accent)"] as const;
 const LEVEL_NAMES: Record<CompletionLevel, string> = { quran: "Whole Quran", surah: "Surahs", ayah: "Ayahs" };
 const DRAG_THRESHOLD = { mouse: 4, touch: 8 } as const;
 
-function tone(chapterId: number) {
-  return SURAH_TONES[(chapterId - 1) % SURAH_TONES.length];
-}
-
-const UNREAD = "color-mix(in srgb, var(--line) 30%, var(--canvas))";
-
-/** Surah level: paint the lit runs in place so the reader sees where in the surah they have read. */
-function surahPaint(chapterId: number, runs: [number, number][] | null, fill: number) {
-  if (fill <= 0) return UNREAD;
-  if (!runs || fill >= 1) return sliverFill("surah", chapterId, fill);
-  const lit = tone(chapterId);
-  const base = UNREAD;
-  const stops: string[] = [];
-  for (const [a, b] of runs) {
-    const from = (a * 100).toFixed(2);
-    const to = (b * 100).toFixed(2);
-    stops.push(`${base} ${from}%`, `${lit} ${from}%`, `${lit} ${to}%`, `${base} ${to}%`);
-  }
-  return `linear-gradient(to right, ${base} 0%, ${stops.join(", ")}, ${base} 100%)`;
-}
-
-function sliverFill(level: CompletionLevel, chapterId: number, fill: number) {
-  if (fill <= 0) return UNREAD;
-  if (level === "ayah") return tone(chapterId);
-  const strength = Math.round(28 + fill * 72);
-  return `color-mix(in srgb, ${tone(chapterId)} ${strength}%, var(--canvas))`;
-}
-
-/** Lit slivers look lit from within: a warm top light over the fill; finished ones lean towards noor. */
-function litPaint(paint: string, chapterId: number, fill: number, finished: boolean, level: CompletionLevel) {
-  if (fill <= 0) return paint;
-  if (finished) {
-    const glowFill = `color-mix(in srgb, ${tone(chapterId)} 58%, var(--noor))`;
-    return `linear-gradient(to bottom, color-mix(in srgb, #fff8e1 55%, transparent), transparent 55%), ${
-      level === "surah" ? `linear-gradient(${glowFill}, ${glowFill})` : glowFill
-    }`;
-  }
-  return `linear-gradient(to bottom, color-mix(in srgb, var(--noor) ${Math.round(20 + fill * 30)}%, transparent), transparent 60%), ${paint}`;
-}
-
-function litRing(fill: number, finished: boolean) {
-  if (fill <= 0) return undefined;
-  return finished
-    ? "inset 0 0 0 1px color-mix(in srgb, var(--noor) 85%, transparent), inset 0 1px 0 color-mix(in srgb, #fffbeb 80%, transparent)"
-    : "inset 0 1px 0 color-mix(in srgb, var(--noor) 45%, transparent)";
+function CompletionKey() {
+  return (
+    <div
+      data-testid="completion-key"
+      aria-hidden="true"
+      className="flex w-full flex-wrap items-center gap-x-1.5 gap-y-1 text-[11px] leading-4 font-medium text-ink-soft sm:w-auto sm:flex-1 sm:justify-center"
+    >
+      <span className="inline-flex items-center gap-1.5">
+        <span className="inline-block size-2.5 rounded-[3px] bg-[var(--map-unread)] shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--ink)_22%,transparent),inset_0_0_0_1px_var(--map-edge)]" />
+        Not started
+      </span>
+      <span className="opacity-55">·</span>
+      <span className="inline-flex items-center gap-1.5">
+        <span className="inline-block size-2.5 rounded-[3px] bg-[var(--map-mid)]" />
+        In progress
+      </span>
+      <span className="opacity-55">·</span>
+      <span className="inline-flex items-center gap-1.5">
+        <span className="inline-block size-2.5 rounded-[3px] bg-[var(--map-done)] shadow-[inset_0_1px_0_var(--map-sheen),0_0_6px_color-mix(in_srgb,var(--map-bloom)_70%,transparent)]" />
+        Finished
+      </span>
+    </div>
+  );
 }
 
 function prefersReducedMotion() {
@@ -136,7 +116,7 @@ const Sliver = memo(function Sliver({ level, index, left, width, fill, finished,
         left,
         width: Math.max(width, 0.5),
         background: paint,
-        boxShadow: litRing(fill, finished),
+        boxShadow: sliverRing(fill, finished),
       }}
     />
   );
@@ -501,8 +481,7 @@ export function CompletionViewport({
         const fill = unitFill(read, unit);
         const finished = unit.level !== "quran" ? surahFinished(read, chapterId) : fill >= 1;
         const runs = unit.level === "surah" && fill > 0 && fill < 1 ? litRuns(read, unit.start, unit.end) : null;
-        const base = unit.level === "surah" ? surahPaint(chapterId, runs, fill) : sliverFill(unit.level, chapterId, fill);
-        const paint = litPaint(base, chapterId, fill, finished, unit.level);
+        const paint = unit.level === "surah" ? surahPaint(fill, runs) : sliverPaint(fill, finished);
         return { unit, chapterId, fill, finished, paint, runs, label: unitLabel(unit, read, name) };
       }),
     [units, read, name],
@@ -727,8 +706,7 @@ export function CompletionViewport({
       Array.from({ length: COMPLETION_PIECES }, (_, piece) => {
         const start = SLICE_STARTS[piece];
         const end = SLICE_STARTS[piece + 1];
-        const chapterId = ayahAtIndex(start)?.chapterId ?? 1;
-        return { piece, background: sliverFill("quran", chapterId, unitFill(read, { start, end })) };
+        return { piece, background: overviewFill(unitFill(read, { start, end })) };
       }),
     [read],
   );
@@ -768,28 +746,31 @@ export function CompletionViewport({
 
   return (
     <div className="flex flex-col gap-3" data-testid={`completion-view-${variant}`}>
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div role="group" aria-label="Zoom level" className="inline-flex rounded-full border border-line bg-surface p-0.5">
-          {(Object.keys(LEVEL_NAMES) as CompletionLevel[]).map((id) => (
-            <button
-              key={id}
-              type="button"
-              aria-pressed={level === id}
-              onClick={() => goToLevel(id)}
-              className="h-11 min-w-11 cursor-pointer rounded-full px-3.5 text-sm font-medium text-ink-soft transition-colors aria-pressed:bg-gold aria-pressed:text-on-gold motion-reduce:transition-none sm:px-4"
-            >
-              {LEVEL_NAMES[id]}
+      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+        <div className="flex w-full items-center justify-between gap-2 sm:contents">
+          <div role="group" aria-label="Zoom level" className="inline-flex rounded-full border border-line bg-surface p-0.5">
+            {(Object.keys(LEVEL_NAMES) as CompletionLevel[]).map((id) => (
+              <button
+                key={id}
+                type="button"
+                aria-pressed={level === id}
+                onClick={() => goToLevel(id)}
+                className="h-11 min-w-11 cursor-pointer rounded-full px-3 text-sm font-medium text-ink-soft transition-colors aria-pressed:bg-gold aria-pressed:text-on-gold motion-reduce:transition-none sm:px-4"
+              >
+                {LEVEL_NAMES[id]}
+              </button>
+            ))}
+          </div>
+          <div className="flex items-center gap-2 sm:order-3">
+            <button type="button" aria-label="Zoom out" className={controlButton} disabled={!canZoomOut} onClick={() => zoomBy(1 / ZOOM_STEP)}>
+              <Minus aria-hidden="true" className="h-4 w-4" />
             </button>
-          ))}
+            <button type="button" aria-label="Zoom in" className={controlButton} disabled={!canZoomIn} onClick={() => zoomBy(ZOOM_STEP)}>
+              <Plus aria-hidden="true" className="h-4 w-4" />
+            </button>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <button type="button" aria-label="Zoom out" className={controlButton} disabled={!canZoomOut} onClick={() => zoomBy(1 / ZOOM_STEP)}>
-            <Minus aria-hidden="true" className="h-4 w-4" />
-          </button>
-          <button type="button" aria-label="Zoom in" className={controlButton} disabled={!canZoomIn} onClick={() => zoomBy(ZOOM_STEP)}>
-            <Plus aria-hidden="true" className="h-4 w-4" />
-          </button>
-        </div>
+        <CompletionKey />
       </div>
 
       <div
@@ -836,8 +817,8 @@ export function CompletionViewport({
             dragging ? "cursor-grabbing" : zoomed ? "cursor-grab" : ""
           } ${explorer ? "touch-none" : "touch-pan-y"}`}
           style={{
-            background: `linear-gradient(to bottom, color-mix(in srgb, var(--noor) ${backdrop.top}%, var(--map-base)), color-mix(in srgb, var(--noor) ${backdrop.bottom}%, var(--map-base)) 55%, color-mix(in srgb, var(--noor) ${backdrop.bottom}%, var(--map-base)))`,
-            boxShadow: backdrop.halo > 0 ? `0 0 ${backdrop.haloBlur}px color-mix(in srgb, var(--noor) ${backdrop.halo}%, transparent)` : undefined,
+            background: `linear-gradient(to bottom, color-mix(in srgb, var(--map-bloom) ${backdrop.top}%, var(--map-base)), color-mix(in srgb, var(--map-bloom) ${backdrop.bottom}%, var(--map-base)) 55%, color-mix(in srgb, var(--map-bloom) ${backdrop.bottom}%, var(--map-base)))`,
+            boxShadow: backdrop.halo > 0 ? `0 0 ${backdrop.haloBlur}px color-mix(in srgb, var(--map-bloom) ${backdrop.halo}%, transparent)` : undefined,
           }}
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
@@ -880,7 +861,7 @@ export function CompletionViewport({
                     top: -bloom.spread,
                     bottom: 0,
                     opacity: bloom.opacity,
-                    background: "var(--noor)",
+                    background: "var(--map-bloom)",
                   }}
                 />
               ))}
