@@ -32,6 +32,7 @@ import {
   noorGlow,
   overviewFill,
   panBy,
+  placePopover,
   revealSpan,
   sliverPaint,
   sliverRing,
@@ -48,6 +49,7 @@ import {
   wholeView,
   zoomAt,
   type CompletionLevel,
+  type PopoverPlacement,
   type CompletionView,
   type ReadIndex,
   type SurahName,
@@ -62,22 +64,25 @@ function CompletionKey() {
     <div
       data-testid="completion-key"
       aria-hidden="true"
-      className="flex w-full flex-wrap items-center gap-x-1.5 gap-y-1 text-[11px] leading-4 font-medium text-ink-soft sm:w-auto sm:flex-1 sm:justify-center"
+      className="flex w-full sm:w-auto sm:flex-1 sm:justify-center"
     >
-      <span className="inline-flex items-center gap-1.5">
-        <span className="inline-block size-2.5 rounded-[3px] bg-[var(--map-unread)] shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--ink)_22%,transparent),inset_0_0_0_1px_var(--map-edge)]" />
-        Not started
-      </span>
-      <span className="opacity-55">·</span>
-      <span className="inline-flex items-center gap-1.5">
-        <span className="inline-block size-2.5 rounded-[3px] bg-[var(--map-mid)]" />
-        In progress
-      </span>
-      <span className="opacity-55">·</span>
-      <span className="inline-flex items-center gap-1.5">
-        <span className="inline-block size-2.5 rounded-[3px] bg-[var(--map-done)] shadow-[inset_0_1px_0_var(--map-sheen),0_0_6px_color-mix(in_srgb,var(--map-bloom)_70%,transparent)]" />
-        Finished
-      </span>
+      {/* The key sits on the same dark panel as the map, so its swatches look the same on every theme. */}
+      <div className="completion-panel-ink inline-flex flex-wrap items-center gap-x-1.5 gap-y-1 rounded-xl bg-[var(--map-base)] px-3 py-1.5 text-[11px] leading-4 font-medium text-ink-soft shadow-[inset_0_0_0_1px_var(--map-rim)]">
+        <span className="inline-flex items-center gap-1.5">
+          <span className="inline-block size-2.5 rounded-[3px] bg-[var(--map-unread)] shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--ink)_22%,transparent),inset_0_0_0_1px_var(--map-edge)]" />
+          Not started
+        </span>
+        <span className="opacity-55">·</span>
+        <span className="inline-flex items-center gap-1.5">
+          <span className="inline-block size-2.5 rounded-[3px] bg-[var(--map-mid)]" />
+          In progress
+        </span>
+        <span className="opacity-55">·</span>
+        <span className="inline-flex items-center gap-1.5">
+          <span className="inline-block size-2.5 rounded-[3px] bg-[var(--map-done)] shadow-[inset_0_1px_0_var(--map-sheen),0_0_6px_color-mix(in_srgb,var(--map-bloom)_70%,transparent)]" />
+          Finished
+        </span>
+      </div>
     </div>
   );
 }
@@ -164,6 +169,8 @@ export function CompletionViewport({
   const viewportRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const popoverRef = useRef<HTMLDivElement>(null);
+  const anchorRef = useRef<HTMLDivElement>(null);
+  const [placement, setPlacement] = useState<PopoverPlacement | null>(null);
   const [width, setWidth] = useState(0);
   const [view, setViewState] = useState<CompletionView>({ start: 0, ppa: 0.1 });
   const viewRef = useRef(view);
@@ -636,6 +643,46 @@ export function CompletionViewport({
     ? Math.max(0, Math.min(width - popoverWidth, screenX((openUnit.start + openUnit.end) / 2) - popoverWidth / 2))
     : 0;
 
+  // Open above the bar (a phone held sideways has no room below), flip below when
+  // above does not fit, and keep the whole popover on screen. Measured before paint.
+  const popoverOpen = Boolean(openUnit && details);
+  useLayoutEffect(() => {
+    if (!popoverOpen) return;
+    const place = () => {
+      const anchor = anchorRef.current;
+      const bar = viewportRef.current;
+      const pop = popoverRef.current;
+      if (!anchor || !bar || !pop) return;
+      const host = anchor.getBoundingClientRect();
+      const barBox = bar.getBoundingClientRect();
+      const vv = window.visualViewport;
+      const next = placePopover({
+        anchor: barBox,
+        size: { width: pop.offsetWidth, height: pop.scrollHeight + (pop.offsetHeight - pop.clientHeight) },
+        viewport: { width: vv?.width ?? window.innerWidth, height: vv?.height ?? window.innerHeight },
+        preferredLeft: host.left + popoverLeft,
+      });
+      const relative = { ...next, top: next.top - host.top, left: next.left - host.left };
+      setPlacement((prev) =>
+        prev &&
+        prev.side === relative.side &&
+        Math.abs(prev.top - relative.top) < 0.5 &&
+        Math.abs(prev.left - relative.left) < 0.5 &&
+        prev.maxHeight === relative.maxHeight
+          ? prev
+          : relative,
+      );
+    };
+    place();
+    // Turning the phone re-places it; scrolling the page carries it along with the bar.
+    window.addEventListener("resize", place);
+    window.visualViewport?.addEventListener("resize", place);
+    return () => {
+      window.removeEventListener("resize", place);
+      window.visualViewport?.removeEventListener("resize", place);
+    };
+  }, [popoverOpen, popoverLeft, popoverWidth, details]);
+
   const hoverUnit = hover != null && !dragging && !openUnit ? unitAt(level, hover) : null;
   const hoverLabel = hoverUnit ? unitLabel(hoverUnit, read, name) : "";
   const tooltipWidth = 260;
@@ -793,7 +840,7 @@ export function CompletionViewport({
           overviewDrag.current = false;
         }}
       >
-        <div className="flex h-2.5 w-full gap-px overflow-hidden rounded-full bg-line/70">
+        <div className="flex h-2.5 w-full gap-px overflow-hidden rounded-full bg-[var(--map-base)]">
           {overview.map((item) => (
             <span key={item.piece} className="h-full min-w-0 flex-1" style={{ background: item.background }} />
           ))}
@@ -805,7 +852,7 @@ export function CompletionViewport({
         />
       </div>
 
-      <div className="relative">
+      <div ref={anchorRef} className="relative">
         <div
           ref={viewportRef}
           data-testid="completion-viewport"
@@ -813,7 +860,7 @@ export function CompletionViewport({
           data-ppa={view.ppa.toFixed(3)}
           data-start={view.start.toFixed(2)}
           data-focus-ayah={focusAyah}
-          className={`completion-viewport relative ${barHeight} select-none overflow-hidden rounded-2xl ${
+          className={`completion-viewport completion-panel completion-panel-ink relative ${barHeight} select-none overflow-hidden rounded-2xl ${
             dragging ? "cursor-grabbing" : zoomed ? "cursor-grab" : ""
           } ${explorer ? "touch-none" : "touch-pan-y"}`}
           style={{
@@ -934,8 +981,13 @@ export function CompletionViewport({
             aria-modal="false"
             aria-labelledby={popoverTitleId}
             data-testid="completion-popover"
-            className={`absolute z-30 rounded-2xl border border-line bg-surface p-3 text-ink shadow-xl ${explorer ? "top-full mt-2" : "bottom-full mb-2"}`}
-            style={{ left: popoverLeft, width: popoverWidth }}
+            data-side={placement?.side ?? "above"}
+            className={`absolute z-30 overflow-y-auto overscroll-contain rounded-2xl border border-line bg-surface p-3 text-ink shadow-xl ${placement ? "" : "bottom-full mb-2"}`}
+            style={
+              placement
+                ? { top: placement.top, left: placement.left, width: popoverWidth, maxHeight: placement.maxHeight }
+                : { left: popoverLeft, width: popoverWidth }
+            }
             onKeyDown={(event) => {
               if (event.key === "Escape") {
                 event.preventDefault();

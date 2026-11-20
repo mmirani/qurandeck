@@ -147,7 +147,7 @@ function CoarsePreview({ read, onExplore }: { read: ReadIndex; onExplore: () => 
       onClick={onExplore}
       data-testid="completion-preview"
       aria-label={`Quran completion map, ${read.total} of ${TOTAL_AYAHS} ayahs read. Open the explorer to zoom in.`}
-      className="relative flex h-16 w-full cursor-pointer items-stretch gap-px overflow-hidden rounded-2xl p-2.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)]"
+      className="completion-panel relative flex h-16 w-full cursor-pointer items-stretch gap-px overflow-hidden rounded-2xl p-2.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)]"
       style={{
         background: `linear-gradient(to bottom, color-mix(in srgb, var(--map-bloom) ${backdrop.top}%, var(--map-base)), color-mix(in srgb, var(--map-bloom) ${backdrop.bottom}%, var(--map-base)) 55%, color-mix(in srgb, var(--map-bloom) ${backdrop.bottom}%, var(--map-base)))`,
         boxShadow: backdrop.halo > 0 ? `0 0 ${backdrop.haloBlur}px color-mix(in srgb, var(--map-bloom) ${backdrop.halo}%, transparent)` : undefined,
@@ -216,6 +216,8 @@ function CompletionExplorer({ read, versesRead, name, onOpen, onClose, returnFoc
     const root = dialogRef.current;
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
+        // Escape inside the sliver popover closes only the popover (it handles its own).
+        if (event.target instanceof Element && event.target.closest('[data-testid="completion-popover"]')) return;
         event.preventDefault();
         event.stopPropagation();
         onCloseRef.current();

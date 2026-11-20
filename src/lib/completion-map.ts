@@ -429,3 +429,42 @@ export function overviewFill(fill: number): string {
   if (fill >= 1) return "var(--map-done)";
   return heatColor(fill);
 }
+
+export type PopoverSide = "above" | "below";
+export type PopoverPlacement = { side: PopoverSide; top: number; left: number; maxHeight: number };
+type Box = { top: number; bottom: number };
+
+/**
+ * Where the sliver popover goes, in viewport pixels. It opens above the bar so a
+ * short screen (a phone held sideways) never has to scroll to reach it, flips below
+ * when there is no room above, and stays fully on screen either way. It never
+ * overlaps the bar unless the screen is too short for either side, and then it is
+ * pinned to the screen and capped in height so it still fits.
+ */
+export function placePopover({
+  anchor,
+  size,
+  viewport,
+  preferredLeft,
+  gap = 8,
+  margin = 8,
+}: {
+  anchor: Box;
+  size: { width: number; height: number };
+  viewport: { width: number; height: number };
+  preferredLeft: number;
+  gap?: number;
+  margin?: number;
+}): PopoverPlacement {
+  const roomAbove = anchor.top - gap - margin;
+  const roomBelow = viewport.height - margin - (anchor.bottom + gap);
+  const side: PopoverSide =
+    size.height <= roomAbove ? "above" : size.height <= roomBelow ? "below" : roomAbove >= roomBelow ? "above" : "below";
+  const maxHeight = Math.max(0, viewport.height - margin * 2);
+  const height = Math.min(size.height, maxHeight);
+  const wanted = side === "above" ? anchor.top - gap - height : anchor.bottom + gap;
+  const top = Math.max(margin, Math.min(viewport.height - margin - height, wanted));
+  const maxLeft = Math.max(margin, viewport.width - margin - size.width);
+  const left = Math.max(margin, Math.min(maxLeft, preferredLeft));
+  return { side, top, left, maxHeight };
+}
