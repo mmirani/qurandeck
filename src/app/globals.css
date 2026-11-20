@@ -2854,30 +2854,12 @@ html[data-focus="on"] .sana-dock {
   height: 7rem;
 }
 
-/* Completion map: one emerald heat scale. Color means only how much is read. */
+/* Completion map: one emerald heat scale on one dark, recessed panel for all 17
+   themes. Reading always goes from dim to bright, like noor, even on Day and Paper.
+   Inside the panel, text and focus rings switch to the panel's own light ink. */
 :root {
-  --map-base: color-mix(in srgb, var(--surface) 72%, #e4e0ee);
-  --map-unread: color-mix(in srgb, var(--surface) 55%, #d4cfe0);
-  --map-low: #a7f3d0;
-  --map-mid: #34d399;
-  --map-high: #10b981;
-  --map-done: #059669;
-  --map-sheen: #a7f3d0;
-  --map-bloom: #6ee7b7;
-  --map-edge: transparent;
-  --noor: var(--map-bloom);
-}
-
-[data-theme="aurora"],
-[data-theme="obsidian"],
-[data-theme="midnight"],
-[data-theme="slate"],
-[data-theme="forest"],
-[data-theme="amethyst"],
-[data-theme="rose"],
-[data-theme="cyan"] {
-  --map-base: color-mix(in srgb, var(--surface) 65%, #0b0914);
-  --map-unread: color-mix(in srgb, var(--surface) 40%, #1c1730);
+  --map-base: #120f1d;
+  --map-unread: #1a152a;
   --map-low: #166534;
   --map-mid: #15803d;
   --map-high: #10b981;
@@ -2885,18 +2867,46 @@ html[data-focus="on"] .sana-dock {
   --map-sheen: #a7f3d0;
   --map-bloom: #34d399;
   --map-edge: transparent;
+  --map-rim: rgb(255 255 255 / 0.08);
+  --map-ink: #f8f5ff;
+  --map-ink-soft: #d8d0ee;
+  --map-select: #d8b4fe;
   --noor: var(--map-bloom);
 }
 
+/* High Contrast keeps crisp edges: pure black panel, white rims. */
 [data-theme="contrast"] {
-  --map-base: #ffffff;
-  --map-unread: #d0d0d0;
-  --map-low: #6ee7b7;
-  --map-mid: #10b981;
-  --map-high: #047857;
-  --map-done: #065f46;
+  --map-base: #000000;
+  --map-unread: #262626;
+  --map-low: #166534;
+  --map-mid: #15803d;
+  --map-high: #10b981;
+  --map-done: #a7f3d0;
   --map-sheen: #ecfdf5;
-  --map-bloom: #10b981;
-  --map-edge: #000000;
+  --map-bloom: #34d399;
+  --map-edge: #ffffff;
+  --map-rim: #ffffff;
+  --map-ink: #ffffff;
+  --map-ink-soft: #e5e5e5;
+  --map-select: #fde047;
   --noor: var(--map-bloom);
+}
+
+/* The dark inset: a faint rim so it reads as recessed on light and dark cards. */
+.completion-panel::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: 1px solid var(--map-rim);
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+/* Labels and focus rings drawn on the panel. */
+.completion-panel-ink {
+  color-scheme: dark;
+  --ink: var(--map-ink);
+  --ink-soft: var(--map-ink-soft);
+  --gold-deep: var(--map-select);
+  color: var(--map-ink);
 }

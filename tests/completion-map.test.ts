@@ -8,6 +8,7 @@ import {
   buildReadIndex,
   clampView,
   firstUnreadIn,
+  fitLabel,
   heatColor,
   levelForPpa,
   litRuns,
@@ -330,3 +331,14 @@ describe("emerald heat map paint", () => {
   });
 });
 
+
+
+describe("ruler labels never show cut text", () => {
+  it("shows the full label when it fits, the number when only that fits, else nothing", () => {
+    assert.equal(fitLabel("3 Ali 'Imran", 200), "3 Ali 'Imran");
+    assert.equal(fitLabel("3 Ali 'Imran", 30), "3");
+    assert.equal(fitLabel("114 An-Nas", 12), "");
+    assert.equal(fitLabel("40", 30), "40");
+    assert.equal(fitLabel("40", -5), "");
+  });
+});

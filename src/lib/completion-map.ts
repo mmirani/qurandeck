@@ -429,3 +429,11 @@ export function overviewFill(fill: number): string {
   if (fill >= 1) return "var(--map-done)";
   return heatColor(fill);
 }
+
+/** The ruler label that fits in `room` px: the full label, just the number, or nothing. */
+export function fitLabel(text: string, room: number): string {
+  const fits = (value: string) => value.length * 7.2 + 4 <= room;
+  if (fits(text)) return text;
+  const number = text.split(" ")[0];
+  return number !== text && fits(number) ? number : "";
+}

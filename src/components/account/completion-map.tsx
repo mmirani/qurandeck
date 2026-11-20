@@ -147,7 +147,7 @@ function CoarsePreview({ read, onExplore }: { read: ReadIndex; onExplore: () => 
       onClick={onExplore}
       data-testid="completion-preview"
       aria-label={`Quran completion map, ${read.total} of ${TOTAL_AYAHS} ayahs read. Open the explorer to zoom in.`}
-      className="relative flex h-16 w-full cursor-pointer items-stretch gap-px overflow-hidden rounded-2xl p-2.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)]"
+      className="completion-panel relative flex h-16 w-full cursor-pointer items-stretch gap-px overflow-hidden rounded-2xl p-2.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)]"
       style={{
         background: `linear-gradient(to bottom, color-mix(in srgb, var(--map-bloom) ${backdrop.top}%, var(--map-base)), color-mix(in srgb, var(--map-bloom) ${backdrop.bottom}%, var(--map-base)) 55%, color-mix(in srgb, var(--map-bloom) ${backdrop.bottom}%, var(--map-base)))`,
         boxShadow: backdrop.halo > 0 ? `0 0 ${backdrop.haloBlur}px color-mix(in srgb, var(--map-bloom) ${backdrop.halo}%, transparent)` : undefined,
@@ -216,6 +216,8 @@ function CompletionExplorer({ read, versesRead, name, onOpen, onClose, returnFoc
     const root = dialogRef.current;
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
+        // Escape inside the sliver popover closes only the popover (it handles its own).
+        if (event.target instanceof Element && event.target.closest('[data-testid="completion-popover"]')) return;
         event.preventDefault();
         event.stopPropagation();
         onCloseRef.current();
@@ -247,11 +249,11 @@ function CompletionExplorer({ read, versesRead, name, onOpen, onClose, returnFoc
       <div className="mx-auto flex min-h-full w-full max-w-6xl flex-col gap-4 px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))] sm:px-6 sm:pt-6">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <p className="kufic-label text-gold-deep">Quran completion</p>
+            <p className="kufic-label text-gold-deep [@media(max-height:500px)]:hidden">Quran completion</p>
             <h2 id={titleId} className="font-display text-2xl leading-tight font-semibold text-ink sm:text-3xl">
               Your map of the Quran
             </h2>
-            <p className="mt-1 text-sm leading-6 text-ink-soft">{summary}</p>
+            <p data-testid="completion-explorer-summary" className="mt-1 text-sm leading-6 text-ink-soft">{summary}</p>
           </div>
           <button
             ref={closeRef}
@@ -272,7 +274,6 @@ function CompletionExplorer({ read, versesRead, name, onOpen, onClose, returnFoc
           initialAyah={initialAyah}
           hint={hint}
         />
-        <div className="pb-44" aria-hidden="true" />
       </div>
     </div>,
     document.body,

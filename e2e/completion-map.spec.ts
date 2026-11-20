@@ -1,4 +1,4 @@
-import { devices, expect, test, type Page } from "@playwright/test";
+import { devices, expect, test, type Locator, type Page } from "@playwright/test";
 
 // The dev server rate-limits /api per client address. Each spec file gets its own
 // so one file's requests never throttle another's (live traffic is unaffected).
@@ -48,6 +48,28 @@ async function openMap(page: Page) {
   await expect(map).toBeVisible({ timeout: 60_000 });
   await map.scrollIntoViewIfNeeded();
   return map;
+}
+
+
+type Box = { x: number; y: number; width: number; height: number };
+const overlaps = (a: Box, b: Box) =>
+  a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
+
+/** The details card must not cover the title, stats, zoom toggle, zoom buttons or key. */
+async function expectClearOfChrome(scope: Locator, popover: Box) {
+  const chrome = [
+    scope.getByRole("heading", { name: "Your map of the Quran" }),
+    scope.getByTestId("completion-explorer-summary"),
+    scope.getByRole("group", { name: "Zoom level" }),
+    scope.getByRole("button", { name: "Zoom in" }),
+    scope.getByRole("button", { name: "Zoom out" }),
+    scope.getByTestId("completion-key"),
+    scope.getByTestId("completion-overview"),
+  ];
+  for (const item of chrome) {
+    const box = (await item.boundingBox())!;
+    expect(overlaps(popover, box), `${item} overlaps the details card`).toBe(false);
+  }
 }
 
 const viewport = (page: Page) => page.getByTestId("completion-viewport").first();
@@ -282,17 +304,23 @@ test.describe("phone", () => {
   });
 });
 
-const CONTRAST_THEMES = ["iris", "emerald", "blush", "sepia", "aurora", "forest", "contrast"] as const;
+const CONTRAST_THEMES = [
+  "manuscript", "emerald", "ottoman", "ivory", "iris", "pastels", "blush", "sepia", "contrast",
+  "aurora", "obsidian", "midnight", "slate", "forest", "amethyst", "rose", "cyan",
+] as const;
 
-async function cssColor(page: Page, token: string) {
-  return page.evaluate((name) => {
-    const el = document.createElement("span");
-    el.style.color = `var(${name})`;
-    document.body.append(el);
-    const value = getComputedStyle(el).color;
-    el.remove();
-    return value;
-  }, token);
+async function cssColor(page: Page, token: string, host = "body") {
+  return page.evaluate(
+    ({ name, hostSel }) => {
+      const el = document.createElement("span");
+      el.style.color = `var(${name})`;
+      (document.querySelector(hostSel) ?? document.body).append(el);
+      const value = getComputedStyle(el).color;
+      el.remove();
+      return value;
+    },
+    { name: token, hostSel: host },
+  );
 }
 
 function parseRgb(value: string) {
@@ -339,11 +367,15 @@ test("desktop: the color key is visible and labels stay AA across themes", async
     const ink = parseRgb(await cssColor(page, "--ink"));
     const surface = parseRgb(await cssColor(page, "--surface"));
     const base = parseRgb(await cssColor(page, "--map-base"));
+    // Labels on the map read the panel's own ink, whatever the theme.
+    const panel = '[data-testid="completion-map"] .completion-panel-ink';
+    const panelInk = parseRgb(await cssColor(page, "--ink", panel));
+    const panelInkSoft = parseRgb(await cssColor(page, "--ink-soft", panel));
     const pairs: [string, typeof ink, typeof surface][] = [
       ["ink-soft / surface", inkSoft, surface],
       ["ink / surface", ink, surface],
-      ["ink-soft / map-base", inkSoft, base],
-      ["ink / map-base", ink, base],
+      ["panel ink-soft / map-base", panelInkSoft, base],
+      ["panel ink / map-base", panelInk, base],
     ];
     for (const [name, fg, bg] of pairs) {
       const ratio = contrastRatio(fg, bg);
@@ -353,3 +385,104 @@ test("desktop: the color key is visible and labels stay AA across themes", async
   expect(failures, failures.join("; ")).toEqual([]);
 });
 
+
+test.describe("phone landscape", () => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { defaultBrowserType, ...iPhone14 } = devices["iPhone 14"];
+  test.use({ ...iPhone14, viewport: { width: 844, height: 390 }, extraHTTPHeaders: CLIENT });
+
+  for (const theme of ["aurora", "iris"]) {
+    test(`${theme}: sliver details open just above the bar, fully on screen, clear of labels, no scrolling`, async ({ page }) => {
+      await seed(page, theme);
+      await openMap(page);
+      await page.getByTestId("completion-preview").tap();
+      const dialog = page.getByRole("dialog", { name: "Your map of the Quran" });
+      await expect(dialog).toBeVisible();
+      await dialog.getByRole("button", { name: "Surahs", exact: true }).tap();
+      const vp = dialog.getByTestId("completion-viewport");
+      await expect(vp).toHaveAttribute("data-level", "surah");
+
+      // Tap Al-Baqarah where it already shows, with a raw touch so nothing scrolls first.
+      const scrollBefore = await dialog.evaluate((el) => el.scrollTop);
+      const bar = (await vp.boundingBox())!;
+      const baqarah = (await vp.locator('[data-index="1"]').boundingBox())!;
+      const x = Math.max(baqarah.x, 0) + 30;
+      const y = bar.y + 40;
+      expect(y).toBeLessThan(390);
+      const cdp = await page.context().newCDPSession(page);
+      await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x, y, id: 0 }] });
+      await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+
+      const popover = dialog.getByTestId("completion-popover");
+      await expect(popover).toContainText("81 of 286 read");
+      await expect(popover.getByRole("button", { name: "Read the 205 left" })).toBeFocused();
+      expect(await dialog.evaluate((el) => el.scrollTop)).toBe(scrollBefore);
+
+      const box = (await popover.boundingBox())!;
+      const barNow = (await vp.boundingBox())!;
+      expect(box.y).toBeGreaterThanOrEqual(0);
+      expect(box.x).toBeGreaterThanOrEqual(0);
+      expect(box.x + box.width).toBeLessThanOrEqual(844);
+      expect(box.y + box.height).toBeLessThanOrEqual(390);
+      // Sits just above the bar, never on the tapped sliver, and clear of every label and control.
+      expect(box.y + box.height).toBeLessThanOrEqual(barNow.y);
+      expect(barNow.y - (box.y + box.height)).toBeLessThan(24);
+      await expectClearOfChrome(dialog, box);
+      // The whole bar stays on screen too.
+      expect(barNow.y + barNow.height).toBeLessThanOrEqual(390);
+      for (const button of await popover.getByRole("button").all()) {
+        const b = (await button.boundingBox())!;
+        expect(b.height).toBeGreaterThanOrEqual(44);
+        expect(b.width).toBeGreaterThanOrEqual(44);
+        expect(b.y + b.height).toBeLessThanOrEqual(390);
+      }
+
+      await page.keyboard.press("Escape");
+      await expect(popover).toHaveCount(0);
+      await expect(dialog).toBeVisible();
+      await expect(page.locator(":focus")).toHaveAttribute("data-index", "1");
+    });
+  }
+});
+
+test("desktop: the explorer details open just above the bar, clear of the controls", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await seed(page);
+  const map = await openMap(page);
+  await map.getByRole("button", { name: "Full screen" }).click();
+  const dialog = page.getByRole("dialog", { name: "Your map of the Quran" });
+  await dialog.getByRole("button", { name: "Surahs", exact: true }).click();
+  const vp = dialog.getByTestId("completion-viewport");
+  await expect(vp).toHaveAttribute("data-level", "surah");
+  await vp.locator('[data-index="1"]').click({ position: { x: 30, y: 30 } });
+  const popover = dialog.getByTestId("completion-popover");
+  await expect(popover).toContainText("81 of 286 read");
+  const box = (await popover.boundingBox())!;
+  const bar = (await vp.boundingBox())!;
+  expect(box.y).toBeGreaterThanOrEqual(0);
+  expect(box.y + box.height).toBeLessThanOrEqual(bar.y);
+  await expectClearOfChrome(dialog, box);
+  // Opening details never moves the bar.
+  await page.keyboard.press("Escape");
+  await expect(popover).toHaveCount(0);
+  expect((await vp.boundingBox())!.y).toBe(bar.y);
+});
+
+test("desktop: the map is the same dark panel on light and dark themes", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await seed(page, "iris");
+  const map = await openMap(page);
+  const panel = map.getByTestId("completion-viewport");
+  const bg = async () => panel.evaluate((el) => getComputedStyle(el).backgroundImage);
+  const iris = await bg();
+  await page.evaluate(() => {
+    document.documentElement.dataset.theme = "aurora";
+  });
+  expect(await bg()).toBe(iris);
+  // Day theme: finished glows brighter than the track behind it.
+  await page.evaluate(() => {
+    document.documentElement.dataset.theme = "sepia";
+  });
+  const lum = (rgb: readonly [number, number, number]) => rgb[0] * 0.2126 + rgb[1] * 0.7152 + rgb[2] * 0.0722;
+  expect(lum(parseRgb(await cssColor(page, "--map-done")))).toBeGreaterThan(lum(parseRgb(await cssColor(page, "--map-base"))) + 100);
+});

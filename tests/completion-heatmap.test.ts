@@ -26,18 +26,10 @@ const THEMES = [
   "cyan",
 ] as const;
 
-const NIGHT = new Set(["aurora", "obsidian", "midnight", "slate", "forest", "amethyst", "rose", "cyan"]);
-
-const DAY_RAMP = {
-  "--map-low": "#a7f3d0",
-  "--map-mid": "#34d399",
-  "--map-high": "#10b981",
-  "--map-done": "#059669",
-  "--map-sheen": "#a7f3d0",
-  "--map-bloom": "#6ee7b7",
-};
-
-const NIGHT_RAMP = {
+// Every theme, Day, Paper or Night, gets the same dark panel and luminous ramp.
+const RAMP = {
+  "--map-base": "#120f1d",
+  "--map-unread": "#1a152a",
   "--map-low": "#166534",
   "--map-mid": "#15803d",
   "--map-high": "#10b981",
@@ -129,11 +121,11 @@ function mix(a: RGB, b: RGB, amount: number): RGB {
 }
 
 describe("completion heatmap tokens", () => {
-  it("defines one shared emerald ramp for every Day and Paper theme", () => {
+  it("uses one dark panel and one luminous emerald ramp on every theme", () => {
     for (const theme of THEMES) {
-      if (NIGHT.has(theme) || theme === "contrast") continue;
+      if (theme === "contrast") continue;
       const vars = themeVars(theme);
-      for (const [token, hex] of Object.entries(DAY_RAMP)) {
+      for (const [token, hex] of Object.entries(RAMP)) {
         assert.equal(vars[token], hex, `${theme} ${token}`);
       }
       assert.equal(vars["--map-edge"], "transparent");
@@ -141,23 +133,30 @@ describe("completion heatmap tokens", () => {
     }
   });
 
-  it("defines one shared luminous emerald ramp for every Night theme", () => {
+  it("goes from dim to bright: finished is the lightest cell and the track the darkest", () => {
     for (const theme of THEMES) {
-      if (!NIGHT.has(theme)) continue;
       const vars = themeVars(theme);
-      for (const [token, hex] of Object.entries(NIGHT_RAMP)) {
-        assert.equal(vars[token], hex, `${theme} ${token}`);
-      }
-      assert.equal(vars["--noor"], "var(--map-bloom)");
+      const l = (token: string) => luminance(resolve(`var(${token})`, vars));
+      assert.ok(l("--map-base") < l("--map-low"), `${theme} base < low`);
+      assert.ok(l("--map-unread") < l("--map-low"), `${theme} unread < low`);
+      assert.ok(l("--map-low") < l("--map-mid") && l("--map-mid") < l("--map-high"), `${theme} ramp rises`);
+      assert.ok(l("--map-high") < l("--map-done"), `${theme} finished brightest`);
     }
   });
 
-  it("gives High Contrast a crisp, unmistakable scale", () => {
+  it("gives High Contrast a black panel with crisp white edges", () => {
     const vars = themeVars("contrast");
-    assert.equal(vars["--map-unread"], "#d0d0d0");
-    assert.equal(vars["--map-done"], "#065f46");
-    assert.equal(vars["--map-edge"], "#000000");
-    assert.equal(vars["--map-base"], "#ffffff");
+    assert.equal(vars["--map-base"], "#000000");
+    assert.equal(vars["--map-edge"], "#ffffff");
+    assert.equal(vars["--map-ink"], "#ffffff");
+    const done = resolve("var(--map-done)", vars);
+    const unread = resolve("var(--map-unread)", vars);
+    assert.ok(contrast(done, unread) >= 3, "finished vs not started is at least 3:1");
+    assert.ok(contrast(resolve("var(--map-edge)", vars), resolve("var(--map-base)", vars)) >= 3, "edges are visible");
+  });
+
+  it("scopes light ink to the panel so its labels and focus rings stay readable", () => {
+    assert.match(CSS, /\.completion-panel-ink\s*\{[^}]*--ink:\s*var\(--map-ink\)[^}]*--ink-soft:\s*var\(--map-ink-soft\)/);
   });
 
   it("never derives the heat scale from theme accent, gold, or chip colors", () => {
@@ -179,21 +178,26 @@ describe("completion heatmap tokens", () => {
       const ink = resolve("var(--ink)", vars);
       const inkSoft = resolve("var(--ink-soft)", vars);
       const surface = resolve("var(--surface)", vars);
+      const mapInk = resolve("var(--map-ink)", vars);
+      const mapInkSoft = resolve("var(--map-ink-soft)", vars);
+      const select = resolve("var(--map-select)", vars);
       const base = resolve("var(--map-base)", vars);
       const unread = resolve("var(--map-unread)", vars);
       const bloom = resolve("var(--map-bloom)", vars);
       const warmed = mix(bloom, base, 0.2);
-      const pairs: [string, RGB, RGB][] = [
-        ["ink / surface", ink, surface],
-        ["ink-soft / surface", inkSoft, surface],
-        ["ink / map-base", ink, base],
-        ["ink-soft / map-base", inkSoft, base],
-        ["ink-soft / map-unread", inkSoft, unread],
-        ["ink-soft / warmed map-base", inkSoft, warmed],
+      const pairs: [string, RGB, RGB, number][] = [
+        ["ink / surface", ink, surface, 4.5],
+        ["ink-soft / surface", inkSoft, surface, 4.5],
+        ["map-ink / map-base", mapInk, base, 4.5],
+        ["map-ink-soft / map-base", mapInkSoft, base, 4.5],
+        ["map-ink-soft / map-unread", mapInkSoft, unread, 4.5],
+        ["map-ink-soft / warmed map-base", mapInkSoft, warmed, 4.5],
+        ["focus ring / map-base", mapInk, base, 3],
+        ["selected ring / map-base", select, base, 3],
       ];
-      for (const [name, fg, bg] of pairs) {
+      for (const [name, fg, bg, min] of pairs) {
         const ratio = contrast(fg, bg);
-        if (ratio < 4.5) failures.push(`${theme} ${name}: ${ratio.toFixed(2)}:1`);
+        if (ratio < min) failures.push(`${theme} ${name}: ${ratio.toFixed(2)}:1`);
       }
     }
     assert.deepEqual(failures, []);
