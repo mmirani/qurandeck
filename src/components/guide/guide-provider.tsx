@@ -20,6 +20,7 @@ import { sanaCommandName } from "@/lib/usage-catalog";
 import { focusOpenNote } from "@/lib/note-composer";
 import { scrollVerseIntoPane } from "@/lib/reader-scroll";
 import { trackUsage } from "@/lib/usage-client";
+import { reportMissedCommand } from "@/lib/sana-missed-client";
 import { finishedSurahIds } from "@/lib/reading";
 
 type GuideKind = "welcome" | "lesson" | null;
@@ -147,7 +148,10 @@ export function GuideProvider({ children }: { children: ReactNode }) {
   const ask = useCallback((text: string) => {
     const match = matchHelper(text);
     if (match.action === "refuse") trackUsage({ name: "sana_refusal" });
-    else if (match.action === "none") trackUsage({ name: "sana_unknown" });
+    else if (match.action === "none") {
+      trackUsage({ name: "sana_unknown" });
+      reportMissedCommand(text);
+    }
     else {
       const command = sanaCommandName(match.action);
       if (command) trackUsage({ name: "sana_command", command });

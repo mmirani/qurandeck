@@ -192,6 +192,28 @@ const TYPOS: Record<string, string> = {
   nots: "notes",
   playy: "play",
   plaay: "play",
+  drak: "dark",
+  dakr: "dark",
+  darl: "dark",
+  nxt: "next",
+  nex: "next",
+  prevous: "previous",
+  previus: "previous",
+  serach: "search",
+  sarch: "search",
+  bookmrk: "bookmark",
+  tafsr: "tafsir",
+  transaltion: "translation",
+  translaton: "translation",
+  biggr: "bigger",
+  smalller: "smaller",
+  ayha: "ayah",
+  surha: "surah",
+  sruah: "surah",
+  shwo: "show",
+  opne: "open",
+  pls: "please",
+  plz: "please",
 };
 
 const KEEP = new Set([
@@ -307,6 +329,17 @@ const KEEP = new Set([
   "i",
   "you",
   "can",
+  // Everyday words that must not be "corrected" into a surah name.
+  "increase",
+  "decrease",
+  "reduce",
+  "enlarge",
+  "shrink",
+  "salam",
+  "salaam",
+  "hello",
+  "thanks",
+  "settings",
 ]);
 
 const THEME_ALIASES: { id: AppearanceThemeId; names: string[] }[] = [
@@ -630,8 +663,80 @@ export function matchReciter(query: string, reciters: { id: number; reciterName:
   return scored[0].item;
 }
 
+const NUMBER_WORDS: Record<string, number> = {
+  one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10,
+  eleven: 11, twelve: 12, thirteen: 13, fourteen: 14, fifteen: 15, sixteen: 16, seventeen: 17, eighteen: 18, nineteen: 19,
+  twenty: 20, thirty: 30, forty: 40, fifty: 50, sixty: 60, seventy: 70, eighty: 80, ninety: 90,
+};
+
+/** "thirty six" -> 36, "one hundred and twelve" -> 112. Null when the words are not a number. */
+export function wordsToNumber(words: string): number | null {
+  const parts = words.split(" ").filter((part) => part && part !== "and");
+  if (parts.length === 0) return null;
+  let total = 0;
+  let current = 0;
+  for (const part of parts) {
+    if (part === "hundred") {
+      current = (current || 1) * 100;
+      continue;
+    }
+    const value = NUMBER_WORDS[part];
+    if (value == null) return null;
+    current += value;
+  }
+  total += current;
+  return total > 0 ? total : null;
+}
+
+const NUMBER_WORD_RUN =
+  "(?:(?:one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred|and)(?: |$))+";
+
+/**
+ * Everyday phrasings rewritten to the forms the matcher already knows.
+ * Runs on the normalized text before typo correction, so "log out" is not read as "sign in".
+ */
+const PHRASES: [RegExp, string][] = [
+  [/\b(dark|night|light|day)mode\b/g, "$1 mode"],
+  [/\bfullscreen\b/g, "full screen"],
+  [/\b(surah|sura|surat|chapter) (?:number|num|no\.?|nr|#) ?(\d{1,3})\b/g, "$1 $2"],
+  [/\b(\d{1,3})(?:st|nd|rd|th) (surah|sura|chapter)\b/g, "$2 $1"],
+  [/\b(?:log ?out|sign ?out|signout)\b/g, "my account"],
+  [/^(?:switch to |go |make it |turn on )?light$/g, "light mode"],
+  [/\b(?:switch|change|go) to light\b/g, "light mode"],
+  [/\b(?:enlarge|magnify)\b/g, "bigger"],
+  [/\bbig (text|font|letters|writing)\b/g, "bigger $1"],
+  [/\b(?:text|font|letters)(?: size)? up\b/g, "bigger text"],
+  [/\b(?:text|font|letters)(?: size)? down\b/g, "smaller text"],
+  [/\b(?:reduce|shrink)\b/g, "smaller"],
+  [/\bsmall (text|font|letters|writing)\b/g, "smaller $1"],
+  [/\bsave (?:this|the) (ayah|verse)\b/g, "bookmark this $1"],
+  [/^(?:mute|silence)(?: (?:it|audio|the audio|recitation))?$/g, "pause"],
+  [/^back$/g, "go back"],
+  [/\bprevious page\b/g, "previous ayah"],
+  [/\b(?:translations? off|turn off (?:the )?translations?|no translations?)\b/g, "hide translation"],
+  [/\b(?:translations? on|turn on (?:the )?translations?)\b/g, "show translation"],
+  [/^(?:show |open |see )?(?:my )?stats$/g, "my progress"],
+];
+
+/** Number words after surah, chapter, juz, ayah, or verse become digits: "juz thirty" -> "juz 30". */
+function numberWords(text: string) {
+  return text.replace(
+    new RegExp(`\\b(surah|sura|surat|chapter|juz|para|ayah|aya|ayat|verse) (${NUMBER_WORD_RUN})`, "g"),
+    (whole, label: string, run: string) => {
+      const value = wordsToNumber(run.trim());
+      return value == null ? whole : `${label} ${value} `;
+    },
+  );
+}
+
+export function rewritePhrases(text: string) {
+  let out = numberWords(text);
+  for (const [pattern, replacement] of PHRASES) out = out.replace(pattern, replacement);
+  return out.replace(/\s+/g, " ").trim();
+}
+
 export function matchHelper(raw: string): HelperMatch {
-  const light = normalizeCommand(raw);
+  const light = rewritePhrases(normalizeCommand(raw));
   const text = light
     .split(" ")
     .map((token) => correctToken(token))
@@ -642,6 +747,24 @@ export function matchHelper(raw: string): HelperMatch {
     return base({
       action: "none",
       reply: `Try a chip, or ask in plain words. I can play, navigate, and open tools — I don't explain the Quran. I'm ${COMPANION_NAME}.`,
+    });
+  }
+
+  if (/^(help|commands|what can you do|what can i say|what can i ask|what do you do|how does this work|options)$/.test(text)) {
+    return base({
+      action: "guide",
+      reply: "I can open a surah, ayah, or juz, play recitation, change the text size or theme, and open notes, bookmarks, tafsir, and search. Try “go to 2:255” or “bigger text”.",
+      suggestions: ["Go to 2:255", "Play this surah", "Bigger text", "Dark theme"],
+    });
+  }
+
+  if (/^(salam|salaam|as ?salamu? alaikum|assalamu alaikum|assalamualaikum|asalamualaikum|hi|hello|hey|thanks|thank you|jazakallah|jazakallahu khair)( sana)?$/.test(text)) {
+    return base({
+      action: "guide",
+      reply: /^(thanks|thank you|jazak)/.test(text)
+        ? "You're welcome. I'm here when you need the next step."
+        : "Wa alaykum as-salam. I can open a surah, play recitation, or find your notes.",
+      suggestions: ["Go to 2:255", "Play this surah", "Add a note"],
     });
   }
 
@@ -1155,4 +1278,20 @@ function goOrCurrent(
     verseNumber: verseNumber ?? undefined,
     verseKey: chapterId && verseNumber ? verseKey(chapterId, verseNumber) : undefined,
   });
+}
+
+/**
+ * Every plain word the matcher understands, without surah names.
+ * The missed-command log keeps only these words, so a personal word never leaves the browser.
+ */
+export function matcherVocabulary(): Set<string> {
+  const aliases = surahAliasTokens();
+  const words = new Set<string>([...KEEP, ...Object.values(TYPOS), ...LANGUAGES]);
+  for (const word of KEYWORDS) if (!aliases.has(word)) words.add(word);
+  return words;
+}
+
+/** Theme names as the matcher reads them, such as "rose" or "high contrast". */
+export function themeNames(): string[] {
+  return THEME_ALIASES.flatMap((theme) => theme.names);
 }

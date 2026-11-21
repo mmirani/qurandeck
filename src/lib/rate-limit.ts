@@ -55,6 +55,7 @@ export function limitForPath(pathname: string): { name: string; limit: number; w
   if (pathname.startsWith("/api/ranks/reset")) return { name: "ranks-reset", limit: 5, windowMs: 60 * 1000 };
   if (pathname.startsWith("/api/library")) return { name: "library", limit: 20, windowMs: 60 * 1000 };
   if (pathname.startsWith("/api/quran/search")) return { name: "search", limit: 30, windowMs: 60 * 1000 };
+  if (pathname.startsWith("/api/sana")) return { name: "sana", limit: 30, windowMs: 60 * 60 * 1000 };
   if (pathname.startsWith("/api/beta")) return { name: "beta", limit: 8, windowMs: 60 * 1000 };
   if (pathname.startsWith("/api/")) return { name: "api", limit: 90, windowMs: 60 * 1000 };
   return null;
