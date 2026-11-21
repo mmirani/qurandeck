@@ -1,20 +1,36 @@
 import "server-only";
 import { getSql } from "@/lib/db";
-import { MISSED_RETENTION_DAYS, MISSED_WINDOW_DAYS, topMissedShapes, type MissedStore, type MissedTop } from "@/lib/sana-missed";
+import {
+  MISSED_RETENTION_DAYS,
+  MISSED_WINDOW_DAYS,
+  missedSchemaStatements,
+  onceWithRetry,
+  topMissedShapes,
+  type MissedStore,
+  type MissedTop,
+} from "@/lib/sana-missed";
 
 /**
  * Daily counts of Sana missed-command shapes in `sana_missed_daily`.
- * The table comes from migrations/0001_sana_missed_daily.sql and is never created here.
- * Until it exists, every call is a quiet no-op.
+ * The table is created with CREATE TABLE IF NOT EXISTS once per server instance, like the usage tables.
+ * If that fails, every call is a quiet no-op and setup is tried again later.
  */
 
-type Sql = (strings: TemplateStringsArray, ...values: unknown[]) => Promise<unknown>;
+type Sql = ((strings: TemplateStringsArray, ...values: unknown[]) => Promise<unknown>) & {
+  query: (text: string, params?: unknown[]) => Promise<unknown>;
+};
 
 const MISSING_RETRY_MS = 10 * 60 * 1000;
 const PURGE_EVERY_MS = 60 * 60 * 1000;
 
 let missingUntil = 0;
 let lastPurge = 0;
+
+const ensureTable = onceWithRetry(async () => {
+  const sql = sqlOrNull();
+  if (!sql) throw new Error("No database");
+  for (const statement of missedSchemaStatements()) await sql.query(statement);
+}, MISSING_RETRY_MS);
 
 function sqlOrNull(): Sql | null {
   if (!process.env.DATABASE_URL) return null;
@@ -34,6 +50,7 @@ async function guarded<T>(fallback: T, run: (sql: Sql) => Promise<T>): Promise<T
   if (Date.now() < missingUntil) return fallback;
   const sql = sqlOrNull();
   if (!sql) return fallback;
+  if (!(await ensureTable())) return fallback;
   try {
     return await run(sql);
   } catch (error) {
