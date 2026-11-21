@@ -24,6 +24,7 @@ import {
   barWarmth,
   centreOn,
   clampView,
+  fitLabel,
   isZoomed,
   levelForPpa,
   litRuns,
@@ -62,22 +63,25 @@ function CompletionKey() {
     <div
       data-testid="completion-key"
       aria-hidden="true"
-      className="flex w-full flex-wrap items-center gap-x-1.5 gap-y-1 text-[11px] leading-4 font-medium text-ink-soft sm:w-auto sm:flex-1 sm:justify-center"
+      className="flex w-full sm:w-auto sm:flex-1 sm:justify-center"
     >
-      <span className="inline-flex items-center gap-1.5">
-        <span className="inline-block size-2.5 rounded-[3px] bg-[var(--map-unread)] shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--ink)_22%,transparent),inset_0_0_0_1px_var(--map-edge)]" />
-        Not started
-      </span>
-      <span className="opacity-55">·</span>
-      <span className="inline-flex items-center gap-1.5">
-        <span className="inline-block size-2.5 rounded-[3px] bg-[var(--map-mid)]" />
-        In progress
-      </span>
-      <span className="opacity-55">·</span>
-      <span className="inline-flex items-center gap-1.5">
-        <span className="inline-block size-2.5 rounded-[3px] bg-[var(--map-done)] shadow-[inset_0_1px_0_var(--map-sheen),0_0_6px_color-mix(in_srgb,var(--map-bloom)_70%,transparent)]" />
-        Finished
-      </span>
+      {/* The key sits on the same dark panel as the map, so its swatches look the same on every theme. */}
+      <div className="completion-panel-ink inline-flex flex-wrap items-center gap-x-1.5 gap-y-1 rounded-xl bg-[var(--map-base)] px-3 py-1.5 text-[11px] leading-4 font-medium text-ink-soft shadow-[inset_0_0_0_1px_var(--map-rim)]">
+        <span className="inline-flex items-center gap-1.5">
+          <span className="inline-block size-2.5 rounded-[3px] bg-[var(--map-unread)] shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--ink)_22%,transparent),inset_0_0_0_1px_var(--map-edge)]" />
+          Not started
+        </span>
+        <span className="opacity-55">·</span>
+        <span className="inline-flex items-center gap-1.5">
+          <span className="inline-block size-2.5 rounded-[3px] bg-[var(--map-mid)]" />
+          In progress
+        </span>
+        <span className="opacity-55">·</span>
+        <span className="inline-flex items-center gap-1.5">
+          <span className="inline-block size-2.5 rounded-[3px] bg-[var(--map-done)] shadow-[inset_0_1px_0_var(--map-sheen),0_0_6px_color-mix(in_srgb,var(--map-bloom)_70%,transparent)]" />
+          Finished
+        </span>
+      </div>
     </div>
   );
 }
@@ -630,18 +634,8 @@ export function CompletionViewport({
     if (revealed !== viewRef.current) animateTo(revealed);
   };
 
-  const screenX = (ayah: number) => (ayah - view.start) * ppa;
-  const popoverWidth = Math.min(300, Math.max(0, width - 8));
-  const popoverLeft = openUnit
-    ? Math.max(0, Math.min(width - popoverWidth, screenX((openUnit.start + openUnit.end) / 2) - popoverWidth / 2))
-    : 0;
-
   const hoverUnit = hover != null && !dragging && !openUnit ? unitAt(level, hover) : null;
   const hoverLabel = hoverUnit ? unitLabel(hoverUnit, read, name) : "";
-  const tooltipWidth = 260;
-  const hoverLeft = hoverUnit
-    ? Math.max(0, Math.min(width - tooltipWidth, screenX((hoverUnit.start + hoverUnit.end) / 2) - tooltipWidth / 2))
-    : 0;
 
   /* ---------- ruler, overview, warmth ---------- */
 
@@ -699,6 +693,8 @@ export function CompletionViewport({
     const label = `${first.chapterId} ${name(first.chapterId)}`;
     return { left: edge, width: Math.min(room, 180), text: label };
   })();
+  // Never draw a cut-off label: shorten "3 Ali 'Imran" to "3" at the bar's right edge, or skip it.
+  const visibleRight = (view.start - winFrom) * ppa + width - 6;
   const stickyRight = sticky ? sticky.left + Math.min(sticky.width, sticky.text.length * 7.2 + 8) : -Infinity;
 
   const overview = useMemo(
@@ -728,7 +724,10 @@ export function CompletionViewport({
   const warmth = barWarmth(read);
   const backdrop = barGlow(warmth);
   const explorer = variant === "explorer";
-  const barHeight = explorer ? "h-36 sm:h-40" : "h-16";
+  // A phone held sideways is short: a lower bar keeps the details row and the whole bar on screen.
+  const barHeight = explorer
+    ? "h-36 [@media(min-width:640px)_and_(min-height:501px)]:h-40 [@media(max-height:500px)]:h-28"
+    : "h-16";
   const canZoomIn = view.ppa < MAX_PPA - 1e-6;
   const canZoomOut = zoomed;
 
@@ -793,7 +792,7 @@ export function CompletionViewport({
           overviewDrag.current = false;
         }}
       >
-        <div className="flex h-2.5 w-full gap-px overflow-hidden rounded-full bg-line/70">
+        <div className="flex h-2.5 w-full gap-px overflow-hidden rounded-full bg-[var(--map-base)]">
           {overview.map((item) => (
             <span key={item.piece} className="h-full min-w-0 flex-1" style={{ background: item.background }} />
           ))}
@@ -805,6 +804,98 @@ export function CompletionViewport({
         />
       </div>
 
+      {/* Details sit in their own reserved row just above the bar: nothing floats over the
+          header, the stats, the controls or the key, and the bar never shifts when one opens. */}
+      <div
+        data-testid="completion-details"
+        className="flex min-h-[7.25rem] flex-col justify-center rounded-2xl border border-line bg-surface px-3 py-2 sm:min-h-[3.875rem]"
+      >
+        {openUnit && details ? (
+          <div
+            ref={popoverRef}
+            role="dialog"
+            aria-modal="false"
+            aria-labelledby={popoverTitleId}
+            data-testid="completion-popover"
+            className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-2 gap-y-2 text-ink sm:grid-cols-[minmax(0,1fr)_auto_auto]"
+            onKeyDown={(event) => {
+              if (event.key === "Escape") {
+                event.preventDefault();
+                event.stopPropagation();
+                closePopover(true);
+              }
+            }}
+          >
+            <div className="col-start-1 row-start-1 min-w-0">
+              <p id={popoverTitleId} className="text-sm leading-5 font-semibold">
+                {details.title}
+              </p>
+              <p className="text-sm leading-5 text-ink-soft" data-testid="completion-popover-surah">
+                {details.surahLine}
+                {details.detail ? ` · ${details.detail}` : details.finished ? " · Finished" : ""}
+              </p>
+            </div>
+            <div className="col-span-2 row-start-2 flex items-center gap-2 sm:col-span-1 sm:col-start-2 sm:row-start-1">
+              <button
+                type="button"
+                aria-label={`Previous ${level === "quran" ? "slice" : level}`}
+                disabled={openUnit.index === 0}
+                onClick={() => stepPopover(-1)}
+                className="inline-flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full border border-line text-ink disabled:opacity-40"
+              >
+                <ChevronLeft aria-hidden="true" className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                data-primary
+                onClick={() => onOpen(details.target)}
+                className="inline-flex h-11 min-w-0 flex-1 cursor-pointer items-center justify-center rounded-full bg-gold px-4 text-sm font-semibold whitespace-nowrap text-on-gold sm:flex-none"
+              >
+                {details.action}
+              </button>
+              <button
+                type="button"
+                aria-label={`Next ${level === "quran" ? "slice" : level}`}
+                disabled={openUnit.index >= unitCount(level) - 1}
+                onClick={() => stepPopover(1)}
+                className="inline-flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full border border-line text-ink disabled:opacity-40"
+              >
+                <ChevronRight aria-hidden="true" className="h-4 w-4" />
+              </button>
+            </div>
+            <button
+              type="button"
+              aria-label="Close"
+              onClick={() => closePopover(true)}
+              className="col-start-2 row-start-1 inline-flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center justify-self-end rounded-full text-ink-soft hover:bg-highlight sm:col-start-3"
+            >
+              <X aria-hidden="true" className="h-4 w-4" />
+            </button>
+          </div>
+        ) : (
+          <div className="flex flex-wrap items-center justify-between gap-x-4 text-xs leading-5 text-ink-soft">
+            {hoverUnit ? (
+              <p data-testid="completion-tooltip" aria-hidden="true" className="font-medium text-ink">
+                {hoverLabel}
+              </p>
+            ) : (
+              <p data-testid="completion-status-line" aria-hidden="true" className="font-medium text-ink">
+                {LEVEL_NAMES[level]}
+                {rangeText ? ` · ${rangeText}` : ""}
+              </p>
+            )}
+            <p>{hint}</p>
+          </div>
+        )}
+        <p id={statusId} data-testid="completion-status" className="sr-only">
+          {LEVEL_NAMES[level]}
+          {rangeText ? ` · ${rangeText}` : ""}
+        </p>
+        <p aria-live="polite" className="sr-only">
+          {ready ? `${LEVEL_NAMES[level]} view` : ""}
+        </p>
+      </div>
+
       <div className="relative">
         <div
           ref={viewportRef}
@@ -813,7 +904,7 @@ export function CompletionViewport({
           data-ppa={view.ppa.toFixed(3)}
           data-start={view.start.toFixed(2)}
           data-focus-ayah={focusAyah}
-          className={`completion-viewport relative ${barHeight} select-none overflow-hidden rounded-2xl ${
+          className={`completion-viewport completion-panel completion-panel-ink relative ${barHeight} select-none overflow-hidden rounded-2xl ${
             dragging ? "cursor-grabbing" : zoomed ? "cursor-grab" : ""
           } ${explorer ? "touch-none" : "touch-pan-y"}`}
           style={{
@@ -895,6 +986,8 @@ export function CompletionViewport({
               ) : null}
               {ruler
                 .filter((mark) => mark.left > stickyRight || mark.left + mark.width < (sticky?.left ?? 0))
+                .map((mark) => ({ ...mark, text: fitLabel(mark.text, Math.min(mark.width, visibleRight - mark.left)) }))
+                .filter((mark) => mark.text)
                 .map((mark) => (
                 <span
                   key={mark.key}
@@ -916,95 +1009,6 @@ export function CompletionViewport({
           ) : null}
         </div>
 
-        {hoverUnit ? (
-          <div
-            role="tooltip"
-            data-testid="completion-tooltip"
-            className="pointer-events-none absolute bottom-full z-20 mb-2 rounded-xl border border-line bg-surface px-3 py-2 text-xs leading-5 text-ink shadow-lg"
-            style={{ left: hoverLeft, width: tooltipWidth }}
-          >
-            {hoverLabel}
-          </div>
-        ) : null}
-
-        {openUnit && details ? (
-          <div
-            ref={popoverRef}
-            role="dialog"
-            aria-modal="false"
-            aria-labelledby={popoverTitleId}
-            data-testid="completion-popover"
-            className={`absolute z-30 rounded-2xl border border-line bg-surface p-3 text-ink shadow-xl ${explorer ? "top-full mt-2" : "bottom-full mb-2"}`}
-            style={{ left: popoverLeft, width: popoverWidth }}
-            onKeyDown={(event) => {
-              if (event.key === "Escape") {
-                event.preventDefault();
-                event.stopPropagation();
-                closePopover(true);
-              }
-            }}
-          >
-            <div className="flex items-start justify-between gap-2">
-              <div className="min-w-0 pt-1">
-                <p id={popoverTitleId} className="text-sm font-semibold leading-5">
-                  {details.title}
-                </p>
-                <p className="mt-0.5 text-sm leading-5 text-ink-soft" data-testid="completion-popover-surah">
-                  {details.surahLine}
-                  {details.finished ? " · Finished" : ""}
-                </p>
-                {details.detail ? <p className="text-xs leading-5 text-ink-soft">{details.detail}</p> : null}
-              </div>
-              <button
-                type="button"
-                aria-label="Close"
-                onClick={() => closePopover(true)}
-                className="inline-flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full text-ink-soft hover:bg-highlight"
-              >
-                <X aria-hidden="true" className="h-4 w-4" />
-              </button>
-            </div>
-            <div className="mt-2 flex items-center gap-2">
-              <button
-                type="button"
-                aria-label={`Previous ${level === "quran" ? "slice" : level}`}
-                disabled={openUnit.index === 0}
-                onClick={() => stepPopover(-1)}
-                className="inline-flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full border border-line text-ink disabled:opacity-40"
-              >
-                <ChevronLeft aria-hidden="true" className="h-4 w-4" />
-              </button>
-              <button
-                type="button"
-                data-primary
-                onClick={() => onOpen(details.target)}
-                className="inline-flex h-11 min-w-0 flex-1 cursor-pointer items-center justify-center rounded-full bg-gold px-4 text-sm font-semibold text-on-gold"
-              >
-                {details.action}
-              </button>
-              <button
-                type="button"
-                aria-label={`Next ${level === "quran" ? "slice" : level}`}
-                disabled={openUnit.index >= unitCount(level) - 1}
-                onClick={() => stepPopover(1)}
-                className="inline-flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full border border-line text-ink disabled:opacity-40"
-              >
-                <ChevronRight aria-hidden="true" className="h-4 w-4" />
-              </button>
-            </div>
-          </div>
-        ) : null}
-      </div>
-
-      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-xs leading-5 text-ink-soft">
-        <p id={statusId} data-testid="completion-status">
-          {LEVEL_NAMES[level]}
-          {rangeText ? ` · ${rangeText}` : ""}
-        </p>
-        <p aria-live="polite" className="sr-only">
-          {ready ? `${LEVEL_NAMES[level]} view` : ""}
-        </p>
-        <p>{hint}</p>
       </div>
     </div>
   );
