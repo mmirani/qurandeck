@@ -130,6 +130,13 @@ export default function PrivacyPage() {
           a count when a religious question was refused. The words you type or speak to {COMPANION_NAME} are not stored.
         </p>
         <p>
+          When {COMPANION_NAME} does not understand a command, the browser can send its anonymous shape instead of the
+          words: only words from {COMPANION_NAME}&apos;s fixed command list, with every number, surah name, and theme name
+          replaced by a placeholder and any other word replaced by a blank, for example &ldquo;take me to [surah]
+          [w]&rdquo;. Anything with an email, link, phone number, or more than six words is not sent. The server keeps a
+          count per shape per day, with no account, id, IP address, or time of day, and deletes it after 90 days.
+        </p>
+        <p>
           Display settings are stored as the choice itself: the theme name in use, text size, ink, and similar on or
           off options such as translation, mushaf view, and playback speed. Not your notes, and not your place in the
           Quran.

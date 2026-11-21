@@ -137,3 +137,71 @@ describe("Sana command parser", () => {
     assert.match(match.reply, /don't explain the Quran/i);
   });
 });
+
+describe("Sana phrasings, synonyms, and typos", () => {
+  it("opens a surah by number in everyday forms", () => {
+    for (const raw of ["surah number 36", "surah no 36", "surah no. 36", "surah #36", "the 36th surah", "36th surah", "chapter thirty six", "take me to surah 36", "show me surah 36", "open surah 36", "jump to surah 36"]) {
+      const match = matchHelper(raw);
+      assert.equal(match.action, "go-surah", raw);
+      assert.equal(match.chapterId, 36, raw);
+    }
+    assert.equal(matchHelper("surah one hundred and twelve").chapterId, 112);
+    assert.equal(matchHelper("juz thirty").juz, 30);
+    assert.equal(matchHelper("play surah thirty six").action, "play-surah");
+    assert.equal(matchHelper("one ayah").action, "reading-mode");
+  });
+
+  it("switches dark and light mode", () => {
+    for (const raw of ["dark mode", "darkmode", "turn on dark mode", "drak mode", "dakr mode", "night mode"]) {
+      assert.equal(matchHelper(raw).theme, "obsidian", raw);
+    }
+    for (const raw of ["light mode", "lightmode", "switch to light", "light"]) {
+      assert.equal(matchHelper(raw).theme, "iris", raw);
+    }
+  });
+
+  it("changes text size in plain words", () => {
+    for (const raw of ["bigger text", "big text", "big font", "enlarge text", "font size up", "make text bigger", "biger text"]) {
+      assert.equal(matchHelper(raw).action, "bigger", raw);
+    }
+    for (const raw of ["smaller text", "small text", "reduce font", "decrease text size", "shrink text", "text size down"]) {
+      assert.equal(matchHelper(raw).action, "smaller", raw);
+    }
+  });
+
+  it("understands other common phrasings", () => {
+    assert.equal(matchHelper("save this ayah").action, "bookmark");
+    assert.equal(matchHelper("shwo bookmarks").action, "bookmarks");
+    assert.equal(matchHelper("mute").action, "pause");
+    assert.equal(matchHelper("back").action, "previous");
+    assert.equal(matchHelper("previous page").action, "previous");
+    assert.equal(matchHelper("nxt ayah").action, "next");
+    assert.equal(matchHelper("serach mercy").action, "search");
+    assert.equal(matchHelper("translation off").translationChange, "arabic-only");
+    assert.equal(matchHelper("turn off translation").translationChange, "arabic-only");
+    assert.equal(matchHelper("log out").action, "account");
+    assert.equal(matchHelper("sign out").action, "account");
+    assert.equal(matchHelper("log in").action, "sign-in");
+    assert.equal(matchHelper("my stats").action, "progress");
+    assert.equal(matchHelper("export stats").exportKind, "stats");
+    assert.equal(matchHelper("fullscreen").action, "focus");
+  });
+
+  it("answers help and greetings as a site helper, not a surah", () => {
+    for (const raw of ["help", "what can you do", "commands"]) {
+      const match = matchHelper(raw);
+      assert.equal(match.action, "guide", raw);
+      assert.doesNotMatch(match.reply, /\bAI\b|assistant|model/i);
+    }
+    const salam = matchHelper("salam");
+    assert.equal(salam.action, "guide");
+    assert.equal(salam.chapterId, undefined);
+    assert.equal(matchHelper("assalamu alaikum").action, "guide");
+    assert.equal(matchHelper("thanks").action, "guide");
+  });
+
+  it("still refuses rulings after the new phrasings", () => {
+    assert.equal(matchHelper("is music haram").action, "refuse");
+    assert.equal(matchHelper("explain this ayah").action, "refuse");
+  });
+});
