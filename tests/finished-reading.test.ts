@@ -20,7 +20,7 @@ import {
   reconcileFinishedReadings,
   startNewReading,
 } from "../src/lib/finished-reading";
-import { keepsakeDesignForMonth, keepsakeSvg, KEEPSAKE_DESIGNS } from "../src/lib/keepsake-card";
+import { keepsakeDesignForMonth, keepsakeMotif, keepsakeSvg, KEEPSAKE_DESIGNS } from "../src/lib/keepsake-card";
 
 const KEYS = allVerseKeys();
 
@@ -84,7 +84,41 @@ describe("daysInclusive and month mapping", () => {
     assert.match(svg, /114 surahs/);
     assert.match(svg, /qurandeck.com/);
     assert.doesNotMatch(svg, /khatm/i);
-    assert.doesNotMatch(svg, /app/i);
+    assert.doesNotMatch(svg, /\bapp\b/i);
+  });
+
+  it("gives each month a unique motif and seasonal paper", () => {
+    const motifs = new Set<string>();
+    const papers = new Set<string>();
+    for (let month = 1; month <= 12; month += 1) {
+      const design = keepsakeDesignForMonth(month);
+      motifs.add(keepsakeMotif(design));
+      papers.add(`${design.paperTop}|${design.paperMid}|${design.paperBottom}|${design.stem}`);
+    }
+    assert.equal(motifs.size, 12);
+    assert.equal(papers.size, 12);
+  });
+
+  it("keeps title, dua, date and footer above AA contrast on every paper", () => {
+    const ratio = (a: string, b: string) => {
+      const lum = (hex: string) => {
+        const rgb = [0, 1, 2].map((i) => {
+          const channel = Number.parseInt(hex.slice(1 + i * 2, 3 + i * 2), 16) / 255;
+          return channel <= 0.03928 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
+        });
+        return 0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2];
+      };
+      const hi = Math.max(lum(a), lum(b));
+      const lo = Math.min(lum(a), lum(b));
+      return (hi + 0.05) / (lo + 0.05);
+    };
+    for (const design of KEEPSAKE_DESIGNS) {
+      for (const paper of [design.paperTop, design.paperMid, design.paperBottom]) {
+        assert.ok(ratio(design.ink, paper) >= 4.5, `${design.id} ink on ${paper}`);
+        assert.ok(ratio(design.soft, paper) >= 4.5, `${design.id} soft on ${paper}`);
+        assert.ok(ratio(design.muted, paper) >= 4.5, `${design.id} muted on ${paper}`);
+      }
+    }
   });
 });
 

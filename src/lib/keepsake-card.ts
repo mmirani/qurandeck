@@ -10,6 +10,7 @@ export type KeepsakeDesign = {
   paperBottom: string;
   ink: string;
   soft: string;
+  muted: string;
   stem: string;
   leafFill: string;
   flower: string;
@@ -18,19 +19,96 @@ export type KeepsakeDesign = {
   frame: string;
 };
 
+/**
+ * Twelve seasonal designs in QuranDeck Iris purple and cyan.
+ * Seasons shift shade within that palette; motifs and compositions stay distinct.
+ * Text colours are chosen for WCAG AA contrast on these light papers.
+ */
 export const KEEPSAKE_DESIGNS: readonly KeepsakeDesign[] = [
-  { month: 1, id: "winter-twigs", name: "Winter twigs", paperTop: "#f3eef8", paperMid: "#faf7f4", paperBottom: "#f4eee8", ink: "#2a1838", soft: "#5a2e4a", stem: "#8a6574", leafFill: "#f3e4e6", flower: "#e8bec3", flowerStroke: "#b56b78", bird: "#9d8ab0", frame: "#d4b8c4" },
-  { month: 2, id: "rose-buds", name: "Rose buds", paperTop: "#f8eef2", paperMid: "#fbf6f4", paperBottom: "#f6ebe6", ink: "#2a1838", soft: "#5a2e4a", stem: "#8a5d6c", leafFill: "#f6e4e8", flower: "#e4a8b4", flowerStroke: "#b45a6a", bird: "#c4a0b4", frame: "#e0c0cc" },
-  { month: 3, id: "opening-branch", name: "Opening branch", paperTop: "#f2eef8", paperMid: "#faf7f2", paperBottom: "#f3efe6", ink: "#2a1838", soft: "#5a2e4a", stem: "#7e6570", leafFill: "#efe6dc", flower: "#efc4c8", flowerStroke: "#b56b78", bird: "#9d8ab0", frame: "#d4b8c4" },
-  { month: 4, id: "spring-wreath", name: "Spring wreath", paperTop: "#f4eef8", paperMid: "#faf6f1", paperBottom: "#f7ebe6", ink: "#2a1838", soft: "#5a2e4a", stem: "#8a6574", leafFill: "#f3e4e6", flower: "#e8bec3", flowerStroke: "#b56b78", bird: "#9d8ab0", frame: "#d4b8c4" },
-  { month: 5, id: "tall-sprays", name: "Tall sprays", paperTop: "#f0eef6", paperMid: "#f8f6f1", paperBottom: "#f3efe8", ink: "#2a1838", soft: "#5a2e4a", stem: "#7a6860", leafFill: "#efe6da", flower: "#e6c0b8", flowerStroke: "#a87470", bird: "#9d8ab0", frame: "#d4c0bc" },
-  { month: 6, id: "june-garland", name: "June garland", paperTop: "#f3eef6", paperMid: "#faf7f2", paperBottom: "#f6eee8", ink: "#2a1838", soft: "#5a2e4a", stem: "#7e6a68", leafFill: "#f0e4dc", flower: "#e8b8c0", flowerStroke: "#b56b78", bird: "#9d8ab0", frame: "#d8c0c4" },
-  { month: 7, id: "open-corners", name: "Open corners", paperTop: "#f6f0f6", paperMid: "#fbf8f4", paperBottom: "#f7f0ea", ink: "#2a1838", soft: "#5a2e4a", stem: "#8a6574", leafFill: "#f3e4e6", flower: "#e8bec3", flowerStroke: "#b56b78", bird: "#9d8ab0", frame: "#dcc8d0" },
-  { month: 8, id: "late-berries", name: "Late berries", paperTop: "#f6eef2", paperMid: "#faf6f2", paperBottom: "#f4ebe6", ink: "#2a1838", soft: "#5a2e4a", stem: "#7a5e62", leafFill: "#f0e0dc", flower: "#c97880", flowerStroke: "#a0505c", bird: "#b090a4", frame: "#d4b8c0" },
-  { month: 9, id: "drooping-leaves", name: "Drooping leaves", paperTop: "#f5efe8", paperMid: "#faf6f1", paperBottom: "#f3e8e0", ink: "#2a1838", soft: "#5a2e4a", stem: "#7a6558", leafFill: "#edd8c8", flower: "#d8a090", flowerStroke: "#a07060", bird: "#a0909c", frame: "#d4c0b4" },
-  { month: 10, id: "autumn-gate", name: "Autumn gate", paperTop: "#f4eee8", paperMid: "#faf6f1", paperBottom: "#f2e8e2", ink: "#2a1838", soft: "#5a2e4a", stem: "#7a5e58", leafFill: "#e8d0c4", flower: "#d4a098", flowerStroke: "#a06860", bird: "#a08890", frame: "#d4c0b8" },
-  { month: 11, id: "bookplate", name: "Bookplate", paperTop: "#f4eef8", paperMid: "#faf6f1", paperBottom: "#f7ebe6", ink: "#2a1838", soft: "#5a2e4a", stem: "#8a6574", leafFill: "#f3e4e6", flower: "#e8bec3", flowerStroke: "#b56b78", bird: "#9d8ab0", frame: "#d4b8c4" },
-  { month: 12, id: "evergreen-sprigs", name: "Evergreen sprigs", paperTop: "#eef0f6", paperMid: "#f7f6f4", paperBottom: "#f0ebe8", ink: "#2a1838", soft: "#5a2e4a", stem: "#5e6a68", leafFill: "#dce6e0", flower: "#c8b8c4", flowerStroke: "#8a7078", bird: "#8a90a4", frame: "#c8c4cc" },
+  {
+    month: 1, id: "winter-frost", name: "Winter frost",
+    paperTop: "#e4eef8", paperMid: "#f4f8fc", paperBottom: "#e8f2f8",
+    ink: "#1e1b4b", soft: "#3d1779", muted: "#3f3a6a",
+    stem: "#4a6a88", leafFill: "#e8f4f8", flower: "#a5f3fc", flowerStroke: "#0b6b7a",
+    bird: "#7a90b0", frame: "#b4c8dc",
+  },
+  {
+    month: 2, id: "snow-twigs", name: "Snow twigs",
+    paperTop: "#e8ecf8", paperMid: "#f5f6fb", paperBottom: "#ece8f6",
+    ink: "#1e1b4b", soft: "#3d1779", muted: "#3f3a6a",
+    stem: "#5a6a90", leafFill: "#eef2fa", flower: "#c4b5fd", flowerStroke: "#4a1b94",
+    bird: "#8a90b8", frame: "#c0c4e0",
+  },
+  {
+    month: 3, id: "almond-blossom", name: "Almond blossom",
+    paperTop: "#ece6fb", paperMid: "#f8f5ff", paperBottom: "#f4eefc",
+    ink: "#1e1b4b", soft: "#3d1779", muted: "#4a3d78",
+    stem: "#6a5a98", leafFill: "#eee6fa", flower: "#ddd6fe", flowerStroke: "#6d28d9",
+    bird: "#9d8ab0", frame: "#c4b5fd",
+  },
+  {
+    month: 4, id: "spring-tulips", name: "Spring tulips",
+    paperTop: "#f0e6fb", paperMid: "#faf6ff", paperBottom: "#f6eef8",
+    ink: "#1e1b4b", soft: "#3d1779", muted: "#4a3d78",
+    stem: "#5b4a8a", leafFill: "#f0e8fa", flower: "#e9d5ff", flowerStroke: "#6d28d9",
+    bird: "#a78bfa", frame: "#d0c0f0",
+  },
+  {
+    month: 5, id: "climbing-buds", name: "Climbing buds",
+    paperTop: "#eee8fc", paperMid: "#f9f6ff", paperBottom: "#efe8fa",
+    ink: "#1e1b4b", soft: "#3d1779", muted: "#4a3d78",
+    stem: "#5729a7", leafFill: "#eee6fa", flower: "#ddd6fe", flowerStroke: "#5b21b6",
+    bird: "#9d8ab0", frame: "#c4b5fd",
+  },
+  {
+    month: 6, id: "summer-vines", name: "Summer vines",
+    paperTop: "#e6eefc", paperMid: "#f4f8ff", paperBottom: "#e8f4f6",
+    ink: "#1e1b4b", soft: "#3d1779", muted: "#3f3a6a",
+    stem: "#3d6a88", leafFill: "#e4f4f4", flower: "#67e8f9", flowerStroke: "#0b6b7a",
+    bird: "#5a8aa0", frame: "#a8d0dc",
+  },
+  {
+    month: 7, id: "sunflowers", name: "Sunflowers",
+    paperTop: "#e4f0f6", paperMid: "#f3f8fc", paperBottom: "#ece8fb",
+    ink: "#1e1b4b", soft: "#3d1779", muted: "#3f3a6a",
+    stem: "#4a5a98", leafFill: "#e8f0fb", flower: "#22d3ee", flowerStroke: "#5729a7",
+    bird: "#7a90b8", frame: "#b0c4e8",
+  },
+  {
+    month: 8, id: "palm-fronds", name: "Palm fronds",
+    paperTop: "#e8e6fb", paperMid: "#f6f5ff", paperBottom: "#e6f2f4",
+    ink: "#1e1b4b", soft: "#3d1779", muted: "#3f3a6a",
+    stem: "#3d5a88", leafFill: "#e6f2f4", flower: "#67e8f9", flowerStroke: "#4a1b94",
+    bird: "#7a90b0", frame: "#b8c8e0",
+  },
+  {
+    month: 9, id: "falling-leaves", name: "Falling leaves",
+    paperTop: "#eee6f6", paperMid: "#f8f4fb", paperBottom: "#f0e8f4",
+    ink: "#1e1b4b", soft: "#3d1779", muted: "#4a3d78",
+    stem: "#5a3d78", leafFill: "#eee4f4", flower: "#c4b5fd", flowerStroke: "#5b21b6",
+    bird: "#8a7aa8", frame: "#c8b4d8",
+  },
+  {
+    month: 10, id: "oak-acorns", name: "Oak and acorns",
+    paperTop: "#ece4f4", paperMid: "#f7f3fa", paperBottom: "#ebe4f2",
+    ink: "#1e1b4b", soft: "#3d1779", muted: "#4a3d78",
+    stem: "#4c1d95", leafFill: "#eee4f4", flower: "#ddd6fe", flowerStroke: "#5b21b6",
+    bird: "#8a7aa8", frame: "#c4b0d8",
+  },
+  {
+    month: 11, id: "wheat-grain", name: "Wheat and grain",
+    paperTop: "#e8e0f2", paperMid: "#f5f1f9", paperBottom: "#e6e0ee",
+    ink: "#1e1b4b", soft: "#3d1779", muted: "#4a3d78",
+    stem: "#5b21b6", leafFill: "#ece4f4", flower: "#c4b5fd", flowerStroke: "#4a1b94",
+    bird: "#8a7aa8", frame: "#c0a8d4",
+  },
+  {
+    month: 12, id: "pine-sprigs", name: "Pine sprigs",
+    paperTop: "#e4eef6", paperMid: "#f3f7fb", paperBottom: "#e6eef4",
+    ink: "#1e1b4b", soft: "#3d1779", muted: "#3f3a6a",
+    stem: "#3d6a80", leafFill: "#e4f0f4", flower: "#a5f3fc", flowerStroke: "#0b6b7a",
+    bird: "#6a88a0", frame: "#b0c8d4",
+  },
 ] as const;
 
 export function keepsakeDesignForMonth(month: number): KeepsakeDesign {
@@ -80,6 +158,10 @@ function escapeXml(value: string) {
   return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
+function n(value: number) {
+  return Number(value.toFixed(1));
+}
+
 function birds(d: KeepsakeDesign, x1: number, y1: number, x2: number, y2: number) {
   return `<g fill="none" stroke="${d.bird}" stroke-width="0.9" stroke-linecap="round" opacity="0.55">
     <path d="M${x1} ${y1} c7 3.5 13 3.5 18 0 c-4.5 7 -11 9 -18 7"/>
@@ -87,232 +169,308 @@ function birds(d: KeepsakeDesign, x1: number, y1: number, x2: number, y2: number
   </g>`;
 }
 
-function flower(d: KeepsakeDesign, cx: number, cy: number, r: number) {
+function blossom(d: KeepsakeDesign, cx: number, cy: number, r: number) {
   return `<g fill="${d.flower}" stroke="${d.flowerStroke}" stroke-width="0.7">
-    <circle cx="${cx}" cy="${cy - r * 0.85}" r="${r * 0.72}"/>
-    <circle cx="${cx - r * 0.8}" cy="${cy - r * 0.15}" r="${r * 0.7}"/>
-    <circle cx="${cx + r * 0.8}" cy="${cy - r * 0.15}" r="${r * 0.7}"/>
-    <circle cx="${cx - r * 0.5}" cy="${cy + r * 0.7}" r="${r * 0.62}"/>
-    <circle cx="${cx + r * 0.5}" cy="${cy + r * 0.7}" r="${r * 0.62}"/>
-    <circle cx="${cx}" cy="${cy}" r="${r * 0.32}" fill="#f7ece8" stroke="none"/>
+    <circle cx="${n(cx)}" cy="${n(cy - r * 0.85)}" r="${n(r * 0.72)}"/>
+    <circle cx="${n(cx - r * 0.8)}" cy="${n(cy - r * 0.15)}" r="${n(r * 0.7)}"/>
+    <circle cx="${n(cx + r * 0.8)}" cy="${n(cy - r * 0.15)}" r="${n(r * 0.7)}"/>
+    <circle cx="${n(cx - r * 0.5)}" cy="${n(cy + r * 0.7)}" r="${n(r * 0.62)}"/>
+    <circle cx="${n(cx + r * 0.5)}" cy="${n(cy + r * 0.7)}" r="${n(r * 0.62)}"/>
+    <circle cx="${n(cx)}" cy="${n(cy)}" r="${n(r * 0.32)}" fill="${d.paperMid}" stroke="none"/>
   </g>`;
 }
 
-function berry(d: KeepsakeDesign, cx: number, cy: number, r: number) {
-  return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${d.flower}" stroke="${d.flowerStroke}" stroke-width="0.6"/>`;
+function bud(d: KeepsakeDesign, cx: number, cy: number, r: number, angle = 0) {
+  return `<ellipse cx="${n(cx)}" cy="${n(cy)}" rx="${n(r * 0.55)}" ry="${n(r)}" transform="rotate(${n(angle)} ${n(cx)} ${n(cy)})" fill="${d.flower}" stroke="${d.flowerStroke}" stroke-width="0.7"/>`;
+}
+
+function frost(d: KeepsakeDesign, dots: Array<[number, number, number?]>) {
+  return `<g fill="${d.flower}" stroke="${d.flowerStroke}" stroke-width="0.45" opacity="0.85">${dots
+    .map(([x, y, r = 1.6]) => `<circle cx="${n(x)}" cy="${n(y)}" r="${n(r)}"/>`)
+    .join("")}</g>`;
+}
+
+function tulip(d: KeepsakeDesign, x: number, base: number, height: number, lean = 0) {
+  const head = base - height;
+  const tip = head - 16;
+  const mid = (base + head) / 2;
+  return `<g fill="none" stroke="${d.stem}" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M${n(x)} ${n(base)} C${n(x + lean * 0.4)} ${n(mid)}, ${n(x + lean)} ${n(head + 8)}, ${n(x + lean)} ${n(head)}"/>
+    <path d="M${n(x + lean * 0.3)} ${n(mid + 8)} C${n(x + lean * 0.3 - 14)} ${n(mid)}, ${n(x + lean * 0.3 - 8)} ${n(mid - 18)}, ${n(x + lean * 0.3)} ${n(mid - 6)}"/>
+  </g>
+  <path d="M${n(x + lean - 7)} ${n(head + 2)} C${n(x + lean - 8)} ${n(tip + 6)}, ${n(x + lean)} ${n(tip)}, ${n(x + lean)} ${n(head - 4)} C${n(x + lean)} ${n(tip)}, ${n(x + lean + 8)} ${n(tip + 6)}, ${n(x + lean + 7)} ${n(head + 2)} C${n(x + lean + 3)} ${n(head + 8)}, ${n(x + lean - 3)} ${n(head + 8)}, ${n(x + lean - 7)} ${n(head + 2)} Z" fill="${d.flower}" stroke="${d.flowerStroke}" stroke-width="0.8" stroke-linejoin="round"/>`;
+}
+
+function sunflower(d: KeepsakeDesign, cx: number, cy: number, r: number, petals = 14) {
+  const parts: string[] = [];
+  for (let i = 0; i < petals; i += 1) {
+    const a = (i / petals) * Math.PI * 2 - Math.PI / 2;
+    const x1 = cx + Math.cos(a) * r * 0.42;
+    const y1 = cy + Math.sin(a) * r * 0.42;
+    const x2 = cx + Math.cos(a) * r;
+    const y2 = cy + Math.sin(a) * r;
+    const nx = Math.cos(a + Math.PI / 2) * r * 0.2;
+    const ny = Math.sin(a + Math.PI / 2) * r * 0.2;
+    parts.push(`<path d="M${n(x1 + nx)} ${n(y1 + ny)} Q${n(x2)} ${n(y2)} ${n(x1 - nx)} ${n(y1 - ny)} Z"/>`);
+  }
+  return `<g fill="${d.leafFill}" stroke="${d.flowerStroke}" stroke-width="0.85" stroke-linejoin="round">
+    ${parts.join("")}
+    <circle cx="${n(cx)}" cy="${n(cy)}" r="${n(r * 0.36)}" fill="${d.flower}" stroke="${d.stem}" stroke-width="0.9"/>
+  </g>`;
+}
+
+function mapleLeaf(d: KeepsakeDesign, x: number, y: number, scale: number, angle: number) {
+  return `<path transform="translate(${n(x)} ${n(y)}) rotate(${n(angle)}) scale(${n(scale)})" d="M0-18 C3-12 6-10 5-6 L14-10 L12-4 C16-2 16 4 10 6 L8 8 C10 14 6 16 2 12 L0 16 L-2 12 C-6 16-10 14-8 8 L-10 6 C-16 4-16-2-12-4 L-14-10 L-5-6 C-6-10-3-12 0-18 Z" fill="${d.leafFill}" stroke="${d.stem}" stroke-width="${n(0.9 / Math.max(scale, 0.6))}" stroke-linejoin="round"/>`;
+}
+
+function oakLeaf(d: KeepsakeDesign, x: number, y: number, scale: number, angle: number) {
+  return `<path transform="translate(${n(x)} ${n(y)}) rotate(${n(angle)}) scale(${n(scale)})" d="M0-20 C6-16 8-10 6-6 C12-8 14-2 8 0 C14 2 12 8 6 8 C8 14 4 18 0 20 C-4 18-8 14-6 8 C-12 8-14 2-8 0 C-14-2-12-8-6-6 C-8-10-6-16 0-20 Z" fill="${d.leafFill}" stroke="${d.stem}" stroke-width="${n(0.9 / Math.max(scale, 0.6))}" stroke-linejoin="round"/>`;
+}
+
+function acorn(d: KeepsakeDesign, x: number, y: number, scale: number, angle = 0) {
+  return `<g transform="translate(${n(x)} ${n(y)}) rotate(${n(angle)}) scale(${n(scale)})" fill="${d.flower}" stroke="${d.flowerStroke}" stroke-width="${n(0.8 / Math.max(scale, 0.6))}" stroke-linejoin="round">
+    <ellipse cx="0" cy="5" rx="5.2" ry="7"/>
+    <path d="M-6 0 C-5-5 5-5 6 0 Z" fill="${d.leafFill}" stroke="${d.stem}"/>
+    <path d="M0-5 V-9" fill="none" stroke="${d.stem}" stroke-linecap="round"/>
+  </g>`;
+}
+
+function wheat(d: KeepsakeDesign, x: number, base: number, height: number, lean = 0) {
+  const tip = base - height;
+  const head = tip + height * 0.38;
+  const grains: string[] = [];
+  const steps = 7;
+  for (let i = 0; i < steps; i += 1) {
+    const t = i / (steps - 1);
+    const y = head + (tip + 4 - head) * t;
+    const xAt = x + lean * (1 - (y - tip) / height);
+    const len = 6 + t * 2;
+    grains.push(`<path d="M${n(xAt)} ${n(y)} L${n(xAt - len)} ${n(y - 3)}"/>`);
+    grains.push(`<path d="M${n(xAt)} ${n(y)} L${n(xAt + len)} ${n(y - 3)}"/>`);
+    if (i >= steps - 3) {
+      grains.push(`<path d="M${n(xAt)} ${n(y)} L${n(xAt - 2)} ${n(y - 10)}"/>`);
+      grains.push(`<path d="M${n(xAt)} ${n(y)} L${n(xAt + 2)} ${n(y - 10)}"/>`);
+    }
+  }
+  return `<g fill="none" stroke="${d.stem}" stroke-width="1" stroke-linecap="round">
+    <path d="M${n(x)} ${n(base)} C${n(x + lean * 0.4)} ${n((base + head) / 2)}, ${n(x + lean * 0.8)} ${n(head)}, ${n(x + lean)} ${n(tip)}"/>
+    ${grains.join("")}
+  </g>`;
+}
+
+function pineSprig(d: KeepsakeDesign, x: number, y: number, length: number, angle: number) {
+  const rad = (angle * Math.PI) / 180;
+  const ex = x + Math.cos(rad) * length;
+  const ey = y + Math.sin(rad) * length;
+  const needles: string[] = [];
+  const count = Math.max(5, Math.round(length / 7));
+  for (let i = 1; i <= count; i += 1) {
+    const t = i / (count + 0.3);
+    const px = x + (ex - x) * t;
+    const py = y + (ey - y) * t;
+    const len = 7 + (i % 3);
+    const a1 = rad + 0.7;
+    const a2 = rad - 0.7;
+    needles.push(`<path d="M${n(px)} ${n(py)} L${n(px + Math.cos(a1) * len)} ${n(py + Math.sin(a1) * len)}"/>`);
+    needles.push(`<path d="M${n(px)} ${n(py)} L${n(px + Math.cos(a2) * len)} ${n(py + Math.sin(a2) * len)}"/>`);
+  }
+  return `<g fill="none" stroke="${d.stem}" stroke-width="1" stroke-linecap="round">
+    <path d="M${n(x)} ${n(y)} L${n(ex)} ${n(ey)}"/>
+    ${needles.join("")}
+  </g>`;
+}
+
+function palmFrond(d: KeepsakeDesign, x: number, y: number, length: number, angle: number, curve = 28) {
+  const rad = (angle * Math.PI) / 180;
+  const ex = x + Math.cos(rad) * length;
+  const ey = y + Math.sin(rad) * length;
+  const cx = (x + ex) / 2 + Math.cos(rad + Math.PI / 2) * curve;
+  const cy = (y + ey) / 2 + Math.sin(rad + Math.PI / 2) * curve;
+  const leaflets: string[] = [];
+  const count = 9;
+  for (let i = 1; i <= count; i += 1) {
+    const t = i / (count + 0.5);
+    const px = (1 - t) * (1 - t) * x + 2 * (1 - t) * t * cx + t * t * ex;
+    const py = (1 - t) * (1 - t) * y + 2 * (1 - t) * t * cy + t * t * ey;
+    const tx = 2 * (1 - t) * (cx - x) + 2 * t * (ex - cx);
+    const ty = 2 * (1 - t) * (cy - y) + 2 * t * (ey - cy);
+    const mag = Math.hypot(tx, ty) || 1;
+    const nx = -ty / mag;
+    const ny = tx / mag;
+    const len = 16 + (1 - Math.abs(t - 0.5) * 1.4) * 10;
+    leaflets.push(`<path d="M${n(px)} ${n(py)} L${n(px + nx * len)} ${n(py + ny * len)}"/>`);
+    leaflets.push(`<path d="M${n(px)} ${n(py)} L${n(px - nx * len * 0.95)} ${n(py - ny * len * 0.95)}"/>`);
+  }
+  return `<g fill="none" stroke="${d.stem}" stroke-width="1" stroke-linecap="round">
+    <path d="M${n(x)} ${n(y)} Q${n(cx)} ${n(cy)} ${n(ex)} ${n(ey)}"/>
+    ${leaflets.join("")}
+  </g>`;
+}
+
+function oliveLeaf(d: KeepsakeDesign, x: number, y: number, scale: number, angle: number) {
+  return `<ellipse cx="${n(x)}" cy="${n(y)}" rx="${n(4.2 * scale)}" ry="${n(11 * scale)}" transform="rotate(${n(angle)} ${n(x)} ${n(y)})" fill="${d.leafFill}" stroke="${d.stem}" stroke-width="0.85"/>`;
 }
 
 /** Quiet line-art motif for one month. No people, buildings, symbols, or text in the art. */
 export function keepsakeMotif(design: KeepsakeDesign): string {
   const d = design;
-  const leaf = `fill="${d.leafFill}" stroke="${d.stem}" stroke-width="0.9" stroke-linejoin="round"`;
   switch (d.month) {
     case 1:
-      return `${birds(d, 150, 72, 242, 64)}
-        <g fill="none" stroke="${d.stem}" stroke-width="1.05" stroke-linecap="round">
-          <path d="M70 140 C90 80, 130 70, 160 110"/>
-          <path d="M330 140 C310 80, 270 70, 240 110"/>
-          <path d="M90 430 C120 500, 170 520, 200 470"/>
-          <path d="M310 430 C280 500, 230 520, 200 470"/>
+      return `${birds(d, 240, 58, 300, 72)}
+        <g fill="none" stroke="${d.stem}" stroke-width="1.05" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 128 C70 96, 110 128, 148 108"/>
+          <path d="M70 114 L96 78"/>
+          <path d="M104 118 L132 72"/>
+          <path d="M88 122 L84 86"/>
+          <path d="M382 470 C320 500, 280 450, 236 478"/>
+          <path d="M330 484 L348 430"/>
+          <path d="M300 468 L292 424"/>
+          <path d="M268 476 L250 438"/>
+          <path d="M382 96 C340 80, 312 118, 278 98"/>
+          <path d="M340 90 L352 60"/>
+          <path d="M318 100 L300 68"/>
         </g>
-        <g ${leaf}>
-          <path d="M96 100 C90 88, 108 84, 110 96 Z"/>
-          <path d="M300 100 C306 88, 288 84, 286 96 Z"/>
-          <path d="M118 460 C110 474, 128 478, 130 466 Z"/>
-          <path d="M282 460 C290 474, 272 478, 270 466 Z"/>
-        </g>
-        ${flower(d, 200, 78, 4.2)}`;
+        ${frost(d, [[96, 76, 1.7], [132, 70, 2], [84, 84, 1.3], [148, 106, 1.5], [60, 108, 1.2], [348, 428, 1.8], [292, 422, 1.5], [250, 436, 1.4], [236, 476, 1.6], [200, 90, 1.2], [170, 64, 1.1], [360, 500, 1.3], [352, 58, 1.6], [300, 66, 1.4], [278, 96, 1.3], [330, 84, 1.2]])}`;
     case 2:
-      return `${birds(d, 128, 80, 250, 70)}
+      return `${birds(d, 60, 90, 330, 100)}
         <g fill="none" stroke="${d.stem}" stroke-width="1.05" stroke-linecap="round">
-          <path d="M200 50 C150 90, 110 120, 88 150"/>
-          <path d="M200 50 C250 90, 290 120, 312 150"/>
-          <path d="M200 510 C150 470, 110 440, 88 410"/>
-          <path d="M200 510 C250 470, 290 440, 312 410"/>
+          <path d="M200 42 L200 70"/>
+          <path d="M200 70 L86 138"/>
+          <path d="M200 70 L128 148"/>
+          <path d="M200 70 L164 154"/>
+          <path d="M200 70 L200 150"/>
+          <path d="M200 70 L236 154"/>
+          <path d="M200 70 L272 148"/>
+          <path d="M200 70 L314 138"/>
+          <path d="M86 138 L70 152"/>
+          <path d="M314 138 L330 152"/>
+          <path d="M48 500 L48 536"/>
+          <path d="M78 492 L84 536"/>
+          <path d="M112 506 L112 538"/>
+          <path d="M146 496 L140 536"/>
+          <path d="M254 496 L260 536"/>
+          <path d="M288 506 L288 538"/>
+          <path d="M322 492 L316 536"/>
+          <path d="M352 500 L352 536"/>
         </g>
-        ${flower(d, 200, 58, 6.4)}${flower(d, 118, 118, 5)}${flower(d, 282, 118, 5)}
-        ${flower(d, 200, 508, 5.4)}${flower(d, 118, 442, 4.4)}${flower(d, 282, 442, 4.4)}
-        <g ${leaf}>
-          <path d="M150 90 C142 76, 162 72, 164 86 Z"/>
-          <path d="M250 90 C258 76, 238 72, 236 86 Z"/>
-        </g>`;
+        ${frost(d, [[200, 42, 2.2], [86, 136, 1.6], [314, 136, 1.6], [164, 152, 1.3], [236, 152, 1.3], [70, 150, 1.2], [330, 150, 1.2], [48, 498, 1.4], [112, 504, 1.3], [288, 504, 1.3], [352, 498, 1.4], [200, 520, 1.5]])}`;
     case 3:
-      return `${birds(d, 220, 70, 280, 86)}
-        <g fill="none" stroke="${d.stem}" stroke-width="1.1" stroke-linecap="round">
-          <path d="M40 150 C120 70, 220 55, 350 120"/>
-          <path d="M40 410 C120 490, 220 505, 350 440"/>
+      return `${birds(d, 40, 70, 80, 96)}
+        <g fill="none" stroke="${d.stem}" stroke-width="1.05" stroke-linecap="round">
+          <path d="M16 118 C90 64, 210 86, 384 70"/>
+          <path d="M120 90 L108 60"/>
+          <path d="M200 82 L218 52"/>
+          <path d="M290 78 L278 48"/>
+          <path d="M384 490 C300 520, 160 500, 64 528"/>
         </g>
-        <g ${leaf}>
-          <path d="M110 110 C98 96, 122 88, 128 104 Z"/>
-          <path d="M200 72 C190 56, 214 54, 216 70 Z"/>
-          <path d="M110 450 C98 464, 122 472, 128 456 Z"/>
-          <path d="M200 488 C190 504, 214 506, 216 490 Z"/>
-        </g>
-        ${flower(d, 300, 80, 5.2)}${flower(d, 160, 90, 4.2)}${flower(d, 250, 480, 4.6)}`;
+        ${oliveLeaf(d, 108, 72, 0.7, -40)}${oliveLeaf(d, 218, 62, 0.65, 30)}${oliveLeaf(d, 278, 58, 0.6, -20)}
+        ${blossom(d, 70, 96, 6.2)}${blossom(d, 150, 78, 5.6)}${blossom(d, 248, 68, 6.4)}${blossom(d, 340, 66, 5.8)}
+        ${bud(d, 108, 58, 3.4, -20)}${bud(d, 290, 50, 3.2, 15)}${blossom(d, 320, 502, 5.2)}${blossom(d, 220, 516, 4.6)}${bud(d, 140, 518, 3, 25)}`;
     case 4:
-      return `${birds(d, 154, 78, 230, 70)}
-        <g fill="none" stroke="${d.stem}" stroke-width="1.05" stroke-linecap="round">
-          <path d="M58 128 C110 58, 290 58, 342 128"/>
-          <path d="M58 432 C110 502, 290 502, 342 432"/>
-        </g>
-        <g ${leaf}>
-          <path d="M90 108 C80 92, 102 86, 108 102 Z"/>
-          <path d="M140 80 C132 64, 154 62, 156 78 Z"/>
-          <path d="M200 64 C194 50, 214 50, 214 64 Z"/>
-          <path d="M260 80 C268 64, 246 62, 244 78 Z"/>
-          <path d="M310 108 C320 92, 298 86, 292 102 Z"/>
-          <path d="M90 452 C80 468, 102 474, 108 458 Z"/>
-          <path d="M140 480 C132 496, 154 498, 156 482 Z"/>
-          <path d="M200 496 C194 510, 214 510, 214 496 Z"/>
-          <path d="M260 480 C268 496, 246 498, 244 482 Z"/>
-          <path d="M310 452 C320 468, 298 474, 292 458 Z"/>
-        </g>
-        ${flower(d, 200, 62, 6.2)}${flower(d, 86, 112, 4.4)}${flower(d, 314, 112, 4.4)}
-        ${flower(d, 200, 498, 5.4)}${flower(d, 90, 448, 4.2)}${flower(d, 310, 448, 4.2)}`;
+      return `${birds(d, 170, 64, 230, 52)}
+        ${tulip(d, 54, 548, 86, -4)}${tulip(d, 86, 548, 118, 6)}${tulip(d, 122, 548, 74, 2)}
+        ${tulip(d, 278, 548, 80, -6)}${tulip(d, 314, 548, 124, 4)}${tulip(d, 350, 548, 92, 8)}
+        ${tulip(d, 52, 168, 86, 10)}${tulip(d, 348, 168, 90, -12)}
+        ${bud(d, 200, 58, 3.6, 0)}`;
     case 5:
-      return `${birds(d, 160, 68, 236, 60)}
+      return `${birds(d, 200, 70, 250, 58)}
         <g fill="none" stroke="${d.stem}" stroke-width="1.05" stroke-linecap="round">
-          <path d="M80 500 C70 360, 90 200, 80 80"/>
-          <path d="M320 500 C330 360, 310 200, 320 80"/>
-          <path d="M80 80 C120 60, 160 90, 200 70"/>
-          <path d="M320 80 C280 60, 240 90, 200 70"/>
+          <path d="M40 530 C28 400, 58 280, 36 170 C24 110, 54 70, 44 36"/>
+          <path d="M36 170 C70 150, 74 190, 50 200"/>
+          <path d="M40 300 C72 284, 76 320, 48 332"/>
+          <path d="M38 430 C68 414, 74 452, 46 460"/>
+          <path d="M368 28 C380 110, 340 180, 372 250"/>
+          <path d="M360 90 C330 80, 324 114, 352 120"/>
+          <path d="M366 170 C336 158, 330 196, 358 204"/>
         </g>
-        <g ${leaf}>
-          <path d="M70 200 C58 186, 80 174, 86 190 Z"/>
-          <path d="M96 300 C84 286, 108 276, 112 292 Z"/>
-          <path d="M330 200 C342 186, 320 174, 314 190 Z"/>
-          <path d="M304 300 C316 286, 292 276, 288 292 Z"/>
-          <path d="M70 400 C56 388, 78 374, 86 390 Z"/>
-          <path d="M330 400 C344 388, 322 374, 314 390 Z"/>
-        </g>
-        ${flower(d, 200, 68, 5)}${flower(d, 80, 80, 4.4)}${flower(d, 320, 80, 4.4)}
-        ${flower(d, 80, 500, 3.8)}${flower(d, 320, 500, 3.8)}`;
+        ${oliveLeaf(d, 62, 186, 0.7, 40)}${oliveLeaf(d, 64, 316, 0.75, 50)}${oliveLeaf(d, 62, 446, 0.7, 42)}
+        ${oliveLeaf(d, 340, 100, 0.7, -40)}${oliveLeaf(d, 344, 186, 0.7, -48)}
+        ${bud(d, 44, 40, 3.8, -10)}${blossom(d, 40, 120, 5)}${bud(d, 48, 250, 3.6, 8)}${blossom(d, 42, 370, 4.6)}${bud(d, 44, 500, 3.4, 12)}
+        ${blossom(d, 368, 36, 5.6)}${blossom(d, 364, 128, 5)}${bud(d, 370, 210, 3.8, -8)}${blossom(d, 330, 500, 4.8)}${bud(d, 300, 520, 3.4, 20)}`;
     case 6:
-      return `${birds(d, 148, 86, 248, 78)}
+      return `${birds(d, 150, 90, 210, 74)}
         <g fill="none" stroke="${d.stem}" stroke-width="1.1" stroke-linecap="round">
-          <path d="M40 160 C120 80, 280 80, 360 160"/>
-          <path d="M40 400 C120 480, 280 480, 360 400"/>
-          <path d="M60 180 C40 240, 40 320, 60 380"/>
-          <path d="M340 180 C360 240, 360 320, 340 380"/>
+          <path d="M24 520 C18 360, 58 240, 26 120 C10 60, 48 36, 90 48 C160 64, 240 36, 320 58 C360 70, 384 100, 372 150"/>
+          <path d="M26 200 C62 180, 70 224, 34 236"/>
+          <path d="M30 340 C68 322, 74 366, 38 376"/>
+          <path d="M28 460 C64 442, 70 486, 36 496"/>
         </g>
-        <g ${leaf}>
-          <path d="M100 120 C88 104, 112 96, 118 114 Z"/>
-          <path d="M200 90 C190 74, 218 74, 216 92 Z"/>
-          <path d="M300 120 C312 104, 288 96, 282 114 Z"/>
-          <path d="M100 440 C88 456, 112 464, 118 446 Z"/>
-          <path d="M200 470 C190 486, 218 486, 216 468 Z"/>
-          <path d="M300 440 C312 456, 288 464, 282 446 Z"/>
-        </g>
-        ${flower(d, 200, 86, 5.8)}${flower(d, 70, 150, 4.2)}${flower(d, 330, 150, 4.2)}
-        ${flower(d, 200, 474, 5)}${flower(d, 70, 410, 4)}${flower(d, 330, 410, 4)}`;
+        ${oliveLeaf(d, 54, 80, 0.85, -30)}${oliveLeaf(d, 140, 52, 0.8, 20)}${oliveLeaf(d, 220, 46, 0.75, -15)}${oliveLeaf(d, 300, 56, 0.8, 25)}
+        ${oliveLeaf(d, 50, 214, 0.8, 50)}${oliveLeaf(d, 56, 354, 0.85, 55)}${oliveLeaf(d, 54, 474, 0.8, 50)}
+        ${oliveLeaf(d, 360, 130, 0.75, -40)}
+        ${blossom(d, 90, 50, 4.8)}${blossom(d, 180, 44, 5.2)}${blossom(d, 270, 48, 4.4)}${blossom(d, 348, 90, 4)}
+        ${blossom(d, 32, 160, 3.8)}${blossom(d, 34, 280, 4.2)}${blossom(d, 32, 400, 3.6)}
+        ${blossom(d, 330, 500, 4.6)}${blossom(d, 280, 520, 3.8)}`;
     case 7:
-      return `${birds(d, 170, 90, 226, 82)}
-        <g fill="none" stroke="${d.stem}" stroke-width="1" stroke-linecap="round">
-          <path d="M36 36 C70 40, 86 80, 70 110"/>
-          <path d="M364 36 C330 40, 314 80, 330 110"/>
-          <path d="M36 524 C70 520, 86 480, 70 450"/>
-          <path d="M364 524 C330 520, 314 480, 330 450"/>
+      return `${birds(d, 200, 48, 250, 40)}
+        ${sunflower(d, 96, 96, 36, 16)}
+        ${sunflower(d, 330, 72, 22, 14)}
+        ${sunflower(d, 318, 478, 28, 15)}
+        <g fill="none" stroke="${d.stem}" stroke-width="1.05" stroke-linecap="round">
+          <path d="M96 132 C48 230, 52 360, 46 520"/>
+          <path d="M318 506 C340 540, 300 548, 290 530"/>
         </g>
-        <g ${leaf}>
-          <path d="M58 70 C50 56, 70 52, 72 66 Z"/>
-          <path d="M342 70 C350 56, 330 52, 328 66 Z"/>
-          <path d="M58 490 C50 504, 70 508, 72 494 Z"/>
-          <path d="M342 490 C350 504, 330 508, 328 494 Z"/>
-        </g>
-        ${flower(d, 64, 48, 4.2)}${flower(d, 336, 48, 4.2)}
-        ${flower(d, 64, 512, 3.8)}${flower(d, 336, 512, 3.8)}`;
+        ${oliveLeaf(d, 70, 240, 1.15, 55)}${oliveLeaf(d, 86, 360, 1.05, -50)}`;
     case 8:
-      return `${birds(d, 150, 76, 240, 68)}
-        <g fill="none" stroke="${d.stem}" stroke-width="1.05" stroke-linecap="round">
-          <path d="M70 130 C130 70, 200 90, 200 150"/>
-          <path d="M330 130 C270 70, 200 90, 200 150"/>
-          <path d="M70 430 C130 490, 200 470, 200 410"/>
-          <path d="M330 430 C270 490, 200 470, 200 410"/>
-        </g>
-        <g ${leaf}>
-          <path d="M110 110 C100 96, 122 92, 124 106 Z"/>
-          <path d="M290 110 C300 96, 278 92, 276 106 Z"/>
-          <path d="M110 450 C100 464, 122 468, 124 454 Z"/>
-          <path d="M290 450 C300 464, 278 468, 276 454 Z"/>
-        </g>
-        ${berry(d, 90, 128, 3.2)}${berry(d, 120, 148, 2.6)}${berry(d, 310, 128, 3.2)}${berry(d, 280, 148, 2.6)}
-        ${berry(d, 90, 432, 3.2)}${berry(d, 120, 412, 2.6)}${berry(d, 310, 432, 3.2)}${berry(d, 280, 412, 2.6)}
-        ${flower(d, 200, 70, 4.6)}`;
+      return `${birds(d, 200, 86, 250, 70)}
+        ${palmFrond(d, 28, 36, 210, 18, 36)}
+        ${palmFrond(d, 8, 70, 160, 38, 22)}
+        ${palmFrond(d, 372, 530, 200, -150, 32)}
+        ${palmFrond(d, 390, 490, 150, -120, 20)}
+        ${oliveLeaf(d, 48, 300, 0.85, 40)}${oliveLeaf(d, 44, 340, 0.8, 18)}${oliveLeaf(d, 52, 380, 0.75, 50)}`;
     case 9:
-      return `${birds(d, 156, 74, 234, 66)}
-        <g fill="none" stroke="${d.stem}" stroke-width="1.05" stroke-linecap="round">
-          <path d="M80 80 C100 160, 60 240, 120 300"/>
-          <path d="M320 80 C300 160, 340 240, 280 300"/>
-          <path d="M100 360 C80 430, 130 500, 200 520"/>
-          <path d="M300 360 C320 430, 270 500, 200 520"/>
-        </g>
-        <g ${leaf}>
-          <path d="M96 140 C110 128, 122 150, 106 154 Z"/>
-          <path d="M70 220 C86 210, 96 234, 78 236 Z"/>
-          <path d="M304 140 C290 128, 278 150, 294 154 Z"/>
-          <path d="M330 220 C314 210, 304 234, 322 236 Z"/>
-          <path d="M110 430 C96 444, 122 456, 126 438 Z"/>
-          <path d="M290 430 C304 444, 278 456, 274 438 Z"/>
-        </g>
-        ${flower(d, 200, 520, 4.8)}${flower(d, 80, 80, 4)}${flower(d, 320, 80, 4)}`;
+      return `${birds(d, 180, 70, 230, 56)}
+        ${mapleLeaf(d, 64, 70, 1.15, -28)}
+        ${mapleLeaf(d, 140, 48, 0.8, 18)}
+        ${mapleLeaf(d, 260, 58, 0.7, -40)}
+        ${mapleLeaf(d, 340, 86, 1.05, 22)}
+        ${mapleLeaf(d, 40, 200, 0.75, -55)}
+        ${mapleLeaf(d, 36, 320, 0.9, 12)}
+        ${mapleLeaf(d, 360, 240, 0.7, -20)}
+        ${mapleLeaf(d, 368, 360, 0.85, 40)}
+        ${mapleLeaf(d, 80, 470, 1, -15)}
+        ${mapleLeaf(d, 200, 520, 0.75, 30)}
+        ${mapleLeaf(d, 310, 490, 0.95, -35)}`;
     case 10:
-      return `${birds(d, 164, 86, 228, 76)}
+      return `${birds(d, 40, 80, 90, 100)}
         <g fill="none" stroke="${d.stem}" stroke-width="1.15" stroke-linecap="round">
-          <path d="M70 500 C80 300, 120 140, 200 80"/>
-          <path d="M330 500 C320 300, 280 140, 200 80"/>
+          <path d="M-4 96 C80 70, 200 118, 404 78"/>
+          <path d="M120 86 L110 54"/>
+          <path d="M220 100 L236 64"/>
+          <path d="M310 88 L300 52"/>
         </g>
-        <g ${leaf}>
-          <path d="M110 200 C96 186, 120 172, 128 190 Z"/>
-          <path d="M290 200 C304 186, 280 172, 272 190 Z"/>
-          <path d="M90 340 C76 328, 100 312, 108 330 Z"/>
-          <path d="M310 340 C324 328, 300 312, 292 330 Z"/>
-          <path d="M80 440 C66 428, 90 414, 98 432 Z"/>
-          <path d="M320 440 C334 428, 310 414, 302 432 Z"/>
-        </g>
-        ${flower(d, 200, 76, 5.2)}`;
+        ${oakLeaf(d, 70, 70, 0.95, -70)}
+        ${oakLeaf(d, 150, 64, 0.85, -20)}
+        ${oakLeaf(d, 250, 72, 1, 30)}
+        ${oakLeaf(d, 350, 62, 0.9, -15)}
+        ${acorn(d, 180, 118, 1.05, 8)}
+        ${acorn(d, 280, 112, 0.95, -12)}
+        ${acorn(d, 100, 110, 0.85, 16)}
+        ${oakLeaf(d, 90, 490, 1.05, -40)}
+        ${oakLeaf(d, 160, 520, 0.8, 25)}
+        ${acorn(d, 300, 510, 1, -20)}`;
     case 11:
-      return `${birds(d, 154, 78, 230, 70)}
-        <g fill="none" stroke="${d.stem}" stroke-width="1.05" stroke-linecap="round">
-          <path d="M58 128 C110 58, 290 58, 342 128"/>
-          <path d="M58 432 C110 502, 290 502, 342 432"/>
-          <path d="M36 36 C70 44, 80 80, 64 108"/>
-          <path d="M364 36 C330 44, 320 80, 336 108"/>
-          <path d="M36 524 C70 516, 80 480, 64 452"/>
-          <path d="M364 524 C330 516, 320 480, 336 452"/>
-        </g>
-        <g ${leaf}>
-          <path d="M90 108 C80 92, 102 86, 108 102 Z"/>
-          <path d="M140 80 C132 64, 154 62, 156 78 Z"/>
-          <path d="M260 80 C268 64, 246 62, 244 78 Z"/>
-          <path d="M310 108 C320 92, 298 86, 292 102 Z"/>
-          <path d="M58 70 C50 56, 70 52, 72 66 Z"/>
-          <path d="M342 70 C350 56, 330 52, 328 66 Z"/>
-          <path d="M90 452 C80 468, 102 474, 108 458 Z"/>
-          <path d="M310 452 C320 468, 298 474, 292 458 Z"/>
-          <path d="M58 490 C50 504, 70 508, 72 494 Z"/>
-          <path d="M342 490 C350 504, 330 508, 328 494 Z"/>
-        </g>
-        ${flower(d, 200, 62, 6.2)}${flower(d, 86, 112, 4.4)}${flower(d, 314, 112, 4.4)}
-        ${flower(d, 200, 498, 5.4)}${flower(d, 90, 448, 4.2)}${flower(d, 310, 448, 4.2)}`;
+      return `${birds(d, 160, 64, 220, 52)}
+        ${wheat(d, 48, 176, 130, -8)}
+        ${wheat(d, 72, 168, 112, 10)}
+        ${wheat(d, 328, 168, 120, -10)}
+        ${wheat(d, 356, 176, 128, 8)}
+        ${wheat(d, 44, 548, 118, 8)}
+        ${wheat(d, 72, 548, 146, -6)}
+        ${wheat(d, 102, 548, 100, 12)}
+        ${wheat(d, 300, 548, 108, -10)}
+        ${wheat(d, 328, 548, 140, 6)}
+        ${wheat(d, 358, 548, 112, -8)}`;
     default:
-      return `${birds(d, 150, 80, 244, 70)}
-        <g fill="none" stroke="${d.stem}" stroke-width="1.1" stroke-linecap="round">
-          <path d="M80 130 C90 90, 130 70, 160 100"/>
-          <path d="M70 150 L90 90 L78 70"/>
-          <path d="M90 150 L100 80 L114 64"/>
-          <path d="M320 130 C310 90, 270 70, 240 100"/>
-          <path d="M330 150 L310 90 L322 70"/>
-          <path d="M310 150 L300 80 L286 64"/>
-          <path d="M80 430 C90 470, 130 490, 160 460"/>
-          <path d="M70 410 L90 470 L78 490"/>
-          <path d="M320 430 C310 470, 270 490, 240 460"/>
-          <path d="M330 410 L310 470 L322 490"/>
-        </g>
-        <g ${leaf}>
-          <path d="M100 88 L96 70 L104 70 Z"/>
-          <path d="M300 88 L296 70 L304 70 Z"/>
-        </g>
-        ${flower(d, 200, 72, 4.4)}`;
+      return `${birds(d, 160, 80, 220, 64)}
+        ${pineSprig(d, 36, 28, 130, 58)}
+        ${pineSprig(d, 20, 50, 90, 78)}
+        ${pineSprig(d, 364, 28, 140, 122)}
+        ${pineSprig(d, 200, 548, 110, -72)}
+        ${pineSprig(d, 200, 548, 120, -108)}
+        ${pineSprig(d, 70, 548, 80, -80)}
+        ${pineSprig(d, 330, 548, 80, -100)}
+        ${frost(d, [[70, 80, 1.5], [100, 110, 1.3], [330, 90, 1.6], [300, 120, 1.2], [180, 500, 1.4], [220, 490, 1.3], [140, 520, 1.2]])}`;
   }
 }
 
@@ -322,27 +480,28 @@ export function keepsakeSvg(input: KeepsakeCardInput, design = keepsakeDesignFor
   const ayahs = `${Math.max(0, Math.floor(input.ayahs)).toLocaleString("en-US")} ayahs`;
   const surahs = `${Math.max(0, Math.floor(input.surahs)).toLocaleString("en-US")} surahs`;
   const motif = keepsakeMotif(design);
+  const paperId = `keepsake-paper-${design.month}`;
   return `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 560" width="400" height="560" role="img" aria-label="You finished the Quran">
   <defs>
-    <linearGradient id="paper" x1="0" y1="0" x2="0" y2="1">
+    <linearGradient id="${paperId}" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="${design.paperTop}"/>
       <stop offset="0.4" stop-color="${design.paperMid}"/>
       <stop offset="1" stop-color="${design.paperBottom}"/>
     </linearGradient>
   </defs>
-  <rect width="400" height="560" rx="28" fill="url(#paper)"/>
+  <rect width="400" height="560" rx="28" fill="url(#${paperId})"/>
   <rect x="16" y="16" width="368" height="528" rx="20" fill="none" stroke="${design.frame}" stroke-width="1"/>
   <rect x="22" y="22" width="356" height="516" rx="16" fill="none" stroke="${design.paperBottom}" stroke-width="0.7"/>
   ${motif}
-  <text x="200" y="200" text-anchor="middle" fill="${design.flowerStroke}" font-family="Plus Jakarta Sans, ui-sans-serif, system-ui, sans-serif" font-size="11" font-weight="650" letter-spacing="1.6">A READING FINISHED</text>
+  <text x="200" y="200" text-anchor="middle" fill="${design.soft}" font-family="Plus Jakarta Sans, ui-sans-serif, system-ui, sans-serif" font-size="11" font-weight="650" letter-spacing="1.6">A READING FINISHED</text>
   <text x="200" y="248" text-anchor="middle" fill="${design.ink}" font-family="Source Serif 4, Georgia, serif" font-size="30" font-weight="600">You finished</text>
   <text x="200" y="284" text-anchor="middle" fill="${design.ink}" font-family="Source Serif 4, Georgia, serif" font-size="30" font-weight="600">the Quran</text>
   <text x="200" y="318" text-anchor="middle" fill="${design.soft}" font-family="Plus Jakarta Sans, ui-sans-serif, system-ui, sans-serif" font-size="15" font-weight="500">May Allah accept it.</text>
   <line x1="176" y1="340" x2="224" y2="340" stroke="${design.frame}" stroke-width="1"/>
-  <text x="200" y="366" text-anchor="middle" fill="#3d1779" font-family="Plus Jakarta Sans, ui-sans-serif, system-ui, sans-serif" font-size="14" font-weight="650">${date}</text>
+  <text x="200" y="366" text-anchor="middle" fill="${design.ink}" font-family="Plus Jakarta Sans, ui-sans-serif, system-ui, sans-serif" font-size="14" font-weight="650">${date}</text>
   <text x="200" y="396" text-anchor="middle" fill="${design.soft}" font-family="Plus Jakarta Sans, ui-sans-serif, system-ui, sans-serif" font-size="12" font-weight="600">${escapeXml(days)}  ·  ${escapeXml(ayahs)}  ·  ${escapeXml(surahs)}</text>
-  <text x="200" y="524" text-anchor="middle" fill="#7a5a6c" font-family="Plus Jakarta Sans, ui-sans-serif, system-ui, sans-serif" font-size="10" font-weight="650" letter-spacing="0.8">qurandeck.com</text>
+  <text x="200" y="524" text-anchor="middle" fill="${design.muted}" font-family="Plus Jakarta Sans, ui-sans-serif, system-ui, sans-serif" font-size="10" font-weight="650" letter-spacing="0.8">qurandeck.com</text>
 </svg>`;
 }
 
