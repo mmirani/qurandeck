@@ -9,6 +9,51 @@ export const MISSED_BODY_LIMIT = 256;
 export type MissedRow = { shape: string; day: string; count: number };
 export type MissedTop = { shape: string; count: number; days: number };
 
+/**
+ * The same statements as migrations/0001_sana_missed_daily.sql. Every one is safe to run again.
+ * The store runs them once per server instance before its first read or write.
+ */
+export function missedSchemaStatements(): string[] {
+  return [
+    `CREATE TABLE IF NOT EXISTS schema_migrations (
+      id text PRIMARY KEY,
+      status text NOT NULL,
+      applied_at timestamptz NOT NULL DEFAULT now()
+    )`,
+    `CREATE TABLE IF NOT EXISTS sana_missed_daily (
+      shape text NOT NULL CHECK (char_length(shape) BETWEEN 1 AND 80),
+      day date NOT NULL,
+      count integer NOT NULL DEFAULT 1 CHECK (count > 0),
+      PRIMARY KEY (shape, day)
+    )`,
+    `CREATE INDEX IF NOT EXISTS sana_missed_daily_day_idx ON sana_missed_daily (day)`,
+    `INSERT INTO schema_migrations (id, status) VALUES ('sana-missed-v1', 'done') ON CONFLICT (id) DO NOTHING`,
+  ];
+}
+
+/**
+ * Runs a setup step at most once while it succeeds. Callers share one in-flight promise.
+ * After a failure, the next try waits `retryMs` so a broken database is not hit on every request.
+ */
+export function onceWithRetry(step: () => Promise<void>, retryMs = 10 * 60 * 1000, clock: () => number = Date.now) {
+  let ready: Promise<void> | null = null;
+  let failedAt = -Infinity;
+  return async (): Promise<boolean> => {
+    if (!ready && clock() - failedAt < retryMs) return false;
+    ready ??= step().catch((error) => {
+      ready = null;
+      failedAt = clock();
+      throw error;
+    });
+    try {
+      await ready;
+      return true;
+    } catch {
+      return false;
+    }
+  };
+}
+
 /** Storage seam so the route and tests share one path. */
 export interface MissedStore {
   /** Adds one to today's count. Resolves false when the table is missing or storage is off. */

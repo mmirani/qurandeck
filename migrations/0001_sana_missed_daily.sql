@@ -1,4 +1,4 @@
--- Sana missed-command shapes. Needs Mansur's OK before it is applied to production.
+-- Sana missed-command shapes. The app also runs these statements itself (missedSchemaStatements in src/lib/sana-missed.ts).
 --
 -- Stores only an anonymous "shape" (known command words plus [n], [surah], [theme], [w])
 -- and a daily count. No raw text, user, email, IP, user agent, session, or exact time.
