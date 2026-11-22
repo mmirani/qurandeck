@@ -9,6 +9,7 @@ import { SettingsModal } from "@/components/modals/settings-modal";
 import { StillReadingPrompt } from "@/components/modals/still-reading-prompt";
 import { ThemePicker } from "@/components/modals/theme-picker";
 import { NoteComposerSheet } from "@/components/reader/note-composer";
+import { FinishMoment } from "@/components/finish/finish-moment";
 
 export function AppModals() {
   return (
@@ -23,6 +24,7 @@ export function AppModals() {
       <HighlightsModal />
       <NotesModal />
       <StillReadingPrompt />
+      <FinishMoment />
       <NoteComposerSheet />
     </>
   );

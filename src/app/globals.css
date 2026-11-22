@@ -2814,6 +2814,12 @@ html[data-focus="on"] .sana-dock {
   .nur .nur-floor {
     animation: none;
   }
+
+  .finish-map-slivers,
+  .finish-map-bloom,
+  .finish-map-panel {
+    animation: none;
+  }
 }
 
 /* Fore-edge laid flat at reading size inside the explore view. Same paper as the book. */
@@ -2909,4 +2915,123 @@ html[data-focus="on"] .sana-dock {
   --ink-soft: var(--map-ink-soft);
   --gold-deep: var(--map-select);
   color: var(--map-ink);
+}
+
+/* Finish-the-Quran moment: a calm full-screen pause with a blooming noor glow. */
+.finish-moment {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.finish-moment-screen {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  min-height: 100dvh;
+  padding: 16px 20px 24px;
+  background:
+    radial-gradient(ellipse 70% 46% at 50% 48%, color-mix(in srgb, var(--map-sheen) 42%, transparent), transparent 68%),
+    radial-gradient(ellipse 90% 70% at 50% 38%, var(--surface) 0%, transparent 72%),
+    radial-gradient(circle at 16% 12%, color-mix(in srgb, var(--line) 40%, transparent), transparent 36%),
+    radial-gradient(circle at 86% 82%, color-mix(in srgb, var(--map-bloom) 16%, transparent), transparent 32%),
+    var(--canvas);
+}
+@media (min-width: 640px) {
+  .finish-moment-screen {
+    padding: 28px 48px 36px;
+  }
+}
+.finish-moment-title {
+  font-family: var(--font-reading), "Source Serif 4", Georgia, serif;
+  font-size: clamp(2rem, 4vw, 3.15rem);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.12;
+  color: var(--ink);
+}
+.finish-map-panel {
+  position: relative;
+  height: 64px;
+  overflow: hidden;
+  border-radius: 16px;
+  padding: 10px;
+  background: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--map-bloom) 50%, var(--map-base)),
+    color-mix(in srgb, var(--map-bloom) 25%, var(--map-base)) 55%,
+    color-mix(in srgb, var(--map-bloom) 25%, var(--map-base))
+  );
+  box-shadow:
+    0 0 48px color-mix(in srgb, var(--map-bloom) 72%, transparent),
+    0 0 20px color-mix(in srgb, var(--map-sheen) 60%, transparent);
+}
+@media (min-width: 640px) {
+  .finish-map-panel { height: 88px; }
+}
+.finish-map-panel::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: 1px solid var(--map-rim);
+  border-radius: inherit;
+  pointer-events: none;
+}
+.finish-map-bloom,
+.finish-map-slivers {
+  position: absolute;
+  inset: 10px;
+  display: flex;
+  gap: 1px;
+}
+.finish-map-bloom { filter: blur(6px); pointer-events: none; }
+.finish-map-bloom span {
+  flex: 1;
+  min-width: 0;
+  border-radius: 999px;
+  background: var(--map-bloom);
+  transform: scale(1.15, 1.35);
+}
+.finish-map-slivers span {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  border-radius: 2px;
+  background:
+    linear-gradient(to bottom, color-mix(in srgb, var(--map-sheen) 70%, transparent), transparent 55%),
+    var(--map-done);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--map-sheen) 85%, transparent), inset 0 1px 0 var(--map-sheen);
+}
+.finish-map-slivers {
+  transform-origin: left center;
+}
+.finish-map:not(.is-static) .finish-map-slivers {
+  animation: finish-sweep 2.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.finish-map:not(.is-static) .finish-map-bloom,
+.finish-map:not(.is-static) .finish-map-panel {
+  animation: finish-bloom 2.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes finish-sweep {
+  from { transform: scaleX(0.04); }
+  to { transform: scaleX(1); }
+}
+@keyframes finish-bloom {
+  from { opacity: 0.2; filter: blur(2px); }
+  to { opacity: 1; filter: blur(6px); }
+}
+.finish-map:not(.is-static) .finish-map-panel {
+  animation-name: finish-glow;
+}
+@keyframes finish-glow {
+  from {
+    box-shadow: 0 0 0 transparent;
+    background: var(--map-base);
+  }
+  to {
+    box-shadow:
+      0 0 48px color-mix(in srgb, var(--map-bloom) 72%, transparent),
+      0 0 20px color-mix(in srgb, var(--map-sheen) 60%, transparent);
+  }
 }

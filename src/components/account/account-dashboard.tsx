@@ -10,6 +10,7 @@ import { Modal } from "@/components/ui/modal";
 import { PROMISE_LINE, PROMISE_WHY } from "@/lib/brand";
 import { AvatarPicker } from "@/components/account/profile-avatar";
 import { CompletionMap } from "@/components/account/completion-map";
+import { FinishedReadingsList } from "@/components/account/finished-readings";
 import { ReadingSince } from "@/components/account/reading-since";
 import { StatsRangeBar, useRangeStats } from "@/components/account/stats-range-bar";
 import {
@@ -165,6 +166,7 @@ function AccountDashboard() {
           hint={`${count(stats.highlights)} highlights${ranged ? " in this range" : ""}`}
         />
       </div>
+      <FinishedReadingsList readings={progress.finishedReadings ?? []} />
       <CompletionMap />
       {!user ? <DataExportPanel compact /> : null}
       {user ? null : (

@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { Maximize2, X } from "lucide-react";
 import { useMushaf } from "@/components/providers/mushaf-provider";
 import { CompletionViewport } from "@/components/account/completion-viewport";
+import { FinishSanaNote } from "@/components/account/finish-sana-note";
 import { barGlow, barWarmth, buildReadIndex, noorGlow, sliverPaint, type ReadIndex, type SurahName } from "@/lib/completion-map";
 import { dialogFocusables, trapTabIndex } from "@/lib/dialog-focus";
 import { TOTAL_AYAHS, ayahIndex, finishedSurahIds, parseVerseKey, quranPieceMap, TOTAL_SURAHS } from "@/lib/reading";
@@ -111,6 +112,8 @@ export function CompletionMap() {
               : "Stay on an ayah for a few seconds to light the first slice"}
         </p>
       </div>
+
+      <FinishSanaNote />
 
       {exploring ? (
         <CompletionExplorer
