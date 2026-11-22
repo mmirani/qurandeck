@@ -20,7 +20,15 @@ import {
   reconcileFinishedReadings,
   startNewReading,
 } from "../src/lib/finished-reading";
-import { keepsakeDesignForMonth, keepsakeMotif, keepsakeSvg, KEEPSAKE_DESIGNS } from "../src/lib/keepsake-card";
+import {
+  keepsakeDesignForMonth,
+  keepsakeMotif,
+  keepsakeSvg,
+  KEEPSAKE_DESIGNS,
+  KEEPSAKE_FOOTER_CLEAR,
+  KEEPSAKE_STATS_CLEAR,
+} from "../src/lib/keepsake-card";
+import sharp from "sharp";
 
 const KEYS = allVerseKeys();
 
@@ -119,6 +127,42 @@ describe("daysInclusive and month mapping", () => {
         assert.ok(ratio(design.muted, paper) >= 4.5, `${design.id} muted on ${paper}`);
       }
     }
+  });
+
+  it("keeps motif art out of the stats line and the site footer", async () => {
+    const scale = 2;
+    const hex = (value: string) => [
+      Number.parseInt(value.slice(1, 3), 16),
+      Number.parseInt(value.slice(3, 5), 16),
+      Number.parseInt(value.slice(5, 7), 16),
+    ] as const;
+    const inkIn = async (design: (typeof KEEPSAKE_DESIGNS)[number], box: { x: number; y: number; width: number; height: number }) => {
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 560" width="800" height="1120">
+        <rect width="400" height="560" fill="${design.paperMid}"/>
+        ${keepsakeMotif(design)}
+      </svg>`;
+      const { data, info } = await sharp(Buffer.from(svg)).resize(400 * scale, 560 * scale).removeAlpha().raw().toBuffer({ resolveWithObject: true });
+      const paper = hex(design.paperMid);
+      let count = 0;
+      for (let y = box.y * scale; y < (box.y + box.height) * scale; y += 1) {
+        for (let x = box.x * scale; x < (box.x + box.width) * scale; x += 1) {
+          const i = (y * info.width + x) * info.channels;
+          const dr = Math.abs(data[i]! - paper[0]);
+          const dg = Math.abs(data[i + 1]! - paper[1]);
+          const db = Math.abs(data[i + 2]! - paper[2]);
+          if (dr > 18 || dg > 18 || db > 18) count += 1;
+        }
+      }
+      return count;
+    };
+    const failures: string[] = [];
+    for (const design of KEEPSAKE_DESIGNS) {
+      const stats = await inkIn(design, KEEPSAKE_STATS_CLEAR);
+      const footer = await inkIn(design, KEEPSAKE_FOOTER_CLEAR);
+      if (stats) failures.push(`${design.id} art in the stats line (${stats} px)`);
+      if (footer) failures.push(`${design.id} art in the site footer (${footer} px)`);
+    }
+    assert.deepEqual(failures, []);
   });
 });
 

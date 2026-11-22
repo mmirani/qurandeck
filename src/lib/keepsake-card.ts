@@ -311,6 +311,10 @@ function oliveLeaf(d: KeepsakeDesign, x: number, y: number, scale: number, angle
   return `<ellipse cx="${n(x)}" cy="${n(y)}" rx="${n(4.2 * scale)}" ry="${n(11 * scale)}" transform="rotate(${n(angle)} ${n(x)} ${n(y)})" fill="${d.leafFill}" stroke="${d.stem}" stroke-width="0.85"/>`;
 }
 
+/** Motif art must stay out of these boxes so it does not touch the stats line or the site footer. */
+export const KEEPSAKE_STATS_CLEAR = { x: 48, y: 378, width: 304, height: 36 } as const;
+export const KEEPSAKE_FOOTER_CLEAR = { x: 100, y: 504, width: 200, height: 36 } as const;
+
 /** Quiet line-art motif for one month. No people, buildings, symbols, or text in the art. */
 export function keepsakeMotif(design: KeepsakeDesign): string {
   const d = design;
@@ -322,15 +326,15 @@ export function keepsakeMotif(design: KeepsakeDesign): string {
           <path d="M70 114 L96 78"/>
           <path d="M104 118 L132 72"/>
           <path d="M88 122 L84 86"/>
-          <path d="M382 470 C320 500, 280 450, 236 478"/>
-          <path d="M330 484 L348 430"/>
-          <path d="M300 468 L292 424"/>
-          <path d="M268 476 L250 438"/>
+          <path d="M382 470 C350 492, 340 450, 318 462"/>
+          <path d="M348 478 L360 430"/>
+          <path d="M332 468 L322 428"/>
+          <path d="M360 486 L372 448"/>
           <path d="M382 96 C340 80, 312 118, 278 98"/>
           <path d="M340 90 L352 60"/>
           <path d="M318 100 L300 68"/>
         </g>
-        ${frost(d, [[96, 76, 1.7], [132, 70, 2], [84, 84, 1.3], [148, 106, 1.5], [60, 108, 1.2], [348, 428, 1.8], [292, 422, 1.5], [250, 436, 1.4], [236, 476, 1.6], [200, 90, 1.2], [170, 64, 1.1], [360, 500, 1.3], [352, 58, 1.6], [300, 66, 1.4], [278, 96, 1.3], [330, 84, 1.2]])}`;
+        ${frost(d, [[96, 76, 1.7], [132, 70, 2], [84, 84, 1.3], [148, 106, 1.5], [60, 108, 1.2], [360, 428, 1.8], [322, 426, 1.5], [372, 446, 1.4], [318, 462, 1.6], [200, 90, 1.2], [170, 64, 1.1], [370, 500, 1.3], [352, 58, 1.6], [300, 66, 1.4], [278, 96, 1.3], [330, 84, 1.2]])}`;
     case 2:
       return `${birds(d, 60, 90, 330, 100)}
         <g fill="none" stroke="${d.stem}" stroke-width="1.05" stroke-linecap="round">
@@ -344,16 +348,14 @@ export function keepsakeMotif(design: KeepsakeDesign): string {
           <path d="M200 70 L314 138"/>
           <path d="M86 138 L70 152"/>
           <path d="M314 138 L330 152"/>
-          <path d="M48 500 L48 536"/>
-          <path d="M78 492 L84 536"/>
-          <path d="M112 506 L112 538"/>
-          <path d="M146 496 L140 536"/>
-          <path d="M254 496 L260 536"/>
-          <path d="M288 506 L288 538"/>
-          <path d="M322 492 L316 536"/>
-          <path d="M352 500 L352 536"/>
+          <path d="M40 500 L40 536"/>
+          <path d="M58 490 L62 536"/>
+          <path d="M76 506 L76 538"/>
+          <path d="M324 506 L324 538"/>
+          <path d="M342 490 L338 536"/>
+          <path d="M360 500 L360 536"/>
         </g>
-        ${frost(d, [[200, 42, 2.2], [86, 136, 1.6], [314, 136, 1.6], [164, 152, 1.3], [236, 152, 1.3], [70, 150, 1.2], [330, 150, 1.2], [48, 498, 1.4], [112, 504, 1.3], [288, 504, 1.3], [352, 498, 1.4], [200, 520, 1.5]])}`;
+        ${frost(d, [[200, 42, 2.2], [86, 136, 1.6], [314, 136, 1.6], [164, 152, 1.3], [236, 152, 1.3], [70, 150, 1.2], [330, 150, 1.2], [40, 498, 1.4], [76, 504, 1.3], [324, 504, 1.3], [360, 498, 1.4]])}`;
     case 3:
       return `${birds(d, 40, 70, 80, 96)}
         <g fill="none" stroke="${d.stem}" stroke-width="1.05" stroke-linecap="round">
@@ -361,15 +363,16 @@ export function keepsakeMotif(design: KeepsakeDesign): string {
           <path d="M120 90 L108 60"/>
           <path d="M200 82 L218 52"/>
           <path d="M290 78 L278 48"/>
-          <path d="M384 490 C300 520, 160 500, 64 528"/>
+          <path d="M384 500 C360 468, 348 490, 332 458"/>
+          <path d="M16 522 C44 498, 58 532, 76 500"/>
         </g>
         ${oliveLeaf(d, 108, 72, 0.7, -40)}${oliveLeaf(d, 218, 62, 0.65, 30)}${oliveLeaf(d, 278, 58, 0.6, -20)}
         ${blossom(d, 70, 96, 6.2)}${blossom(d, 150, 78, 5.6)}${blossom(d, 248, 68, 6.4)}${blossom(d, 340, 66, 5.8)}
-        ${bud(d, 108, 58, 3.4, -20)}${bud(d, 290, 50, 3.2, 15)}${blossom(d, 320, 502, 5.2)}${blossom(d, 220, 516, 4.6)}${bud(d, 140, 518, 3, 25)}`;
+        ${bud(d, 108, 58, 3.4, -20)}${bud(d, 290, 50, 3.2, 15)}${blossom(d, 350, 488, 5.2)}${blossom(d, 370, 518, 4.6)}${bud(d, 44, 512, 3, 25)}${blossom(d, 56, 488, 4.4)}`;
     case 4:
       return `${birds(d, 170, 64, 230, 52)}
-        ${tulip(d, 54, 548, 86, -4)}${tulip(d, 86, 548, 118, 6)}${tulip(d, 122, 548, 74, 2)}
-        ${tulip(d, 278, 548, 80, -6)}${tulip(d, 314, 548, 124, 4)}${tulip(d, 350, 548, 92, 8)}
+        ${tulip(d, 40, 548, 96, -4)}${tulip(d, 64, 548, 110, 6)}${tulip(d, 84, 548, 78, 2)}
+        ${tulip(d, 316, 548, 80, -6)}${tulip(d, 336, 548, 110, 4)}${tulip(d, 360, 548, 96, 8)}
         ${tulip(d, 52, 168, 86, 10)}${tulip(d, 348, 168, 90, -12)}
         ${bud(d, 200, 58, 3.6, 0)}`;
     case 5:
@@ -386,7 +389,7 @@ export function keepsakeMotif(design: KeepsakeDesign): string {
         ${oliveLeaf(d, 62, 186, 0.7, 40)}${oliveLeaf(d, 64, 316, 0.75, 50)}${oliveLeaf(d, 62, 446, 0.7, 42)}
         ${oliveLeaf(d, 340, 100, 0.7, -40)}${oliveLeaf(d, 344, 186, 0.7, -48)}
         ${bud(d, 44, 40, 3.8, -10)}${blossom(d, 40, 120, 5)}${bud(d, 48, 250, 3.6, 8)}${blossom(d, 42, 370, 4.6)}${bud(d, 44, 500, 3.4, 12)}
-        ${blossom(d, 368, 36, 5.6)}${blossom(d, 364, 128, 5)}${bud(d, 370, 210, 3.8, -8)}${blossom(d, 330, 500, 4.8)}${bud(d, 300, 520, 3.4, 20)}`;
+        ${blossom(d, 368, 36, 5.6)}${blossom(d, 364, 128, 5)}${bud(d, 370, 210, 3.8, -8)}${blossom(d, 350, 488, 4.8)}${bud(d, 360, 532, 3.4, 20)}`;
     case 6:
       return `${birds(d, 150, 90, 210, 74)}
         <g fill="none" stroke="${d.stem}" stroke-width="1.1" stroke-linecap="round">
@@ -400,24 +403,24 @@ export function keepsakeMotif(design: KeepsakeDesign): string {
         ${oliveLeaf(d, 360, 130, 0.75, -40)}
         ${blossom(d, 90, 50, 4.8)}${blossom(d, 180, 44, 5.2)}${blossom(d, 270, 48, 4.4)}${blossom(d, 348, 90, 4)}
         ${blossom(d, 32, 160, 3.8)}${blossom(d, 34, 280, 4.2)}${blossom(d, 32, 400, 3.6)}
-        ${blossom(d, 330, 500, 4.6)}${blossom(d, 280, 520, 3.8)}`;
+        ${blossom(d, 350, 488, 4.6)}${blossom(d, 364, 530, 3.8)}`;
     case 7:
       return `${birds(d, 200, 48, 250, 40)}
         ${sunflower(d, 96, 96, 36, 16)}
         ${sunflower(d, 330, 72, 22, 14)}
-        ${sunflower(d, 318, 478, 28, 15)}
+        ${sunflower(d, 340, 468, 26, 15)}
         <g fill="none" stroke="${d.stem}" stroke-width="1.05" stroke-linecap="round">
-          <path d="M96 132 C48 230, 52 360, 46 520"/>
-          <path d="M318 506 C340 540, 300 548, 290 530"/>
+          <path d="M96 132 C36 230, 34 360, 32 520"/>
+          <path d="M340 494 C352 528, 370 548, 378 520"/>
         </g>
-        ${oliveLeaf(d, 70, 240, 1.15, 55)}${oliveLeaf(d, 86, 360, 1.05, -50)}`;
+        ${oliveLeaf(d, 58, 240, 1.15, 55)}${oliveLeaf(d, 52, 340, 1.05, -50)}`;
     case 8:
       return `${birds(d, 200, 86, 250, 70)}
         ${palmFrond(d, 28, 36, 210, 18, 36)}
         ${palmFrond(d, 8, 70, 160, 38, 22)}
-        ${palmFrond(d, 372, 530, 200, -150, 32)}
-        ${palmFrond(d, 390, 490, 150, -120, 20)}
-        ${oliveLeaf(d, 48, 300, 0.85, 40)}${oliveLeaf(d, 44, 340, 0.8, 18)}${oliveLeaf(d, 52, 380, 0.75, 50)}`;
+        ${palmFrond(d, 382, 545, 100, -95, 18)}
+        ${palmFrond(d, 394, 510, 90, -80, 14)}
+        ${oliveLeaf(d, 40, 300, 0.85, 40)}${oliveLeaf(d, 36, 340, 0.8, 18)}${oliveLeaf(d, 38, 440, 0.75, 50)}`;
     case 9:
       return `${birds(d, 180, 70, 230, 56)}
         ${mapleLeaf(d, 64, 70, 1.15, -28)}
@@ -428,9 +431,10 @@ export function keepsakeMotif(design: KeepsakeDesign): string {
         ${mapleLeaf(d, 36, 320, 0.9, 12)}
         ${mapleLeaf(d, 360, 240, 0.7, -20)}
         ${mapleLeaf(d, 368, 360, 0.85, 40)}
-        ${mapleLeaf(d, 80, 470, 1, -15)}
-        ${mapleLeaf(d, 200, 520, 0.75, 30)}
-        ${mapleLeaf(d, 310, 490, 0.95, -35)}`;
+        ${mapleLeaf(d, 58, 470, 1, -15)}
+        ${mapleLeaf(d, 48, 515, 0.75, 20)}
+        ${mapleLeaf(d, 348, 475, 0.95, -35)}
+        ${mapleLeaf(d, 352, 515, 0.8, 18)}`;
     case 10:
       return `${birds(d, 40, 80, 90, 100)}
         <g fill="none" stroke="${d.stem}" stroke-width="1.15" stroke-linecap="round">
@@ -446,31 +450,31 @@ export function keepsakeMotif(design: KeepsakeDesign): string {
         ${acorn(d, 180, 118, 1.05, 8)}
         ${acorn(d, 280, 112, 0.95, -12)}
         ${acorn(d, 100, 110, 0.85, 16)}
-        ${oakLeaf(d, 90, 490, 1.05, -40)}
-        ${oakLeaf(d, 160, 520, 0.8, 25)}
-        ${acorn(d, 300, 510, 1, -20)}`;
+        ${oakLeaf(d, 60, 485, 1.05, -40)}
+        ${oakLeaf(d, 46, 522, 0.8, 25)}
+        ${acorn(d, 350, 500, 1, -20)}`;
     case 11:
       return `${birds(d, 160, 64, 220, 52)}
         ${wheat(d, 48, 176, 130, -8)}
         ${wheat(d, 72, 168, 112, 10)}
         ${wheat(d, 328, 168, 120, -10)}
         ${wheat(d, 356, 176, 128, 8)}
-        ${wheat(d, 44, 548, 118, 8)}
-        ${wheat(d, 72, 548, 146, -6)}
-        ${wheat(d, 102, 548, 100, 12)}
-        ${wheat(d, 300, 548, 108, -10)}
-        ${wheat(d, 328, 548, 140, 6)}
-        ${wheat(d, 358, 548, 112, -8)}`;
+        ${wheat(d, 40, 548, 118, 8)}
+        ${wheat(d, 64, 548, 126, -6)}
+        ${wheat(d, 86, 548, 100, 10)}
+        ${wheat(d, 314, 548, 108, -10)}
+        ${wheat(d, 336, 548, 126, 6)}
+        ${wheat(d, 360, 548, 112, -8)}`;
     default:
       return `${birds(d, 160, 80, 220, 64)}
         ${pineSprig(d, 36, 28, 130, 58)}
         ${pineSprig(d, 20, 50, 90, 78)}
         ${pineSprig(d, 364, 28, 140, 122)}
-        ${pineSprig(d, 200, 548, 110, -72)}
-        ${pineSprig(d, 200, 548, 120, -108)}
-        ${pineSprig(d, 70, 548, 80, -80)}
-        ${pineSprig(d, 330, 548, 80, -100)}
-        ${frost(d, [[70, 80, 1.5], [100, 110, 1.3], [330, 90, 1.6], [300, 120, 1.2], [180, 500, 1.4], [220, 490, 1.3], [140, 520, 1.2]])}`;
+        ${pineSprig(d, 60, 548, 90, -85)}
+        ${pineSprig(d, 40, 545, 70, -70)}
+        ${pineSprig(d, 340, 548, 90, -95)}
+        ${pineSprig(d, 360, 545, 70, -110)}
+        ${frost(d, [[70, 80, 1.5], [100, 110, 1.3], [330, 90, 1.6], [300, 120, 1.2], [50, 500, 1.4], [80, 480, 1.3], [350, 500, 1.2], [320, 480, 1.3]])}`;
   }
 }
 
