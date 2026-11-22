@@ -69,6 +69,7 @@ import {
 import { cleanDisplayName, validateDisplayName } from "@/lib/display-name";
 import { applyBootAppearance } from "@/lib/boot-appearance";
 import { preferenceUsageEvents } from "@/lib/usage-catalog";
+import { markFinishedReadingSeen, pendingFinishedReading, readVerse, reconcileFinishedReadings, startNewReading } from "@/lib/finished-reading";
 import { trackUsage } from "@/lib/usage-client";
 import {
   addReadingSeconds,
@@ -164,6 +165,8 @@ type MushafContextValue = {
   introduction: string;
   introductionSource: string;
   progress: ReadingProgress;
+  keepFinishedMap: () => void;
+  startNewReadingCycle: () => void;
   audioRef: React.RefObject<HTMLAudioElement | null>;
   openSurah: (id: number, verseNumber?: number) => void;
   openJuz: (n: number) => void;
@@ -996,7 +999,7 @@ export function MushafProvider({ children }: { children: ReactNode }) {
       setPlayingVerseKey(verseKey);
       setPlayingWordLocation(null);
       setSelectedVerseKey(verseKey);
-      engageVerse(verseKey, (current) => saveReadingPlace(markVerseRead(current, verseKey), verseKey));
+      engageVerse(verseKey, (current) => saveReadingPlace(readVerse(current, verseKey), verseKey));
       await playSource(verse.audioUrl);
       trackUsage({ name: "feature", feature: "audio_play" });
     },
@@ -1011,7 +1014,7 @@ export function MushafProvider({ children }: { children: ReactNode }) {
       setPlayingVerseKey(verseKey);
       setPlayingWordLocation(null);
       setSelectedVerseKey(verseKey);
-      engageVerse(verseKey, (current) => saveReadingPlace(markVerseRead(current, verseKey), verseKey));
+      engageVerse(verseKey, (current) => saveReadingPlace(readVerse(current, verseKey), verseKey));
       await playSource(verse.audioUrl);
       if (origin === "user") trackUsage({ name: "feature", feature: "audio_play" });
     },
@@ -1280,7 +1283,7 @@ export function MushafProvider({ children }: { children: ReactNode }) {
           for (const key of departed) {
             if (!next.versesRead.includes(key)) next = markVerseRead(next, key);
           }
-          return next;
+          return reconcileFinishedReadings(next);
         });
       });
     }
@@ -1288,7 +1291,7 @@ export function MushafProvider({ children }: { children: ReactNode }) {
     if (visibleVerseKeys.length === 0) return;
     const timers = visibleVerseKeys.map((key) =>
       window.setTimeout(() => {
-        setProgress((current) => markVerseRead(current, key));
+        setProgress((current) => readVerse(current, key));
       }, VERSE_READ_DWELL_MS),
     );
     return () => {
@@ -1309,7 +1312,7 @@ export function MushafProvider({ children }: { children: ReactNode }) {
     (verse: Verse, swatchId?: string) => {
       const color = swatchId ?? preferences.activeSwatchId ?? DEFAULT_SWATCH_ID;
       commitHighlights(toggleAyahHighlight(highlights, verse.verseKey, color, verse.translation || verse.verseKey));
-      engageVerse(verse.verseKey, (current) => saveReadingPlace(markVerseRead(current, verse.verseKey), verse.verseKey));
+      engageVerse(verse.verseKey, (current) => saveReadingPlace(readVerse(current, verse.verseKey), verse.verseKey));
     },
     [commitHighlights, engageVerse, highlights, preferences.activeSwatchId],
   );
@@ -1320,7 +1323,7 @@ export function MushafProvider({ children }: { children: ReactNode }) {
       commitHighlights(
         paintAyahHighlight(highlights, verse.verseKey, swatchId, verse.translation || verse.verseKey),
       );
-      engageVerse(verse.verseKey, (current) => saveReadingPlace(markVerseRead(current, verse.verseKey), verse.verseKey));
+      engageVerse(verse.verseKey, (current) => saveReadingPlace(readVerse(current, verse.verseKey), verse.verseKey));
     },
     [commitHighlights, engageVerse, highlights, setActiveSwatch],
   );
@@ -1563,6 +1566,18 @@ export function MushafProvider({ children }: { children: ReactNode }) {
     };
   }, [bookmarks, highlights, notes, preferences, progress, swatches, user?.avatar, user?.displayName, user?.email]);
 
+
+  const keepFinishedMap = useCallback(() => {
+    setProgress((current) => {
+      const pending = pendingFinishedReading(current);
+      return pending ? markFinishedReadingSeen(current, pending.id) : current;
+    });
+  }, []);
+
+  const startNewReadingCycle = useCallback(() => {
+    setProgress((current) => startNewReading(current));
+  }, []);
+
   const value = useMemo<MushafContextValue>(
     () => ({
       preferences,
@@ -1603,6 +1618,8 @@ export function MushafProvider({ children }: { children: ReactNode }) {
       introduction,
       introductionSource,
       progress,
+      keepFinishedMap,
+      startNewReadingCycle,
       audioRef,
       openSurah,
       openJuz,
@@ -1721,6 +1738,8 @@ export function MushafProvider({ children }: { children: ReactNode }) {
       playingWordLocation,
       preferences,
       progress,
+      keepFinishedMap,
+      startNewReadingCycle,
       recitations,
       removeSwatch,
       resumeCue,

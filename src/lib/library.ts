@@ -13,6 +13,12 @@ import {
   syncSurahsRead,
   type ReadingProgress,
 } from "@/lib/reading";
+import {
+  mergeFinishedReadings,
+  pickCycleProgress,
+  readingCycleOf,
+  reconcileFinishedReadings,
+} from "@/lib/finished-reading";
 import { normalizeNote, normalizeNotes } from "@/lib/notes";
 import { cleanSwatches, swatchesOrDefaults } from "@/lib/swatch-palette";
 import type { Bookmark, Highlight, HighlightSwatch, Note, Preferences } from "@/lib/quran/types";
@@ -61,6 +67,41 @@ function dedupeHighlights(items: Highlight[]) {
 function laterIso(a?: string, b?: string) {
   return (a ?? "") >= (b ?? "") ? a : b;
 }
+
+function mergeReadingProgress(
+  local: ReadingProgress,
+  remote: ReadingProgress,
+  lastVerseKey: string | null,
+  localActive: number,
+  remoteActive: number,
+): ReadingProgress {
+  const cycle = pickCycleProgress(local, remote);
+  const sameCycle = readingCycleOf(local) === readingCycleOf(remote);
+  const verseVisits = sameCycle
+    ? mergeVerseVisits(
+        normalizeVerseVisits(remote.verseVisits, remote.versesRead),
+        normalizeVerseVisits(local.verseVisits, local.versesRead),
+      )
+    : cycle.verseVisits;
+  return reconcileFinishedReadings(syncSurahsRead({
+    ...local,
+    ...cycle,
+    surahCompletions: mergeSurahCompletions(
+      normalizeSurahCompletions(remote.surahCompletions, remote.surahsRead),
+      normalizeSurahCompletions(local.surahCompletions, local.surahsRead),
+    ),
+    verseVisits,
+    totalSeconds: Math.max(remote.totalSeconds, local.totalSeconds),
+    streak: Math.max(remote.streak, local.streak),
+    lastReadDay: laterIso(remote.lastReadDay ?? undefined, local.lastReadDay ?? undefined) ?? null,
+    lastVerseKey,
+    lastActiveAt: Math.max(localActive, remoteActive) || null,
+    daily: mergeDaily(remote.daily, local.daily),
+    historySince: earlierHistorySince(remote.historySince, local.historySince),
+    finishedReadings: mergeFinishedReadings(local.finishedReadings, remote.finishedReadings),
+  }));
+}
+
 
 export function mergeLibraries(local: LibrarySnapshot, remote: LibrarySnapshot): LibrarySnapshot {
   const notes = new Map<string, Note>();
@@ -118,25 +159,7 @@ export function mergeLibraries(local: LibrarySnapshot, remote: LibrarySnapshot):
     notes: [...notes.values()],
     highlights: dedupeHighlights([...remote.highlights, ...local.highlights]),
     swatches: byId([...cleanSwatches(remote.swatches), ...cleanSwatches(local.swatches)]),
-    progress: syncSurahsRead({
-      surahsRead: [...new Set([...remote.progress.surahsRead, ...local.progress.surahsRead])].sort((a, b) => a - b),
-      surahCompletions: mergeSurahCompletions(
-        normalizeSurahCompletions(remote.progress.surahCompletions, remote.progress.surahsRead),
-        normalizeSurahCompletions(local.progress.surahCompletions, local.progress.surahsRead),
-      ),
-      versesRead: [...new Set([...remote.progress.versesRead, ...local.progress.versesRead])],
-      verseVisits: mergeVerseVisits(
-        normalizeVerseVisits(remote.progress.verseVisits, remote.progress.versesRead),
-        normalizeVerseVisits(local.progress.verseVisits, local.progress.versesRead),
-      ),
-      totalSeconds: Math.max(remote.progress.totalSeconds, local.progress.totalSeconds),
-      streak: Math.max(remote.progress.streak, local.progress.streak),
-      lastReadDay: laterIso(remote.progress.lastReadDay ?? undefined, local.progress.lastReadDay ?? undefined) ?? null,
-      lastVerseKey,
-      lastActiveAt: Math.max(localActive, remoteActive) || null,
-      daily: mergeDaily(remote.progress.daily, local.progress.daily),
-      historySince: earlierHistorySince(remote.progress.historySince, local.progress.historySince),
-    }),
+    progress: mergeReadingProgress(local.progress, remote.progress, lastVerseKey, localActive, remoteActive),
   };
 }
 
@@ -172,7 +195,7 @@ export function normalizeLibrary(value: unknown): LibrarySnapshot | null {
     notes: normalizeNotes(raw.notes),
     highlights: Array.isArray(raw.highlights) ? raw.highlights : [],
     swatches: swatchesOrDefaults(cleanSwatches(raw.swatches)),
-    progress: normalizeReadingProgress(raw.progress),
+    progress: reconcileFinishedReadings(normalizeReadingProgress(raw.progress)),
     ...safeDisplayName(raw.displayName, raw.displayNameUpdatedAt),
     ...safeAvatar(raw.avatar, raw.avatarUpdatedAt),
   };

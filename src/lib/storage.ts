@@ -4,6 +4,7 @@ import { DEFAULT_RECITATION_ID, DEFAULT_TAFSIR_ID, DEFAULT_TRANSLATION_ID } from
 import { DEFAULT_SWATCH_ID } from "./highlights";
 import { cleanSwatches, swatchesOrDefaults } from "./swatch-palette";
 import { asDayKey, normalizeReadingProgress, syncSurahsRead, type ReadingProgress } from "./reading";
+import { reconcileFinishedReadings } from "./finished-reading";
 import { isStatsRangeId } from "./stats-range";
 import { mergeStudyCards } from "./study-cards";
 import { normalizeNotes, notesMissingCreatedAt } from "./notes";
@@ -163,7 +164,7 @@ export function loadSession(): SessionUser | null {
 }
 
 export function loadProgress(): ReadingProgress {
-  return syncSurahsRead(normalizeReadingProgress(parse(KEYS.progress)));
+  return reconcileFinishedReadings(syncSurahsRead(normalizeReadingProgress(parse(KEYS.progress))));
 }
 
 const FIRST_SEEN_KEY = "al-mushaf-first-seen";

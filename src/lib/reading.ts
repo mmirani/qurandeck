@@ -37,6 +37,12 @@ export type ReadingProgress = {
   daily: DailyMap;
   /** First local day a daily count was recorded. Null until that happens. */
   historySince: string | null;
+  /** Current reading cycle. Increments when the reader starts again. Default 1. */
+  readingCycle: number;
+  /** First local day of the current cycle, if known. */
+  readingStartedOn: string | null;
+  /** Dated finishes of the whole Quran, including whether the celebration was seen. */
+  finishedReadings: import("@/lib/finished-reading").FinishedReading[];
 };
 
 /** Seconds read and ayahs newly marked on one day or one rolled-up month. */
@@ -60,6 +66,9 @@ export const defaultReadingProgress: ReadingProgress = {
   lastActiveAt: null,
   daily: {},
   historySince: null,
+  readingCycle: 1,
+  readingStartedOn: null,
+  finishedReadings: [],
 };
 
 export function todayKey(date = new Date()) {
@@ -232,7 +241,21 @@ export function normalizeReadingProgress(raw: unknown): ReadingProgress {
     lastActiveAt: typeof value.lastActiveAt === "number" && Number.isFinite(value.lastActiveAt) ? value.lastActiveAt : null,
     daily,
     historySince: earlierHistorySince(asDayKey(value.historySince), inferredHistorySince(daily, null)),
+    readingCycle: normalizeCycle(value.readingCycle),
+    readingStartedOn: asDayKey(value.readingStartedOn),
+    finishedReadings: normalizeFinishedReadingsField(value.finishedReadings),
   };
+}
+
+function normalizeCycle(value: unknown) {
+  if (typeof value !== "number" || !Number.isFinite(value) || value < 1) return 1;
+  return Math.min(10_000, Math.floor(value));
+}
+
+function normalizeFinishedReadingsField(value: unknown) {
+  // Imported lazily-shaped: a plain array of unknown objects is cleaned in finished-reading.
+  if (!Array.isArray(value)) return [];
+  return value as ReadingProgress["finishedReadings"];
 }
 
 export function bumpStreak(progress: ReadingProgress, day = todayKey()): ReadingProgress {
@@ -504,6 +527,7 @@ export function markVerseRead(progress: ReadingProgress, verseKey: string, day =
       ...result,
       daily: compactDaily(addDaily(result.daily, day, { ayahs: 1 }), day),
       historySince: result.historySince ?? day,
+      readingStartedOn: result.readingStartedOn ?? day,
     };
   }
 
