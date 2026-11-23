@@ -150,7 +150,7 @@ export function VerseCard({
       ) : null}
       <CornerFrame
         className={`verse-frame rounded-3xl border bg-surface ${
-          ayahFocus ? "verse-frame-flush border-0 bg-transparent shadow-none" : ""
+          ayahFocus ? "border-0 bg-transparent shadow-none" : ""
         } ${
           active ? "ring-2 ring-gold/40" : reciting ? "ring-1 ring-accent/40" : ""
         } ${wash && !ayahFocus ? "border-transparent" : ayahFocus ? "" : "border-line"}`}

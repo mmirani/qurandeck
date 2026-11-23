@@ -1061,6 +1061,14 @@ body::before {
   padding: 0;
 }
 
+/* Mobile ayah mode: the gold ring sits on .verse-frame, so this box keeps
+   --card-pad (20px on phones, 24px from 640px) on every side. That inset
+   lets the translation, source line, and footnotes clear the rounded edge,
+   matching the Arabic block. Do not re-apply .verse-frame-flush here. */
+.reader-ayah-body .verse-frame {
+  padding: var(--card-pad);
+}
+
 .reader-stream[data-script="ar"] article.is-live {
   border-radius: 0;
 }
