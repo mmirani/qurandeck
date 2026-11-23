@@ -38,20 +38,18 @@ async function seedFinished(page: Page, theme = "iris", seen = false) {
           historySince: "2026-03-12",
           readingCycle: 1,
           readingStartedOn: "2026-03-12",
-          finishedReadings: alreadySeen
-            ? [
-                {
-                  id: "fr-cycle-1",
-                  index: 1,
-                  startedOn: "2026-03-12",
-                  finishedOn: "2026-11-22",
-                  days: 256,
-                  ayahs: 6236,
-                  surahs: 114,
-                  seenAt: Date.now(),
-                },
-              ]
-            : [],
+          finishedReadings: [
+            {
+              id: "fr-cycle-1",
+              index: 1,
+              startedOn: "2026-03-12",
+              finishedOn: "2026-11-22",
+              days: 256,
+              ayahs: 6236,
+              surahs: 114,
+              seenAt: alreadySeen ? Date.now() : null,
+            },
+          ],
         }),
       );
     },
