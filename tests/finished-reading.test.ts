@@ -1,10 +1,12 @@
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import { describe, it } from "node:test";
+import { fileURLToPath } from "node:url";
 import { emptyLibrary, mergeLibraries, normalizeLibrary } from "../src/lib/library";
 import {
   defaultReadingProgress,
-  markVerseRead,
   normalizeReadingProgress,
+  todayKey,
   type ReadingProgress,
 } from "../src/lib/reading";
 import {
@@ -17,6 +19,7 @@ import {
   mergeFinishedReadings,
   monthOfFinishedReading,
   pendingFinishedReading,
+  readVerse,
   reconcileFinishedReadings,
   startNewReading,
 } from "../src/lib/finished-reading";
@@ -43,6 +46,43 @@ function almostDone(extra: Partial<ReadingProgress> = {}): ReadingProgress {
     historySince: "2026-03-12",
     ...extra,
   });
+}
+
+function assertLocalFinishDay(options: { timeZone: string; instant: string; localDay: string; utcDay: string }) {
+  const root = fileURLToPath(new URL("..", import.meta.url));
+  const result = spawnSync(
+    process.execPath,
+    [
+      "--import",
+      "tsx",
+      "--input-type=module",
+      "--eval",
+      `
+        import { defaultReadingProgress, isFutureDay, todayKey } from "./src/lib/reading.ts";
+        import { allVerseKeys, daysInclusive, ensureFinishedReading } from "./src/lib/finished-reading.ts";
+        const instant = new Date("${options.instant}");
+        const local = todayKey(instant);
+        const utc = instant.toISOString().slice(0, 10);
+        if (utc !== "${options.utcDay}") throw new Error("expected UTC day ${options.utcDay}, got " + utc);
+        if (local !== "${options.localDay}") throw new Error("expected local day ${options.localDay}, got " + local);
+        if (isFutureDay(utc, instant) === (utc <= local)) {
+          throw new Error("future check did not follow the local day");
+        }
+        const next = ensureFinishedReading(
+          { ...defaultReadingProgress, versesRead: allVerseKeys(), readingStartedOn: "2026-03-12" },
+          local,
+          instant,
+        );
+        const reading = next.finishedReadings[0];
+        if (reading?.finishedOn !== "${options.localDay}") throw new Error("finishedOn " + reading?.finishedOn);
+        if (reading?.days !== daysInclusive("2026-03-12", "${options.localDay}")) {
+          throw new Error("days " + reading?.days);
+        }
+      `,
+    ],
+    { cwd: root, env: { ...process.env, TZ: options.timeZone }, encoding: "utf8" },
+  );
+  assert.equal(result.status, 0, result.stderr || result.stdout);
 }
 
 describe("isQuranFinished", () => {
@@ -168,23 +208,26 @@ describe("daysInclusive and month mapping", () => {
 
 describe("ensureFinishedReading and pending seen", () => {
   it("records a pending finish once when the last ayah is marked", () => {
-    const last = KEYS[KEYS.length - 1];
-    const next = reconcileFinishedReadings(markVerseRead(almostDone(), last, "2026-11-22"));
+    const now = new Date(2026, 10, 22, 21, 0, 0);
+    const day = todayKey(now);
+    const last = KEYS[KEYS.length - 1]!;
+    const next = readVerse(almostDone(), last, day);
     assert.equal(isQuranFinished(next), true);
     assert.equal(next.finishedReadings.length, 1);
     const reading = next.finishedReadings[0]!;
     assert.equal(reading.id, finishedReadingId(1));
     assert.equal(reading.startedOn, "2026-03-12");
-    assert.equal(reading.finishedOn, "2026-11-22");
-    assert.equal(reading.days, 256);
+    assert.equal(reading.finishedOn, day);
+    assert.equal(reading.days, daysInclusive("2026-03-12", day));
     assert.equal(reading.ayahs, 6236);
     assert.equal(reading.surahs, 114);
     assert.equal(reading.seenAt, null);
     assert.equal(pendingFinishedReading(next)?.id, reading.id);
 
-    const again = ensureFinishedReading(next, "2026-11-23");
+    const later = new Date(2026, 10, 23, 8, 0, 0);
+    const again = ensureFinishedReading(next, todayKey(later), later);
     assert.equal(again.finishedReadings.length, 1);
-    assert.equal(again.finishedReadings[0]?.finishedOn, "2026-11-22");
+    assert.equal(again.finishedReadings[0]?.finishedOn, day);
   });
 
   it("backfills a pending row for a library already at 100%", () => {
@@ -213,6 +256,24 @@ describe("ensureFinishedReading and pending seen", () => {
     assert.equal(pendingFinishedReading({ finishedReadings: merged }), null);
     assert.equal(merged[0]?.seenAt, seen.finishedReadings[0]?.seenAt);
   });
+
+  it("records the local calendar day in a late evening behind UTC, not the UTC date", () => {
+    assertLocalFinishDay({
+      timeZone: "America/Vancouver",
+      instant: "2026-11-23T05:00:00.000Z",
+      localDay: "2026-11-22",
+      utcDay: "2026-11-23",
+    });
+  });
+
+  it("records the local calendar day ahead of UTC, not the UTC date", () => {
+    assertLocalFinishDay({
+      timeZone: "Asia/Dubai",
+      instant: "2026-11-22T21:00:00.000Z",
+      localDay: "2026-11-23",
+      utcDay: "2026-11-22",
+    });
+  });
 });
 
 describe("start again and merge", () => {
@@ -222,7 +283,7 @@ describe("start again and merge", () => {
       "2026-11-22",
     );
     // complete it
-    const complete = reconcileFinishedReadings(markVerseRead(finished, KEYS[KEYS.length - 1]!, "2026-11-22"));
+    const complete = readVerse(finished, KEYS[KEYS.length - 1]!, "2026-11-22");
     const next = startNewReading(complete, "2026-11-23", 200);
     assert.equal(isQuranFinished(next), false);
     assert.deepEqual(next.versesRead, []);
